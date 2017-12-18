@@ -1,7 +1,6 @@
 #include "globject.h"
 
-void globject_new(const struct Mesh* mesh, struct GLObject* glo)
-{
+void globject_new(const struct Mesh* mesh, struct GLObject* glo) {
     glo->numVertices = mesh->numVertices;
 
     /* VBOs */
@@ -37,14 +36,17 @@ void globject_new(const struct Mesh* mesh, struct GLObject* glo)
     glBindVertexArray(0);
 }
 
-void globject_free(struct GLObject* glo)
-{
-    if (glIsBuffer(glo->vbo[0]) == GL_TRUE)
+void globject_free(struct GLObject* glo) {
+    if (glIsBuffer(glo->vbo[0]) == GL_TRUE) {
         glDeleteBuffers(1, &glo->vbo[0]);
-    if (glIsBuffer(glo->vbo[1]) == GL_TRUE)
+    }
+    if (glIsBuffer(glo->vbo[1]) == GL_TRUE) {
         glDeleteBuffers(1, &glo->vbo[1]);
-    if (glIsBuffer(glo->vbo[2]) == GL_TRUE)
+    }
+    if (glIsBuffer(glo->vbo[2]) == GL_TRUE) {
         glDeleteBuffers(1, &glo->vbo[2]);
-    if (glIsVertexArray(glo->vao) == GL_TRUE)
+    }
+    if (glIsVertexArray(glo->vao) == GL_TRUE) {
         glDeleteVertexArrays(1, &glo->vao);
+    }
 }

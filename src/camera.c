@@ -4,23 +4,20 @@
 #include "quaternion.h"
 #include "camera.h"
 
-static void camera_update_position(struct Camera* camera)
-{
+static void camera_update_position(struct Camera* camera) {
     camera->view[3][0] = -(camera->view[0][0] * camera->position[0] + camera->view[1][0] * camera->position[1] + camera->view[2][0] * camera->position[2]);
     camera->view[3][1] = -(camera->view[0][1] * camera->position[0] + camera->view[1][1] * camera->position[1] + camera->view[2][1] * camera->position[2]);
     camera->view[3][2] = -(camera->view[0][2] * camera->position[0] + camera->view[1][2] * camera->position[1] + camera->view[2][2] * camera->position[2]);
 }
 
-static void camera_update_orientation(struct Camera* camera)
-{
+static void camera_update_orientation(struct Camera* camera) {
     Mat3 rot;
     quaternion_to_mat3(rot, camera->orientation);
     transpose3m(rot);
     mat3to4(camera->view, rot);
 }
 
-void camera_load_default(struct Camera* camera, Vec3 pos, float ratio)
-{
+void camera_load_default(struct Camera* camera, Vec3 pos, float ratio) {
     memcpy(camera->position, pos, sizeof(Vec3));
     quaternion_load_id(camera->orientation);
     camera_update_view(camera);
@@ -36,30 +33,25 @@ void camera_load_default(struct Camera* camera, Vec3 pos, float ratio)
     camera_update_projection(camera);
 }
 
-void camera_get_right(struct Camera* camera, Vec3 right)
-{
+void camera_get_right(struct Camera* camera, Vec3 right) {
     row3m4(right, camera->view, 0);
 }
 
-void camera_get_up(struct Camera* camera, Vec3 up)
-{
+void camera_get_up(struct Camera* camera, Vec3 up) {
     row3m4(up, camera->view, 1);
 }
 
-void camera_get_backward(struct Camera* camera, Vec3 backward)
-{
+void camera_get_backward(struct Camera* camera, Vec3 backward) {
     row3m4(backward, camera->view, 2);
 }
 
-void camera_move(struct Camera* camera, Vec3 translation)
-{
+void camera_move(struct Camera* camera, Vec3 translation) {
     incr3v(camera->position, translation);
     camera_update_orientation(camera);
     camera_update_position(camera);
 }
 
-void camera_rotate(struct Camera* camera, Vec3 axis, float angle)
-{
+void camera_rotate(struct Camera* camera, Vec3 axis, float angle) {
     Quaternion q, old;
     quaternion_set_axis_angle(q, axis, angle);
     memcpy(old, camera->orientation, sizeof(Quaternion));
@@ -68,14 +60,12 @@ void camera_rotate(struct Camera* camera, Vec3 axis, float angle)
     camera_update_position(camera);
 }
 
-void camera_update_view(struct Camera* camera)
-{
+void camera_update_view(struct Camera* camera) {
     camera_update_orientation(camera);
     camera_update_position(camera);
 }
 
-void camera_update_projection(struct Camera* camera)
-{
+void camera_update_projection(struct Camera* camera) {
     float tanHalfFov = tan(camera->fov / 2.0);
 
     memset(camera->projection, 0, sizeof(Mat4));

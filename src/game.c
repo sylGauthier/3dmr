@@ -22,13 +22,11 @@ Mat4 cubeModel = {
     {0.0, 0.0, 0.0, 1.0}
 };
 
-static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* userData)
-{
+static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* userData) {
     Mat3 rot, a, b;
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
 
-    if (buttonLeft)
-    {
+    if (buttonLeft) {
         mat4to3(a, cubeModel);
         load_rot3(rot, x, 4.0 * dx / viewer_get_width(viewer));
         mul3mm(b, rot, a);
@@ -38,8 +36,7 @@ static void cursor_callback(double xpos, double ypos, double dx, double dy, int 
     }
 }
 
-static void wheel_callback(double xoffset, double yoffset, void* userData)
-{
+static void wheel_callback(double xoffset, double yoffset, void* userData) {
     Vec3 t;
     struct Camera* camera = viewer_get_camera(viewer);
     
@@ -50,25 +47,22 @@ static void wheel_callback(double xoffset, double yoffset, void* userData)
     camera_update_view(camera);
 }
 
-static void key_callback(int key, int scancode, int action, int mods, void* userData)
-{
-    if (action != GLFW_PRESS)
+static void key_callback(int key, int scancode, int action, int mods, void* userData) {
+    if (action != GLFW_PRESS) {
         return;
-    switch (key)
-    {
+    }
+    switch (key) {
         case GLFW_KEY_ESCAPE:
             running = 0;
             break;
     }
 }
 
-static void close_callback(void* userData)
-{
+static void close_callback(void* userData) {
     running = 0;
 }
 
-int main()
-{
+int main() {
     double current, dt, lastTime;
     GLuint shaderSolidColor;
     struct Mesh cubeMesh;
