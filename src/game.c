@@ -69,6 +69,7 @@ int main() {
     struct GLObject cube;
     struct Camera* camera;
     float cubeColor[] = {0.0, 0.0, 1.0, 0.0};
+    Vec3 t = {0, 0, 10};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer_set_callbacks(viewer, cursor_callback, wheel_callback, key_callback, close_callback, NULL);
@@ -79,6 +80,8 @@ int main() {
     mesh_load(&cubeMesh, "models", "cube.obj");
     globject_new(&cubeMesh, &cube);
     camera = viewer_get_camera(viewer);
+    camera_move(camera, t);
+    camera_update_view(camera);
 
     while (running) {
         current = glfwGetTime();
