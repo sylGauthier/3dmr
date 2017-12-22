@@ -21,7 +21,7 @@ int mesh_load(struct Mesh* mesh, const char* filename, int withIndices, int with
         if (!withIndices) {
             mesh->numVertices = 3 * obj.numFaces;
             mesh->numNormals = (withNormals && obj.numNormals) ? mesh->numVertices : 0;
-            mesh->numTexCoords = (withTexCoords && obj.numTexCoords) ? mesh->numTexCoords : 0;
+            mesh->numTexCoords = (withTexCoords && obj.numTexCoords) ? mesh->numVertices : 0;
             mesh->numIndices = 0;
             mesh->indices = NULL;
             mesh->normals = NULL;
@@ -37,8 +37,8 @@ int mesh_load(struct Mesh* mesh, const char* filename, int withIndices, int with
                 for (i = k = l = 0; i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {
                         memcpy(mesh->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
-                        if (withNormals && obj.numNormals) memcpy(mesh->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
-                        if (withTexCoords && obj.numTexCoords) memcpy(mesh->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
+                        if (mesh->numNormals) memcpy(mesh->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
+                        if (mesh->numTexCoords) memcpy(mesh->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
                         k += 3;
                         l += 2;
                     }

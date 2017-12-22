@@ -10,21 +10,19 @@
 #include "camera.h"
 #include "mesh.h"
 #include "globject.h"
+#include "texture.h"
 #include "shader.h"
 #include "shaders/solid_color.h"
+#include "shaders/solid_texture.h"
 
 Viewer* viewer;
 int running;
-Mat4 cubeModel = {
-    {1.0, 0.0, 0.0, 0.0},
-    {0.0, 1.0, 0.0, 0.0},
-    {0.0, 0.0, 1.0, 0.0},
-    {0.0, 0.0, 0.0, 1.0}
-};
 
-static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* userData) {
+static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
     Mat3 rot, a, b;
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
+    void* cubeModel = ((void**)data)[0];
+    void* texturedCubeModel = ((void**)data)[1];
 
     if (buttonLeft) {
         mat4to3(a, cubeModel);
@@ -33,6 +31,12 @@ static void cursor_callback(double xpos, double ypos, double dx, double dy, int 
         load_rot3(rot, y, 4.0 * dy / viewer_get_height(viewer));
         mul3mm(a, rot, b);
         mat3to4(cubeModel, a);
+        mat4to3(a, texturedCubeModel);
+        load_rot3(rot, x, -4.0 * dx / viewer_get_width(viewer));
+        mul3mm(b, rot, a);
+        load_rot3(rot, y, -4.0 * dy / viewer_get_height(viewer));
+        mul3mm(a, rot, b);
+        mat3to4(texturedCubeModel, a);
     }
 }
 
@@ -64,21 +68,36 @@ static void close_callback(void* userData) {
 
 int main() {
     double current, dt, lastTime;
-    GLuint shaderSolidColor;
     struct Mesh cubeMesh = {0};
-    struct GLObject cube = {0};
+    struct SolidColorGeometry cube = {0};
+    struct SolidTextureGeometry texturedCube = {0};
     struct Camera* camera;
-    float cubeColor[] = {0.0, 0.0, 1.0, 0.0};
+    void* data[2];
     Vec3 t = {0, 0, 10};
 
     viewer = viewer_new(1024, 768, "Game");
-    viewer_set_callbacks(viewer, cursor_callback, wheel_callback, key_callback, close_callback, NULL);
+    data[0] = cube.geometry.model;
+    data[1] = texturedCube.geometry.model;
+    viewer_set_callbacks(viewer, cursor_callback, wheel_callback, key_callback, close_callback, data);
     running = 1;
     lastTime = glfwGetTime();
 
-    shaderSolidColor = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
-    mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 0);
-    globject_new(&cubeMesh, &cube);
+    mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 1);
+    globject_new(&cubeMesh, &cube.geometry.glObject);
+    load_id4(cube.geometry.model);
+    cube.geometry.shader = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
+    cube.geometry.render = draw_solid_color;
+    cube.color[0] = 0.0;
+    cube.color[1] = 0.0;
+    cube.color[2] = 1.0;
+
+    texturedCube.geometry.glObject = cube.geometry.glObject;
+    load_id4(texturedCube.geometry.model);
+    texturedCube.geometry.model[3][1] = 3.0;
+    texturedCube.geometry.shader = shader_compile("shaders/solid_texture.vert", "shaders/solid_texture.frag");
+    texturedCube.geometry.render = draw_solid_texture;
+    texturedCube.texture = texture_load_from_file("textures/tux.png");
+
     camera = viewer_get_camera(viewer);
     camera_move(camera, t);
     camera_update_view(camera);
@@ -91,12 +110,13 @@ int main() {
         usleep(10 * 1000);
 
         viewer_next_frame(viewer);
-        draw_solid_color(&cube, shaderSolidColor, camera, cubeModel, cubeColor);
+        geometry_render(&cube.geometry, camera);
+        geometry_render(&texturedCube.geometry, camera);
     }
 
-    globject_free(&cube);
+    glDeleteProgram(cube.geometry.shader);
+    globject_free(&cube.geometry.glObject);
     mesh_free(&cubeMesh);
-    glDeleteProgram(shaderSolidColor);
     viewer_free(viewer);
 
     return 0;

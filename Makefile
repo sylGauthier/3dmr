@@ -20,3 +20,9 @@ check_deps:
 .PHONY: clean
 clean:
 	rm -f $(APP) $(OBJECTS)
+
+$(APP): textures/tux.png
+textures/tux.png:
+	mkdir -p textures
+	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/200px-Tux.svg.png"
+	convert $@ -background white -alpha remove -flatten $@
