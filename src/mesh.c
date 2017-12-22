@@ -1,88 +1,93 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-
-#define TINYOBJ_LOADER_C_IMPLEMENTATION
-#include "tinyobj_loader_c.h"
+#include <string.h>
 
 #include "mesh.h"
+#include "obj.h"
 
-void mesh_load(struct Mesh* mesh, const char* modeldir, const char* filename) {
-    FILE* objFile;
-    char* data;
-    int len;
-    tinyobj_attrib_t attrib;
-    tinyobj_shape_t* shapes;
-    long unsigned int numShapes;
-    tinyobj_material_t* materials;
-    long unsigned int numMaterials;
-    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-    unsigned int i;
+int mesh_load(struct Mesh* mesh, const char* filename, int withIndices, int withNormals, int withTexCoords) {
+    FILE* objFile = NULL;
+    struct OBJ obj;
+    unsigned int i, j, k, l;
+    int objOk = 0, ret = 0;
 
-    chdir(modeldir);
-
-    if ((objFile = fopen(filename, "r"))) {
-        if (!fseek(objFile, 0, SEEK_END)) {
-            if ((data = malloc((len = ftell(objFile))))) {
-                if (!fseek(objFile, 0, SEEK_SET) && fread(data, 1, len, objFile) == len) {
-                    if (tinyobj_parse_obj(&attrib, &shapes, &numShapes, &materials, &numMaterials, data, len, flags) == TINYOBJ_SUCCESS) {
-                        mesh->numVertices = attrib.num_faces;
-                        if ((mesh->vertices = malloc(3 * mesh->numVertices * sizeof(float)))
-                         && (mesh->normals = malloc(3 * mesh->numVertices * sizeof(float)))
-                         && (mesh->texCoords = malloc(2 * mesh->numVertices * sizeof(float)))) {
-                            for (i = 0; i < mesh->numVertices; i++) {
-                                mesh->vertices[3*i] = attrib.vertices[3 * attrib.faces[i].v_idx];
-                                mesh->vertices[3*i + 1] = attrib.vertices[3 * attrib.faces[i].v_idx + 1];
-                                mesh->vertices[3*i + 2] = attrib.vertices[3 * attrib.faces[i].v_idx + 2];
-
-                                mesh->normals[3*i] = attrib.normals[3 * attrib.faces[i].vn_idx];
-                                mesh->normals[3*i + 1] = attrib.normals[3 * attrib.faces[i].vn_idx + 1];
-                                mesh->normals[3*i + 2] = attrib.normals[3 * attrib.faces[i].vn_idx + 2];
-                                
-                                if (i < 6*attrib.num_texcoords) {
-                                    mesh->texCoords[2*i] = attrib.texcoords[2 * attrib.faces[i].vt_idx];
-                                    mesh->texCoords[2*i + 1] = 1 - attrib.texcoords[2 * attrib.faces[i].vt_idx + 1];
-                                }
-                            }
-
-                            mesh->mat.ambient[0] = 1.0;
-                            mesh->mat.ambient[1] = 1.0;
-                            mesh->mat.ambient[2] = 1.0;
-                            mesh->mat.diffuse[0] = 1.0;
-                            mesh->mat.diffuse[1] = 1.0;
-                            mesh->mat.diffuse[2] = 1.0;
-                            mesh->mat.specular[0] = 1.0;
-                            mesh->mat.specular[1] = 1.0;
-                            mesh->mat.specular[2] = 1.0;
-                            mesh->mat.shininess = 1.0;
-                        } else {
-                            fprintf(stderr, "Error: failed to allocate vertices or normals buffer\n");
-                        }
-                        tinyobj_attrib_free(&attrib);
-                        tinyobj_shapes_free(shapes, numShapes);
-                        tinyobj_materials_free(materials, numMaterials);
-                    } else {
-                        fprintf(stderr, "Error: failed to parse obj file '%s'\n", filename);
-                    }
-                } else {
-                    fprintf(stderr, "Error: failed to read '%s'\n", filename);
-                }
-                free(data);
+    if (!(objFile = fopen(filename, "r"))) {
+        fprintf(stderr, "Error: could not open obj file '%s'\n", filename);
+    } else if (!(objOk = obj_load(&obj, objFile))) {
+        fprintf(stderr, "Error: failed to parse obj file '%s'\n", filename);
+    } else if (!obj_triangulate(&obj)) {
+        fprintf(stderr, "Error: failed to triangulate obj file '%s'\n", filename);
+    } else {
+        if (!withIndices) {
+            mesh->numVertices = 3 * obj.numFaces;
+            mesh->numIndices = 0;
+            mesh->indices = NULL;
+            mesh->normals = NULL;
+            mesh->texCoords = NULL;
+            if (!(mesh->vertices = malloc(3 * mesh->numVertices * sizeof(float)))
+             || ((withNormals && obj.numNormals) && !(mesh->normals = malloc(3 * mesh->numVertices * sizeof(float))))
+             || ((withTexCoords && obj.numTexCoords) && !(mesh->texCoords = malloc(2 * mesh->numVertices * sizeof(float))))) {
+                fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
+                free(mesh->vertices);
+                free(mesh->normals);
+                free(mesh->texCoords);
             } else {
-                fprintf(stderr, "Error: cannot allocate memory for obj file data\n");
+                for (i = k = l = 0; i < obj.numFaces; i++) {
+                    for (j = 0; j < 3; j++) {
+                        memcpy(mesh->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
+                        if (withNormals && obj.numNormals) memcpy(mesh->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
+                        if (withTexCoords && obj.numTexCoords) memcpy(mesh->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
+                        k += 3;
+                        l += 2;
+                    }
+                }
+                ret = 1;
             }
         } else {
-            fprintf(stderr, "Error: failed to get file size '%s'\n", filename);
+            mesh->numIndices = 3 * obj.numFaces;
+            if (!(mesh->indices = malloc(mesh->numIndices * (1 + !!withNormals + !!withTexCoords) * sizeof(unsigned int)))) {
+                fprintf(stderr, "Error: failed to allocate mesh buffers for obj file '%s'\n", filename);
+            } else {
+                mesh->numVertices = obj.numVertices;
+                mesh->vertices = obj.vertices;
+                obj.vertices = NULL;
+                if (withNormals && obj.numNormals) {
+                    mesh->numNormals = obj.numNormals;
+                    mesh->normals = obj.normals;
+                    obj.normals = NULL;
+                } else {
+                    mesh->numNormals = 0;
+                    mesh->normals = NULL;
+                }
+                if (withTexCoords && obj.numTexCoords) {
+                    mesh->numTexCoords = obj.numTexCoords;
+                    mesh->texCoords = obj.texCoords;
+                    obj.texCoords = NULL;
+                } else {
+                    mesh->numTexCoords = 0;
+                    mesh->texCoords = NULL;
+                }
+                for (i = k = 0; i < obj.numFaces; i++) {
+                    for (j = 0; j < 3; j++) {
+                        mesh->indices[k++] = obj.faces[i].elems[j].v;
+                        if (withNormals) mesh->indices[k++] = obj.faces[i].elems[j].n;
+                        if (withTexCoords) mesh->indices[k++] = obj.faces[i].elems[j].t;
+                    }
+                }
+                ret = 1;
+            }
         }
-        fclose(objFile);
-    } else {
-        fprintf(stderr, "Error: could not open obj file '%s'\n", filename);
     }
+
+    if (objOk) obj_free(&obj);
+    if (objFile) fclose(objFile);
+    return ret;
 }
 
 void mesh_free(struct Mesh* mesh) {
     free(mesh->vertices);
     free(mesh->normals);
     free(mesh->texCoords);
+    free(mesh->indices);
 }
 

@@ -6,14 +6,14 @@
 
 struct Mesh
 {
-    struct Material mat;
-    unsigned int numVertices;
     float* vertices;
     float* normals;
     float* texCoords;
+    unsigned int* indices;
+    unsigned int numVertices, numNormals, numTexCoords, numIndices;
 };
 
-void mesh_load(struct Mesh* mesh, const char* modeldir, const char* filename);
+int mesh_load(struct Mesh* mesh, const char* filename, int withIndices, int withNormals, int withTexCoords);
 void mesh_free(struct Mesh*);
 
 #endif

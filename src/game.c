@@ -65,8 +65,8 @@ static void close_callback(void* userData) {
 int main() {
     double current, dt, lastTime;
     GLuint shaderSolidColor;
-    struct Mesh cubeMesh;
-    struct GLObject cube;
+    struct Mesh cubeMesh = {0};
+    struct GLObject cube = {0};
     struct Camera* camera;
     float cubeColor[] = {0.0, 0.0, 1.0, 0.0};
     Vec3 t = {0, 0, 10};
@@ -77,7 +77,7 @@ int main() {
     lastTime = glfwGetTime();
 
     shaderSolidColor = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
-    mesh_load(&cubeMesh, "models", "cube.obj");
+    mesh_load(&cubeMesh, "models/cube.obj", 0, 1, 1);
     globject_new(&cubeMesh, &cube);
     camera = viewer_get_camera(viewer);
     camera_move(camera, t);
