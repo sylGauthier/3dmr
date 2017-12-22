@@ -15,7 +15,7 @@
 #include "shaders/solid_color.h"
 #include "shaders/solid_texture.h"
 
-Viewer* viewer;
+struct Viewer* viewer;
 int running;
 
 static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
@@ -26,15 +26,15 @@ static void cursor_callback(double xpos, double ypos, double dx, double dy, int 
 
     if (buttonLeft) {
         mat4to3(a, cubeModel);
-        load_rot3(rot, x, 4.0 * dx / viewer_get_width(viewer));
+        load_rot3(rot, x, 4.0 * dx / viewer->width);
         mul3mm(b, rot, a);
-        load_rot3(rot, y, 4.0 * dy / viewer_get_height(viewer));
+        load_rot3(rot, y, 4.0 * dy / viewer->height);
         mul3mm(a, rot, b);
         mat3to4(cubeModel, a);
         mat4to3(a, texturedCubeModel);
-        load_rot3(rot, x, -4.0 * dx / viewer_get_width(viewer));
+        load_rot3(rot, x, -4.0 * dx / viewer->width);
         mul3mm(b, rot, a);
-        load_rot3(rot, y, -4.0 * dy / viewer_get_height(viewer));
+        load_rot3(rot, y, -4.0 * dy / viewer->height);
         mul3mm(a, rot, b);
         mat3to4(texturedCubeModel, a);
     }
@@ -42,13 +42,12 @@ static void cursor_callback(double xpos, double ypos, double dx, double dy, int 
 
 static void wheel_callback(double xoffset, double yoffset, void* userData) {
     Vec3 t;
-    struct Camera* camera = viewer_get_camera(viewer);
     
     t[0] = 0;
     t[1] = 0;
     t[2] = -yoffset;
-    camera_move(camera, t);
-    camera_update_view(camera);
+    camera_move(&viewer->camera, t);
+    camera_update_view(&viewer->camera);
 }
 
 static void key_callback(int key, int scancode, int action, int mods, void* userData) {
@@ -67,20 +66,22 @@ static void close_callback(void* userData) {
 }
 
 int main() {
-    double current, dt, lastTime;
+    double dt;
     struct Mesh cubeMesh = {0};
     struct SolidColorGeometry cube = {0};
     struct SolidTextureGeometry texturedCube = {0};
-    struct Camera* camera;
     void* data[2];
     Vec3 t = {0, 0, 10};
 
     viewer = viewer_new(1024, 768, "Game");
+    viewer->cursor_callback = cursor_callback;
+    viewer->wheel_callback = wheel_callback;
+    viewer->key_callback = key_callback;
+    viewer->close_callback = close_callback;
+    viewer->callbackData = data;
     data[0] = cube.geometry.model;
     data[1] = texturedCube.geometry.model;
-    viewer_set_callbacks(viewer, cursor_callback, wheel_callback, key_callback, close_callback, data);
     running = 1;
-    lastTime = glfwGetTime();
 
     mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 1);
     globject_new(&cubeMesh, &cube.geometry.glObject);
@@ -98,20 +99,16 @@ int main() {
     texturedCube.geometry.render = draw_solid_texture;
     texturedCube.texture = texture_load_from_file("textures/tux.png");
 
-    camera = viewer_get_camera(viewer);
-    camera_move(camera, t);
-    camera_update_view(camera);
+    camera_move(&viewer->camera, t);
+    camera_update_view(&viewer->camera);
 
     while (running) {
-        current = glfwGetTime();
-        dt = current - lastTime;
-        lastTime = current;
         viewer_process_events(viewer);
         usleep(10 * 1000);
 
-        viewer_next_frame(viewer);
-        geometry_render(&cube.geometry, camera);
-        geometry_render(&texturedCube.geometry, camera);
+        dt = viewer_next_frame(viewer);
+        geometry_render(&cube.geometry, &viewer->camera);
+        geometry_render(&texturedCube.geometry, &viewer->camera);
     }
 
     glDeleteProgram(cube.geometry.shader);
