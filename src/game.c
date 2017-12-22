@@ -71,7 +71,6 @@ int main() {
     struct SolidColorGeometry cube = {0};
     struct SolidTextureGeometry texturedCube = {0};
     void* data[2];
-    Vec3 t = {0, 0, 10};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_callback;
@@ -98,9 +97,6 @@ int main() {
     texturedCube.geometry.shader = shader_compile("shaders/solid_texture.vert", "shaders/solid_texture.frag");
     texturedCube.geometry.render = draw_solid_texture;
     texturedCube.texture = texture_load_from_file("textures/tux.png");
-
-    camera_move(&viewer->camera, t);
-    camera_update_view(&viewer->camera);
 
     while (running) {
         viewer_process_events(viewer);

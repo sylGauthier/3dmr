@@ -77,7 +77,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 if ((error = glGetError()) == GL_NO_ERROR) {
                     glewExperimental = 1;
                     if ((error = glewInit()) == GLEW_OK) {
-                        Vec3 pos = {0, 0, 0};
+                        Vec3 pos = {0, 0, 10};
                         camera_load_default(&viewer->user.camera, pos, ((float)width) / ((float)height));
 
                         viewer->user.cursor_callback = NULL;
