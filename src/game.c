@@ -77,7 +77,7 @@ int main() {
     lastTime = glfwGetTime();
 
     shaderSolidColor = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
-    mesh_load(&cubeMesh, "models/cube.obj", 0, 1, 1);
+    mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 0);
     globject_new(&cubeMesh, &cube);
     camera = viewer_get_camera(viewer);
     camera_move(camera, t);

@@ -20,13 +20,15 @@ int mesh_load(struct Mesh* mesh, const char* filename, int withIndices, int with
     } else {
         if (!withIndices) {
             mesh->numVertices = 3 * obj.numFaces;
+            mesh->numNormals = (withNormals && obj.numNormals) ? mesh->numVertices : 0;
+            mesh->numTexCoords = (withTexCoords && obj.numTexCoords) ? mesh->numTexCoords : 0;
             mesh->numIndices = 0;
             mesh->indices = NULL;
             mesh->normals = NULL;
             mesh->texCoords = NULL;
             if (!(mesh->vertices = malloc(3 * mesh->numVertices * sizeof(float)))
-             || ((withNormals && obj.numNormals) && !(mesh->normals = malloc(3 * mesh->numVertices * sizeof(float))))
-             || ((withTexCoords && obj.numTexCoords) && !(mesh->texCoords = malloc(2 * mesh->numVertices * sizeof(float))))) {
+             || (mesh->numNormals && !(mesh->normals = malloc(3 * mesh->numVertices * sizeof(float))))
+             || (mesh->numTexCoords && !(mesh->texCoords = malloc(2 * mesh->numVertices * sizeof(float))))) {
                 fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
                 free(mesh->vertices);
                 free(mesh->normals);

@@ -7,7 +7,7 @@
 struct GLObject
 {
     GLuint vbo[3], vao;
-    unsigned int numVertices;
+    unsigned int numVertices, numVBOs;
 };
 
 void globject_new(const struct Mesh* mesh, struct GLObject* glo);
