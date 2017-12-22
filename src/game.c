@@ -108,6 +108,8 @@ int main() {
     }
 
     glDeleteProgram(cube.geometry.shader);
+    glDeleteProgram(texturedCube.geometry.shader);
+    glDeleteTextures(1, &texturedCube.texture);
     globject_free(&cube.geometry.glObject);
     mesh_free(&cubeMesh);
     viewer_free(viewer);
