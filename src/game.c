@@ -11,9 +11,8 @@
 #include "mesh.h"
 #include "globject.h"
 #include "texture.h"
-#include "shader.h"
-#include "shaders/solid_color.h"
-#include "shaders/solid_texture.h"
+#include "geometries/solid_color.h"
+#include "geometries/solid_texture.h"
 
 struct Viewer* viewer;
 int running;
@@ -74,6 +73,7 @@ static void close_callback(void* userData) {
 int main() {
     double dt;
     struct Mesh cubeMesh = {0};
+    struct GLObject cubeGl = {0};
     struct SolidColorGeometry cube = {0};
     struct SolidTextureGeometry texturedCube = {0};
 
@@ -85,20 +85,11 @@ int main() {
     running = 1;
 
     mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 1);
-    globject_new(&cubeMesh, &cube.geometry.glObject);
-    load_id4(cube.geometry.model);
-    cube.geometry.shader = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
-    cube.geometry.render = draw_solid_color;
-    cube.color[0] = 0.0;
-    cube.color[1] = 0.0;
-    cube.color[2] = 1.0;
+    globject_new(&cubeMesh, &cubeGl);
 
-    texturedCube.geometry.glObject = cube.geometry.glObject;
-    load_id4(texturedCube.geometry.model);
+    solid_color_geometry(&cube, &cubeGl, 0.0, 0.0, 1.0);
+    solid_texture_geometry(&texturedCube, &cubeGl, texture_load_from_file("textures/tux.png"));
     texturedCube.geometry.model[3][1] = 3.0;
-    texturedCube.geometry.shader = shader_compile("shaders/solid_texture.vert", "shaders/solid_texture.frag");
-    texturedCube.geometry.render = draw_solid_texture;
-    texturedCube.texture = texture_load_from_file("textures/tux.png");
 
     while (running) {
         viewer_process_events(viewer);
@@ -109,10 +100,10 @@ int main() {
         geometry_render(&texturedCube.geometry, &viewer->camera);
     }
 
-    glDeleteProgram(cube.geometry.shader);
-    glDeleteProgram(texturedCube.geometry.shader);
+    solid_color_shader_free();
+    solid_texture_shader_free();
     glDeleteTextures(1, &texturedCube.texture);
-    globject_free(&cube.geometry.glObject);
+    globject_free(&cubeGl);
     mesh_free(&cubeMesh);
     viewer_free(viewer);
 

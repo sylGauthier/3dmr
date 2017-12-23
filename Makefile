@@ -4,7 +4,7 @@ APP := game
 CFLAGS ?= -std=c89 -pedantic -march=native -Wall -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -O3
 CFLAGS += -DM_PI=3.14159265358979 $(shell pkg-config --cflags $(DEPS)) -I. -Isrc
 LDLIBS += -lm $(shell pkg-config --libs $(DEPS))
-C_FILES := $(wildcard src/*.c shaders/*.c)
+C_FILES := $(wildcard src/*.c src/geometries/*.c)
 OBJECTS := $(C_FILES:.c=.o)
 
 .PHONY: all
