@@ -21,6 +21,9 @@ check_deps:
 clean:
 	rm -f $(APP) $(OBJECTS)
 
+tags: $(C_FILES)
+	ctags $^
+
 $(APP): textures/tux.png
 textures/tux.png:
 	mkdir -p textures
