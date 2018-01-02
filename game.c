@@ -18,11 +18,16 @@ struct Viewer* viewer;
 int running;
 
 static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
-    Vec3 axis = {0, 1, 0};
+    Mat3 rot, a, b;
+    Vec3 x = {0, 1, 0}, y = {1, 0, 0};
+
     if (buttonLeft) {
-        camera_rotate(&viewer->camera, axis, dx / viewer->width);
-        camera_get_right(&viewer->camera, axis);
-        camera_rotate(&viewer->camera, axis, dy / viewer->height);
+        mat4to3(a, data);
+        load_rot3(rot, x, 4.0 * dx / viewer->width);
+        mul3mm(b, rot, a);
+        load_rot3(rot, y, 4.0 * dy / viewer->height);
+        mul3mm(a, rot, b);
+        mat3to4(data, a);
     }
 }
 
@@ -70,41 +75,60 @@ static void close_callback(void* userData) {
     running = 0;
 }
 
+#define A 0.6180339887498948f
+#define B 1.0f
+#define C 0.0f
+
+static float vertices[] = {
+    -A, B, C, A, B, C, -A, -B, C, A, -B, C,
+    C, -A, B, C, A, B, C, -A, -B, C, A, -B,
+    B, C, -A, B, C, A, -B, C, -A, -B, C, A
+};
+
+static unsigned int indices[] = {
+    0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
+    1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+    3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
+    4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
+};
+
 int main() {
     double dt;
-    struct Mesh cubeMesh = {0};
-    struct GLObject cubeGl = {0};
-    struct SolidColorGeometry cube = {0};
-    struct SolidTextureGeometry texturedCube = {0};
+    struct Mesh icosahedronMesh = {
+        vertices,
+        NULL,
+        NULL,
+        indices,
+        12,
+        0,
+        0,
+        60
+    };
+    struct GLObject icosahedronGl = {0};
+    struct SolidColorGeometry icosahedron = {0};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_callback;
     viewer->wheel_callback = wheel_callback;
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
+    viewer->callbackData = icosahedron.geometry.model;
     running = 1;
 
-    mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 1);
-    globject_new(&cubeMesh, &cubeGl);
-
-    solid_color_geometry(&cube, &cubeGl, 0.0, 0.0, 1.0);
-    solid_texture_geometry(&texturedCube, &cubeGl, texture_load_from_file("textures/tux.png"));
-    texturedCube.geometry.model[3][1] = 3.0;
+    globject_new(&icosahedronMesh, &icosahedronGl);
+    solid_color_geometry(&icosahedron, &icosahedronGl, 0.0, 0.0, 1.0);
+    icosahedron.geometry.mode = GL_LINE;
 
     while (running) {
         viewer_process_events(viewer);
         usleep(10 * 1000);
 
         dt = viewer_next_frame(viewer);
-        geometry_render(&cube.geometry, &viewer->camera);
-        geometry_render(&texturedCube.geometry, &viewer->camera);
+        geometry_render(&icosahedron.geometry, &viewer->camera);
     }
 
     solid_color_shader_free();
-    solid_texture_shader_free();
-    glDeleteTextures(1, &texturedCube.texture);
-    globject_free(&cubeGl);
-    mesh_free(&cubeMesh);
+    globject_free(&icosahedronGl);
     viewer_free(viewer);
 
     return 0;
