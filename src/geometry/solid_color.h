@@ -1,4 +1,4 @@
-#include "../geometry.h"
+#include "geometry.h"
 
 #ifndef SOLID_COLOR_H
 #define SOLID_COLOR_H

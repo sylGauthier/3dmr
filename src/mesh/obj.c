@@ -136,3 +136,70 @@ int obj_triangulate(struct OBJ* obj) {
     free(faces);
     return 0;
 }
+
+int obj_mesh(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords) {
+    FILE* objFile = NULL;
+    struct OBJ obj;
+    unsigned int i, j, k, l;
+    int objOk = 0, ret = 0;
+
+    if (!(objFile = fopen(filename, "r"))) {
+        fprintf(stderr, "Error: could not open obj file '%s'\n", filename);
+    } else if (!(objOk = obj_load(&obj, objFile))) {
+        fprintf(stderr, "Error: failed to parse obj file '%s'\n", filename);
+    } else if (!obj_triangulate(&obj)) {
+        fprintf(stderr, "Error: failed to triangulate obj file '%s'\n", filename);
+    } else {
+        if (!withIndices) {
+            dest->numVertices = 3 * obj.numFaces;
+            dest->numNormals = (withNormals && obj.numNormals) ? dest->numVertices : 0;
+            dest->numTexCoords = (withTexCoords && obj.numTexCoords) ? dest->numVertices : 0;
+            dest->numIndices = 0;
+            dest->indices = NULL;
+            dest->normals = NULL;
+            dest->texCoords = NULL;
+            if (!(dest->vertices = malloc(3 * dest->numVertices * sizeof(float)))
+             || (dest->numNormals && !(dest->normals = malloc(3 * dest->numVertices * sizeof(float))))
+             || (dest->numTexCoords && !(dest->texCoords = malloc(2 * dest->numVertices * sizeof(float))))) {
+                fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
+                free(dest->vertices);
+                free(dest->normals);
+                free(dest->texCoords);
+            } else {
+                for (i = k = l = 0; i < obj.numFaces; i++) {
+                    for (j = 0; j < 3; j++) {
+                        memcpy(dest->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
+                        if (dest->numNormals) memcpy(dest->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
+                        if (dest->numTexCoords) memcpy(dest->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
+                        k += 3;
+                        l += 2;
+                    }
+                }
+                ret = 1;
+            }
+        } else {
+            dest->numIndices = 3 * obj.numFaces;
+            if (!(dest->indices = malloc(dest->numIndices * sizeof(unsigned int)))) {
+                fprintf(stderr, "Error: failed to allocate mesh buffers for obj file '%s'\n", filename);
+            } else {
+                dest->numVertices = obj.numVertices;
+                dest->vertices = obj.vertices;
+                obj.vertices = NULL;
+                dest->numNormals = 0;
+                dest->normals = NULL;
+                dest->numTexCoords = 0;
+                dest->texCoords = NULL;
+                for (i = k = 0; i < obj.numFaces; i++) {
+                    for (j = 0; j < 3; j++) {
+                        dest->indices[k++] = obj.faces[i].elems[j].v;
+                    }
+                }
+                ret = 1;
+            }
+        }
+    }
+
+    if (objOk) obj_free(&obj);
+    if (objFile) fclose(objFile);
+    return ret;
+}

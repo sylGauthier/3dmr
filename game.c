@@ -8,11 +8,11 @@
 
 #include "viewer.h"
 #include "camera.h"
-#include "mesh.h"
 #include "globject.h"
 #include "texture.h"
-#include "geometries/solid_color.h"
-#include "geometries/solid_texture.h"
+#include "geometry/solid_color.h"
+#include "geometry/solid_texture.h"
+#include "mesh/icosphere.h"
 
 struct Viewer* viewer;
 int running;
@@ -75,60 +75,36 @@ static void close_callback(void* userData) {
     running = 0;
 }
 
-#define A 0.6180339887498948f
-#define B 1.0f
-#define C 0.0f
-
-static float vertices[] = {
-    -A, B, C, A, B, C, -A, -B, C, A, -B, C,
-    C, -A, B, C, A, B, C, -A, -B, C, A, -B,
-    B, C, -A, B, C, A, -B, C, -A, -B, C, A
-};
-
-static unsigned int indices[] = {
-    0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
-    1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
-    3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
-    4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
-};
-
 int main() {
     double dt;
-    struct Mesh icosahedronMesh = {
-        vertices,
-        NULL,
-        NULL,
-        indices,
-        12,
-        0,
-        0,
-        60
-    };
-    struct GLObject icosahedronGl = {0};
-    struct SolidColorGeometry icosahedron = {0};
+    struct Mesh mesh = {0};
+    struct GLObject gl = {0};
+    struct SolidColorGeometry scg = {0};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_callback;
     viewer->wheel_callback = wheel_callback;
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
-    viewer->callbackData = icosahedron.geometry.model;
+    viewer->callbackData = scg.geometry.model;
     running = 1;
 
-    globject_new(&icosahedronMesh, &icosahedronGl);
-    solid_color_geometry(&icosahedron, &icosahedronGl, 0.0, 0.0, 1.0);
-    icosahedron.geometry.mode = GL_LINE;
+    icosphere(&mesh, 2.0, 4);
+    globject_new(&mesh, &gl);
+    solid_color_geometry(&scg, &gl, 0.0, 0.0, 1.0);
+    scg.geometry.mode = GL_LINE;
 
     while (running) {
         viewer_process_events(viewer);
         usleep(10 * 1000);
 
         dt = viewer_next_frame(viewer);
-        geometry_render(&icosahedron.geometry, &viewer->camera);
+        geometry_render(&scg.geometry, &viewer->camera);
     }
 
     solid_color_shader_free();
-    globject_free(&icosahedronGl);
+    mesh_free(&mesh);
+    globject_free(&gl);
     viewer_free(viewer);
 
     return 0;
