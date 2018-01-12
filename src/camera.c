@@ -20,16 +20,15 @@ static void camera_update_orientation(struct Camera* camera) {
 void camera_load_default(struct Camera* camera, Vec3 pos, float ratio) {
     memcpy(camera->position, pos, sizeof(Vec3));
     quaternion_load_id(camera->orientation);
-    camera_update_view(camera);
-    camera->view[0][3] = 0.0;
-    camera->view[1][3] = 0.0;
-    camera->view[2][3] = 0.0;
-    camera->view[3][3] = 1.0;
+    load_id4(camera->view);
+    load_id4(camera->projection);
 
     camera->fov = 1.04;
     camera->ratio = ratio;
     camera->zNear = 0.1;
     camera->zFar = 2000;
+
+    camera_update_view(camera);
     camera_update_projection(camera);
 }
 
