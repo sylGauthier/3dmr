@@ -10,7 +10,6 @@ static void draw_solid_texture(const struct Geometry* geometry) {
 }
 
 void solid_texture_geometry(struct SolidTextureGeometry* dest, const struct GLObject* glObject, GLuint texture) {
-    load_id4(dest->geometry.model);
     if (!shader) {
         shader = shader_compile("shaders/solid_texture.vert", "shaders/solid_texture.frag");
     }

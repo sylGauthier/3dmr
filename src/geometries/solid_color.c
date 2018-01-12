@@ -9,7 +9,6 @@ static void draw_solid_color(const struct Geometry* geometry) {
 }
 
 void solid_color_geometry(struct SolidColorGeometry* dest, const struct GLObject* glObject, float r, float g, float b) {
-    load_id4(dest->geometry.model);
     if (!shader) {
         shader = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
     }

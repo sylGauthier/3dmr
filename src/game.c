@@ -13,6 +13,7 @@
 #include "texture.h"
 #include "geometries/solid_color.h"
 #include "geometries/solid_texture.h"
+#include "node.h"
 
 struct Viewer* viewer;
 int running;
@@ -35,7 +36,7 @@ static void wheel_callback(double xoffset, double yoffset, void* userData) {
 }
 
 static void key_callback(int key, int scancode, int action, int mods, void* userData) {
-    Vec3 axis;
+    Vec3 axis = {0,1,0};
 
     switch (key) {
         case GLFW_KEY_ESCAPE:
@@ -76,6 +77,7 @@ int main() {
     struct GLObject cubeGl = {0};
     struct SolidColorGeometry cube = {0};
     struct SolidTextureGeometry texturedCube = {0};
+    struct Node scene, cube1, cube2;
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_callback;
@@ -89,15 +91,25 @@ int main() {
 
     solid_color_geometry(&cube, &cubeGl, 0.0, 0.0, 1.0);
     solid_texture_geometry(&texturedCube, &cubeGl, texture_load_from_file("textures/tux.png"));
-    texturedCube.geometry.model[3][1] = 3.0;
+
+    node_init(&scene);
+    node_init(&cube1);
+    node_init(&cube2);
+
+    cube1.geometry = &cube.geometry;
+    cube2.geometry = &texturedCube.geometry;
+    cube2.transform[3][1] = 3.0;
+    scene.transform[3][0] = 4.0;
+
+    node_add_child(&scene, &cube1);
+    node_add_child(&scene, &cube2);
 
     while (running) {
         viewer_process_events(viewer);
         usleep(10 * 1000);
 
         dt = viewer_next_frame(viewer);
-        geometry_render(&cube.geometry, &viewer->camera);
-        geometry_render(&texturedCube.geometry, &viewer->camera);
+        render_graph(&scene, &viewer->camera);
     }
 
     solid_color_shader_free();
