@@ -1,11 +1,15 @@
 #include "globject.h"
 
 void globject_new(const struct Mesh* mesh, struct GLObject* glo) {
-    unsigned int haveNormals = !!mesh->numNormals, haveTexCoords = !!mesh->numTexCoords;
+    unsigned int haveNormals = !!mesh->numNormals;
+    unsigned int haveTexCoords = !!mesh->numTexCoords;
+    unsigned int haveIndices = !!mesh->numIndices;
+
     glo->numVertices = mesh->numVertices;
+    glo->numIndices = mesh->numIndices;
 
     /* VBOs */
-    glo->numVBOs = 1 + haveNormals + haveTexCoords;
+    glo->numVBOs = 1 + haveNormals + haveTexCoords + haveIndices;
     glGenBuffers(glo->numVBOs, glo->vbo);
     /* - Vertices */
     glBindBuffer(GL_ARRAY_BUFFER, glo->vbo[0]);
@@ -19,6 +23,11 @@ void globject_new(const struct Mesh* mesh, struct GLObject* glo) {
     if (haveTexCoords) {
         glBindBuffer(GL_ARRAY_BUFFER, glo->vbo[1 + haveNormals]);
         glBufferData(GL_ARRAY_BUFFER, mesh->numTexCoords * 2 * sizeof(float), mesh->texCoords, GL_STATIC_DRAW);
+    }
+    /* - Indices */
+    if (haveIndices) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glo->vbo[1 + haveNormals + haveTexCoords]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->numIndices * sizeof(unsigned int), mesh->indices, GL_STATIC_DRAW);
     }
     /* done */
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -41,6 +50,10 @@ void globject_new(const struct Mesh* mesh, struct GLObject* glo) {
         glBindBuffer(GL_ARRAY_BUFFER, glo->vbo[1 + haveNormals]);
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    }
+    /* - Indices */
+    if (haveIndices) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glo->vbo[1 + haveNormals + haveTexCoords]);
     }
     /* done */
     glBindVertexArray(0);

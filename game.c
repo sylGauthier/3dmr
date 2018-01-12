@@ -8,22 +8,27 @@
 
 #include "viewer.h"
 #include "camera.h"
-#include "mesh.h"
 #include "globject.h"
 #include "texture.h"
-#include "geometries/solid_color.h"
-#include "geometries/solid_texture.h"
 #include "node.h"
+#include "geometry/solid_color.h"
+#include "geometry/solid_texture.h"
+#include "mesh/obj.h"
 
 struct Viewer* viewer;
 int running;
 
 static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
-    Vec3 axis = {0, 1, 0};
+    Mat3 rot, a, b;
+    Vec3 x = {0, 1, 0}, y = {1, 0, 0};
+
     if (buttonLeft) {
-        camera_rotate(&viewer->camera, axis, dx / viewer->width);
-        camera_get_right(&viewer->camera, axis);
-        camera_rotate(&viewer->camera, axis, dy / viewer->height);
+        mat4to3(a, data);
+        load_rot3(rot, x, 4.0 * dx / viewer->width);
+        mul3mm(b, rot, a);
+        load_rot3(rot, y, 4.0 * dy / viewer->height);
+        mul3mm(a, rot, b);
+        mat3to4(data, a);
     }
 }
 
@@ -86,7 +91,7 @@ int main() {
     viewer->close_callback = close_callback;
     running = 1;
 
-    mesh_load(&cubeMesh, "models/cube.obj", 0, 0, 1);
+    obj_mesh(&cubeMesh, "models/cube.obj", 0, 0, 1);
     globject_new(&cubeMesh, &cubeGl);
 
     solid_color_geometry(&cube, &cubeGl, 0.0, 0.0, 1.0);
@@ -113,10 +118,8 @@ int main() {
     }
 
     solid_color_shader_free();
-    solid_texture_shader_free();
-    glDeleteTextures(1, &texturedCube.texture);
-    globject_free(&cubeGl);
     mesh_free(&cubeMesh);
+    globject_free(&cubeGl);
     viewer_free(viewer);
 
     return 0;

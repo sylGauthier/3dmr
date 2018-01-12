@@ -1,13 +1,13 @@
 #include <GL/glew.h>
-#include "mesh.h"
+#include "mesh/mesh.h"
 
 #ifndef GLOBJECT_H
 #define GLOBJECT_H
 
 struct GLObject
 {
-    GLuint vbo[3], vao;
-    unsigned int numVertices, numVBOs;
+    GLuint vbo[4], vao;
+    unsigned int numVertices, numIndices, numVBOs;
 };
 
 void globject_new(const struct Mesh* mesh, struct GLObject* glo);

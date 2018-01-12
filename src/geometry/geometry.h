@@ -7,9 +7,11 @@
 #define GEOMETRY_H
 
 struct Geometry {
-    GLuint shader;
     struct GLObject glObject;
-    void (*render)(const struct Geometry*);
+    GLuint shader;
+    GLuint mode;
+    void (*prerender)(const struct Geometry*);
+    void (*postrender)(const struct Geometry*);
 };
 
 void geometry_render(const struct Geometry* geometry, const struct Camera* camera, Mat4 model);

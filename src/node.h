@@ -1,7 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "geometry.h"
+#include "geometry/geometry.h"
 #include "linear_algebra.h"
 #include "bounding_box.h"
 

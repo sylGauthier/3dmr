@@ -1,4 +1,4 @@
-#include "../geometry.h"
+#include "geometry.h"
 
 #ifndef SOLID_TEXTURE_H
 #define SOLID_TEXTURE_H
