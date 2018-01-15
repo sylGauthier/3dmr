@@ -48,27 +48,27 @@ static void key_callback(int key, int scancode, int action, int mods, void* user
             break;
         case GLFW_KEY_PAGE_UP:
         case GLFW_KEY_Q:
-	    camera_get_up(&viewer->camera, axis);
-	    scale3v(axis, 0.1);
-	    camera_move(&viewer->camera, axis);
+            camera_get_up(&viewer->camera, axis);
+            scale3v(axis, 0.1);
+            camera_move(&viewer->camera, axis);
             break;
         case GLFW_KEY_PAGE_DOWN:
         case GLFW_KEY_E:
-	    camera_get_up(&viewer->camera, axis);
-	    scale3v(axis, -0.1);
-	    camera_move(&viewer->camera, axis);
+            camera_get_up(&viewer->camera, axis);
+            scale3v(axis, -0.1);
+            camera_move(&viewer->camera, axis);
             break;
         case GLFW_KEY_LEFT:
         case GLFW_KEY_A:
-	    camera_get_right(&viewer->camera, axis);
-	    scale3v(axis, -0.1);
-	    camera_move(&viewer->camera, axis);
+            camera_get_right(&viewer->camera, axis);
+            scale3v(axis, -0.1);
+            camera_move(&viewer->camera, axis);
             break;
         case GLFW_KEY_RIGHT:
         case GLFW_KEY_D:
             camera_get_right(&viewer->camera, axis);
-	    scale3v(axis, 0.1);
-	    camera_move(&viewer->camera, axis);
+            scale3v(axis, 0.1);
+            camera_move(&viewer->camera, axis);
             break;
         case GLFW_KEY_DOWN:
         case GLFW_KEY_S:

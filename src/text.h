@@ -8,26 +8,26 @@
 #include FT_FREETYPE_H
 
 struct BitmapGlyph {
-	uint32_t char_code;
-	float texture[4];
-	float bitmap_width;
-	float bitmap_height;
-	float bitmap_top;
-	float bitmap_left;
-	float advance_x;
-	float advance_y;
+    uint32_t char_code;
+    float texture[4];
+    float bitmap_width;
+    float bitmap_height;
+    float bitmap_top;
+    float bitmap_left;
+    float advance_x;
+    float advance_y;
 };
 
 struct BitmapFont {
-	const char *path;
-	const char *name;
-	int size;
-	int nb_glyphs;
-	struct BitmapGlyph *glyphs;
-	int atlas_width;
-	int atlas_height;
-	GLuint texture_atlas;
-	FT_Face face;
+    const char *path;
+    const char *name;
+    int size;
+    int nb_glyphs;
+    struct BitmapGlyph *glyphs;
+    int atlas_width;
+    int atlas_height;
+    GLuint texture_atlas;
+    FT_Face face;
 };
 
 /* Create a simple monospace bitmap font, support only printable ascii */
