@@ -115,7 +115,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
     }
 
     viewer_free(&viewer->user);
-	return NULL;
+    return NULL;
 }
 
 void viewer_free(struct Viewer* viewer) {

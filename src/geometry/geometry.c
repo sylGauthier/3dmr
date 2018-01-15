@@ -8,7 +8,7 @@ void geometry_render(const struct Geometry* geometry, const struct Camera* camer
     glUniformMatrix4fv(glGetUniformLocation(geometry->shader, "model"), 1, GL_FALSE, (float*)model);
     glPolygonMode(GL_FRONT_AND_BACK, geometry->mode);
     if (geometry->prerender) {
-        geometry->prerender(geometry);
+        geometry->prerender(geometry, camera);
     }
     if (geometry->glObject.numIndices) {
         glDrawElements(GL_TRIANGLES, geometry->glObject.numIndices, GL_UNSIGNED_INT, 0);
@@ -16,7 +16,7 @@ void geometry_render(const struct Geometry* geometry, const struct Camera* camer
         glDrawArrays(GL_TRIANGLES, 0, geometry->glObject.numVertices);
     }
     if (geometry->postrender) {
-        geometry->postrender(geometry);
+        geometry->postrender(geometry, camera);
     }
     glBindVertexArray(0);
     glUseProgram(0);

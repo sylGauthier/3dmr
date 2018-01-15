@@ -1,4 +1,4 @@
-DEPS := glfw3 glew libpng
+DEPS := glfw3 glew libpng freetype2
 APP := game
 LIB := libgame.a
 

@@ -10,8 +10,8 @@ struct Geometry {
     struct GLObject glObject;
     GLuint shader;
     GLuint mode;
-    void (*prerender)(const struct Geometry*);
-    void (*postrender)(const struct Geometry*);
+    void (*prerender)(const struct Geometry*, const struct Camera*);
+    void (*postrender)(const struct Geometry*, const struct Camera*);
 };
 
 void geometry_render(const struct Geometry* geometry, const struct Camera* camera, Mat4 model);
