@@ -46,6 +46,12 @@ static int png_read(const char* filename, int* width, int* height, int* alpha, v
                         png_read_update_info(png_ptr, info_ptr);
 
                         rowStride = w * ((*alpha) ? 4 : 3);
+			if ((rowStride % 4) != 0) {
+			    /* OpenGL requires that textures size is always
+			     * multiple of 4 bytes. (see GL_UNPACK_ALIGNMENT)
+                             */
+			    rowStride += 4 - (rowStride % 4);
+			}
                         if ((*output = (png_byte*) malloc(h * rowStride))) {
                             for (nPass = 0; nPass < nbPasses; nPass++) {
                                 for (y = 0; y < h; y++) {
@@ -86,8 +92,8 @@ GLuint texture_load_from_buffer(const unsigned char* buffer, int width, int heig
     if (texture) {
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D, 0, alpha ? GL_RGBA : GL_RGB, width, height, 0, alpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, buffer);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     return texture;
