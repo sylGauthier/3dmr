@@ -18,7 +18,7 @@
 struct Viewer* viewer;
 int running;
 
-static void cursor_callback(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
+static void cursor_rotate_around_origin(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
     Mat3 rot, a, b;
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
 
@@ -85,13 +85,13 @@ int main() {
     struct Node scene, cube1, cube2;
 
     viewer = viewer_new(1024, 768, "Game");
-    viewer->cursor_callback = cursor_callback;
+    viewer->cursor_callback = cursor_rotate_around_origin;
     viewer->wheel_callback = wheel_callback;
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
+    obj_mesh(&cubeMesh, "models/cube.obj", 0, 0, 1);
     running = 1;
 
-    obj_mesh(&cubeMesh, "models/cube.obj", 0, 0, 1);
     globject_new(&cubeMesh, &cubeGl);
 
     solid_color_geometry(&cube, &cubeGl, 0.0, 0.0, 1.0);
@@ -109,6 +109,8 @@ int main() {
     node_add_child(&scene, &cube1);
     node_add_child(&scene, &cube2);
 
+    viewer->callbackData = cube1.transform;
+
     while (running) {
         viewer_process_events(viewer);
         usleep(10 * 1000);
@@ -121,6 +123,7 @@ int main() {
     mesh_free(&cubeMesh);
     globject_free(&cubeGl);
     viewer_free(viewer);
+    graph_free(&scene);
 
     return 0;
 }

@@ -55,3 +55,12 @@ int render_graph(const struct Node* root, struct Camera* cam) {
 
     return rec_render_node(root, cam, model);
 }
+
+void graph_free(struct Node* root) {
+    int i;
+
+    for (i = 0; i < root->nbChildren; i++) {
+        graph_free(root->children[i]);
+    }
+    free(root->children);
+}

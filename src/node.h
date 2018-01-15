@@ -20,5 +20,6 @@ struct Node {
 int node_init(struct Node* node);
 int node_add_child(struct Node* node, struct Node* children);
 int render_graph(const struct Node* root, struct Camera* cam);
+void graph_free(struct Node* root);
 
 #endif
