@@ -3,7 +3,7 @@
 
 static GLuint shader = 0;
 
-static void load_solid_color_uniforms(const struct Geometry* geometry) {
+static void load_solid_color_uniforms(const struct Geometry* geometry, const struct Camera* camera) {
     glUniform3fv(glGetUniformLocation(geometry->shader, "solidColor"), 1, (float*)((const struct SolidColorGeometry*)geometry)->color);
 }
 

@@ -3,11 +3,11 @@
 
 static GLuint shader = 0;
 
-static void solid_texture_prerender(const struct Geometry* geometry) {
+static void solid_texture_prerender(const struct Geometry* geometry, const struct Camera* camera) {
     glBindTexture(GL_TEXTURE_2D, ((const struct SolidTextureGeometry*)geometry)->texture);
 }
 
-static void solid_texture_postrender(const struct Geometry* geometry) {
+static void solid_texture_postrender(const struct Geometry* geometry, const struct Camera* camera) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
