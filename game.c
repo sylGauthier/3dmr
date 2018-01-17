@@ -10,15 +10,18 @@
 #include "camera.h"
 #include "globject.h"
 #include "texture.h"
-#include "node.h"
+#include "scene.h"
 #include "geometry/solid_color.h"
 #include "geometry/solid_texture.h"
+#include "geometry/phong_color.h"
+#include "geometry/phong_texture.h"
 #include "mesh/obj.h"
+#include "mesh/icosphere.h"
 
 struct Viewer* viewer;
 int running;
 
-static void cursor_rotate_around_origin(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
+static void cursor_rotate_object(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
     Mat3 rot, a, b;
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
 
@@ -29,6 +32,16 @@ static void cursor_rotate_around_origin(double xpos, double ypos, double dx, dou
         load_rot3(rot, y, 4.0 * dy / viewer->height);
         mul3mm(a, rot, b);
         mat3to4(data, a);
+    }
+}
+
+static void cursor_rotate_camera(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
+    Vec3 axis = {0, 1, 0};
+
+    if (buttonLeft) {
+        camera_rotate(&viewer->camera, axis, dx / viewer->width);
+        camera_get_right(&viewer->camera, axis);
+        camera_rotate(&viewer->camera, axis, dy / viewer->height);
     }
 }
 
@@ -119,39 +132,67 @@ void hsv2rgb(double h, double s, double v, Vec3 dest) {
 
 int main() {
     double t = 0.0, dt;
-    struct Mesh cubeMesh = {0};
-    struct GLObject cubeGl = {0};
-    struct Geometry *cube, *texturedCube;
-    struct Node scene, cube1, cube2;
-    struct SolidColorMaterial material;
+    struct Mesh cubeMesh = {0}, icosphereMesh = {0};
+    struct GLObject cubeGl = {0}, icosphereGl = {0};
+    struct Geometry *sphere, *texturedCube;
+    struct Scene scene;
+    struct Node cube, lamp;
+    struct SolidColorMaterial sphereMat;
+    struct PhongTextureMaterial cubeMat = {
+        0,
+        {
+            {1.0, 1.0, 1.0},
+            {1.0, 1.0, 1.0},
+            {1.0, 1.0, 1.0},
+            1.0
+        }
+    };
 
     viewer = viewer_new(1024, 768, "Game");
-    viewer->cursor_callback = cursor_rotate_around_origin;
+    viewer->cursor_callback = cursor_rotate_object;
     viewer->wheel_callback = wheel_callback;
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
-    obj_mesh(&cubeMesh, "models/cube.obj", 0, 0, 1);
     running = 1;
 
+    obj_mesh(&cubeMesh, "models/cube.obj", 0, 1, 1);
     globject_new(&cubeMesh, &cubeGl);
+    mesh_free(&cubeMesh);
+    icosphere(&icosphereMesh, 1.0, 2);
+    globject_new(&icosphereMesh, &icosphereGl);
+    mesh_free(&icosphereMesh);
 
     /* cube = solid_color_geometry(&cubeGl, 0.0, 0.0, 1.0); */
-    cube = solid_color_geometry_shared(&cubeGl, &material);
-    texturedCube = solid_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"));
+    sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
+    texturedCube = phong_texture_geometry_shared(&cubeGl, &cubeMat);
+    cubeMat.texture = texture_load_from_file("textures/tux.png");
 
-    node_init(&scene);
-    node_init(&cube1);
-    node_init(&cube2);
+    scene_init(&scene);
+    node_init(&lamp);
+    node_init(&cube);
 
-    cube1.geometry = cube;
-    cube2.geometry = texturedCube;
-    cube2.transform[3][1] = 3.0;
-    scene.transform[3][0] = 4.0;
+    scene.lights.directional[0].direction[0] = 0;
+    scene.lights.directional[0].direction[1] = 1;
+    scene.lights.directional[0].direction[2] = 0;
+    scene.lights.directional[0].ambient[0] = 0.1;
+    scene.lights.directional[0].ambient[1] = 0.1;
+    scene.lights.directional[0].ambient[2] = 0.1;
+    scene.lights.directional[0].diffuse[0] = 0.5;
+    scene.lights.directional[0].diffuse[1] = 0.5;
+    scene.lights.directional[0].diffuse[2] = 0.5;
+    scene.lights.directional[0].specular[0] = 0.2;
+    scene.lights.directional[0].specular[1] = 0.2;
+    scene.lights.directional[0].specular[2] = 0.2;
+    scene.lights.numDirectional = 1;
 
-    node_add_child(&scene, &cube1);
-    node_add_child(&scene, &cube2);
+    lamp.geometry = sphere;
+    cube.geometry = texturedCube;
+    cube.transform[3][1] = 3.0;
 
-    viewer->callbackData = cube1.transform;
+    scene_add(&scene, &lamp);
+    scene_add(&scene, &cube);
+
+    viewer->callbackData = cube.transform;
 
     while (running) {
         viewer_process_events(viewer);
@@ -159,16 +200,20 @@ int main() {
 
         dt = viewer_next_frame(viewer);
         t += 50.0 * dt;
-        hsv2rgb(fmod(t, 360.0), 1.0, 1.0, material.color);
-        render_graph(&scene, &viewer->camera);
+        hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat.color);
+        mul3sv(scene.lights.directional[0].ambient, 0.1, sphereMat.color);
+        mul3sv(scene.lights.directional[0].diffuse, 0.5, sphereMat.color);
+        scene_render(&scene, &viewer->camera);
     }
 
     solid_color_shader_free();
-    solid_texture_shader_free();
-    mesh_free(&cubeMesh);
+    phong_texture_shader_free();
+    free(sphere);
+    free(texturedCube);
     globject_free(&cubeGl);
+    globject_free(&icosphereGl);
     viewer_free(viewer);
-    graph_free(&scene);
+    scene_free(&scene);
 
     return 0;
 }

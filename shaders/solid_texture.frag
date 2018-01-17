@@ -1,5 +1,4 @@
-#version 130 
-#
+#version 130
 
 in vec2 coordTexture;
 out vec4 out_Color;

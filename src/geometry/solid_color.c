@@ -4,8 +4,12 @@
 
 static GLuint shader = 0;
 
-static void load_solid_color_uniforms(const struct Geometry* geometry, const struct Camera* camera) {
-    glUniform3fv(glGetUniformLocation(geometry->shader, "solidColor"), 1, (float*)((const struct SolidColorMaterial*)geometry->material)->color);
+void solid_color_load_uniform(const struct Geometry* geometry, const float* color) {
+    glUniform3fv(glGetUniformLocation(geometry->shader, "solidColor"), 1, color);
+}
+
+static void load_solid_color_uniforms(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
+    solid_color_load_uniform(geometry, ((const struct SolidColorMaterial*)geometry->material)->color);
 }
 
 static void solid_color_geometry_init(struct Geometry* dest, const struct GLObject* glObject) {

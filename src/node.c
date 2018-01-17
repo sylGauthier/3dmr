@@ -32,7 +32,7 @@ int node_add_child(struct Node* node, struct Node* child) {
     return 1;
 }
 
-static int rec_render_node(const struct Node* node, struct Camera* cam, Mat4 model) {
+static int rec_render_node(const struct Node* node, struct Camera* cam, const struct Lights* lights, Mat4 model) {
     Mat4 recModel;
     int i;
     int res = 1;
@@ -40,21 +40,21 @@ static int rec_render_node(const struct Node* node, struct Camera* cam, Mat4 mod
     mul4mm(recModel, model, (void*)node->transform);
 
     if (node->geometry)
-        geometry_render(node->geometry, cam, recModel);
+        geometry_render(node->geometry, cam, lights, recModel);
 
     for (i = 0; i < node->nbChildren && res; i++) {
-        res = res && rec_render_node(node->children[i], cam, recModel);
+        res = res && rec_render_node(node->children[i], cam, lights, recModel);
     }
 
     return res;
 }
 
-int render_graph(const struct Node* root, struct Camera* cam) {
+int render_graph(const struct Node* root, struct Camera* cam, const struct Lights* lights) {
     Mat4 model;
 
     load_id4(model);
 
-    return rec_render_node(root, cam, model);
+    return rec_render_node(root, cam, lights, model);
 }
 
 void graph_free(struct Node* root) {

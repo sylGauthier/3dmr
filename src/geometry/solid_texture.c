@@ -1,14 +1,14 @@
-#include "solid_texture.h"
 #include <stdlib.h>
+#include "solid_texture.h"
 #include "shader.h"
 
 static GLuint shader = 0;
 
-static void solid_texture_prerender(const struct Geometry* geometry, const struct Camera* camera) {
+static void solid_texture_prerender(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
     glBindTexture(GL_TEXTURE_2D, ((const struct SolidTextureMaterial*)geometry->material)->texture);
 }
 
-static void solid_texture_postrender(const struct Geometry* geometry, const struct Camera* camera) {
+static void solid_texture_postrender(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
