@@ -14,6 +14,7 @@ int node_init(struct Node* node) {
     node->father = NULL;
 
     load_id4(node->transform);
+    return 1;
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
@@ -36,7 +37,7 @@ static int rec_render_node(const struct Node* node, struct Camera* cam, Mat4 mod
     int i;
     int res = 1;
 
-    mul4mm(recModel, model, node->transform);
+    mul4mm(recModel, model, (void*)node->transform);
 
     if (node->geometry)
         geometry_render(node->geometry, cam, recModel);

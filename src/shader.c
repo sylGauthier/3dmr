@@ -55,7 +55,7 @@ static GLuint compile(const char* path, GLenum type) {
         if ((source = fopen(path, "rb")) && !fseek(source, 0, SEEK_END)) {
             if ((code = malloc(size = ftell(source)))) {
                 if (!fseek(source, 0, SEEK_SET) && fread(code, 1, size, source) == size && !ferror(source)) {
-                    glShaderSource(shader, 1, (const char *const *)&code, &size);
+                    glShaderSource(shader, 1, (const char**)&code, &size);
                     glCompileShader(shader);
                     if (check_compilation(shader, path)) {
                         ret = shader;
