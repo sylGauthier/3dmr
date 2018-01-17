@@ -12,6 +12,7 @@ struct Geometry {
     GLuint mode;
     void (*prerender)(const struct Geometry*, const struct Camera*);
     void (*postrender)(const struct Geometry*, const struct Camera*);
+    void* material;
 };
 
 void geometry_render(const struct Geometry* geometry, const struct Camera* camera, Mat4 model);
