@@ -12,8 +12,7 @@ uniform mat4 view;
 uniform mat4 model;
 uniform mat3 inverseNormal;
 
-void main()
-{
+void main() {
     gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
     coordTexture = in_TexCoord;
 

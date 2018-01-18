@@ -12,8 +12,7 @@ uniform mat4 model;
 uniform mat3 inverseNormal;
 uniform vec3 solidColor;
 
-void main()
-{
+void main() {
     gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
     color = vec4(solidColor, 1.0);
 

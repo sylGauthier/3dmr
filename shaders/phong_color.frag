@@ -9,7 +9,6 @@ out vec4 out_Color;
 
 uniform vec3 cameraPosition;
 
-void main()
-{
+void main() {
     out_Color = color * vec4(phong_light_factor(cameraPosition, surfelPosition, surfelNormal), 1.0);
 }
