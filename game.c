@@ -16,6 +16,7 @@
 #include "geometry/phong_color.h"
 #include "geometry/phong_texture.h"
 #include "mesh/obj.h"
+#include "mesh/box.h"
 #include "mesh/icosphere.h"
 
 struct Viewer* viewer;
@@ -127,11 +128,11 @@ void hsv2rgb(double h, double s, double v, Vec3 dest) {
 
 int main() {
     double t = 0.0, dt;
-    struct Mesh cubeMesh = {0}, icosphereMesh = {0};
-    struct GLObject cubeGl = {0}, icosphereGl = {0};
-    struct Geometry *sphere, *texturedCube, *coloredCube;
+    struct Mesh cubeMesh = {0}, boxMesh = {0}, icosphereMesh = {0};
+    struct GLObject cubeGl = {0}, boxGl = {0}, icosphereGl = {0};
+    struct Geometry *sphere, *texturedCube, *coloredBox;
     struct Scene scene;
-    struct Node cube, lamp, cube2;
+    struct Node cube, lamp, box;
     struct SolidColorMaterial sphereMat;
     struct PhongMaterial cubeMat = {
         {1.0, 1.0, 1.0},
@@ -139,7 +140,7 @@ int main() {
         {1.0, 1.0, 1.0},
         1.0
     };
-    Vec3 t1 = {0, 3, 0}, t2 = {2.5, 0, 0};
+    Vec3 t1 = {0, 3, 0}, t2 = {3, 0, 0};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_rotate_object;
@@ -148,21 +149,24 @@ int main() {
     viewer->close_callback = close_callback;
     running = 1;
 
-    obj_mesh(&cubeMesh, "models/cube.obj", 0, 1, 1);
+    make_obj(&cubeMesh, "models/cube.obj", 0, 1, 1);
     globject_new(&cubeMesh, &cubeGl);
     mesh_free(&cubeMesh);
-    icosphere(&icosphereMesh, 0.5, 2);
+    make_box(&boxMesh, 4.0, 1.0, 1.0);
+    globject_new(&boxMesh, &boxGl);
+    mesh_free(&boxMesh);
+    make_icosphere(&icosphereMesh, 0.5, 2);
     globject_new(&icosphereMesh, &icosphereGl);
     mesh_free(&icosphereMesh);
 
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
-    coloredCube = phong_color_geometry(&cubeGl, 1.0, 1.0, 1.0, &cubeMat);
+    coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
     texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"), &cubeMat);
 
     scene_init(&scene);
     node_init(&lamp);
     node_init(&cube);
-    node_init(&cube2);
+    node_init(&box);
 
     /*
     scene.lights.directional[0].direction[0] = 0;
@@ -196,13 +200,13 @@ int main() {
 
     lamp.geometry = sphere;
     cube.geometry = texturedCube;
-    cube2.geometry = coloredCube;
+    box.geometry = coloredBox;
     node_translate(&cube, t1);
-    node_translate(&cube2, t2);
+    node_translate(&box, t2);
 
     scene_add(&scene, &lamp);
     scene_add(&scene, &cube);
-    node_add_child(&cube, &cube2);
+    node_add_child(&cube, &box);
 
     viewer->callbackData = &cube;
 
@@ -223,8 +227,9 @@ int main() {
     phong_texture_shader_free();
     free(sphere);
     free(texturedCube);
-    free(coloredCube);
+    free(coloredBox);
     globject_free(&cubeGl);
+    globject_free(&boxGl);
     globject_free(&icosphereGl);
     viewer_free(viewer);
     scene_free(&scene);

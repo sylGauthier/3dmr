@@ -1,8 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-struct Mesh
-{
+struct Mesh {
     float* vertices;
     float* normals;
     float* texCoords;

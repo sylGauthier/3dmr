@@ -42,7 +42,7 @@ static unsigned int middle_point(unsigned int v1, unsigned int v2, float radius,
     return *mapCur;
 }
 
-int icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
+int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
     float A = radius * 0.52573111211913f;
     float B = radius * 0.85065080835204f;
     float factor;

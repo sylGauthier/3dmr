@@ -41,7 +41,7 @@ int models_init()
         key = &model_keys[i];
         dbg_printf("models init: [%d/%d] %s\n", i, NB_MODELS, key->path);
 
-        obj_mesh(&meshs[i], key->path, key->withIndices,
+        make_obj(&meshs[i], key->path, key->withIndices,
               key->withNormals, key->withTexCoords);
         globject_new(&meshs[i], &models[i]);
     }

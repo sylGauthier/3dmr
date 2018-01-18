@@ -21,6 +21,6 @@ void obj_free(struct OBJ* obj);
 
 int obj_triangulate(struct OBJ* obj);
 
-int obj_mesh(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords);
+int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords);
 
 #endif

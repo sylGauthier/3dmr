@@ -137,7 +137,7 @@ int obj_triangulate(struct OBJ* obj) {
     return 0;
 }
 
-int obj_mesh(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords) {
+int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords) {
     FILE* objFile = NULL;
     struct OBJ obj;
     unsigned int i, j, k, l;
