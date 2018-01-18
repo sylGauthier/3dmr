@@ -77,7 +77,8 @@ void load_id4(Mat4 dest);
 void print4v(Vec4 v);
 void print4m(Mat4 m);
 
-void load_rot3(Mat3 dest, RESTRICT_VEC3(axis), float angle);
+void load_rot3(RESTRICT_MAT3(dest), RESTRICT_VEC3(axis), float angle);
+void load_rot4(RESTRICT_MAT4(dest), RESTRICT_VEC3(axis), float angle);
 void compute_rotation(Vec3 u, Vec3 v, Vec3 axis, float* angle);
 
 #endif

@@ -79,6 +79,21 @@ void quaternion_to_mat3(Mat3 dest, Quaternion q) {
     }
 }
 
+void quaternion_to_mat4(Mat4 dest, Quaternion q) {
+    float mag = norm3(&q[1]);
+    float angle = atan2(mag, q[0]);
+    if (angle > M_PI / 2.0) {
+        angle -= M_PI;
+        mag = -mag;
+    }
+    if (mag) {
+        load_rot4(dest, &q[1], 2.0 * angle);
+    } else {
+        Vec3 axis = {1, 0, 0};
+        load_rot4(dest, axis, 2.0 * angle);
+    }
+}
+
 void quaternion_from_mat3(Quaternion dest, Mat3 src) {
     Vec3 axis;
     axis[0] = src[1][2] - src[2][1];

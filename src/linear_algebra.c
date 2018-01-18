@@ -223,19 +223,19 @@ void mul4sm(RESTRICT_MAT4(dest), float s, RESTRICT_MAT4(m)) {
     dest[0][0] = m[0][0] * s;
     dest[0][1] = m[0][1] * s;
     dest[0][2] = m[0][2] * s;
-    /*dest[0][3] = m[0][3] * s;*/
+    dest[0][3] = m[0][3] * s;
     dest[1][0] = m[1][0] * s;
     dest[1][1] = m[1][1] * s;
     dest[1][2] = m[1][2] * s;
-    /*dest[1][3] = m[1][3] * s;*/
+    dest[1][3] = m[1][3] * s;
     dest[2][0] = m[2][0] * s;
     dest[2][1] = m[2][1] * s;
     dest[2][2] = m[2][2] * s;
-    /*dest[2][3] = m[2][3] * s;*/
-    /*dest[3][0] = m[3][0] * s;
+    dest[2][3] = m[2][3] * s;
+    dest[3][0] = m[3][0] * s;
     dest[3][1] = m[3][1] * s;
     dest[3][2] = m[3][2] * s;
-    dest[3][3] = m[3][3] * s;*/
+    dest[3][3] = m[3][3] * s;
 }
 
 void scale4v(Vec4 dest, float s) {
@@ -390,6 +390,47 @@ void load_rot3(RESTRICT_MAT3(dest), RESTRICT_VEC3(axis), float angle) {
     dest[2][0] = a[2] * xv + ys;
     dest[2][1] = a[2] * yv - xs;
     dest[2][2] = a[2] * zv + c;
+}
+
+void load_rot4(RESTRICT_MAT4(dest), RESTRICT_VEC3(axis), float angle) {
+    Vec3 a;
+    float s = sin(angle), c = cos(angle);
+    float xv, xs, yv, ys, zv, zs, ver = 1 - c;
+
+    memcpy(a, axis, sizeof(Vec3));
+    normalize3(a);
+
+    if (angle == 0) {
+        load_id4(dest);
+        return;
+    }
+
+    xv = ver * a[0];
+    xs = a[0] * s;
+    yv = ver * a[1];
+    ys = a[1] * s;
+    zv = ver * a[2];
+    zs = a[2] * s;
+
+    dest[0][0] = a[0] * xv + c;
+    dest[0][1] = a[0] * yv + zs;
+    dest[0][2] = a[0] * zv - ys;
+    dest[0][3] = 0.0;
+
+    dest[1][0] = a[1] * xv - zs;
+    dest[1][1] = a[1] * yv + c;
+    dest[1][2] = a[1] * zv + xs;
+    dest[1][3] = 0.0;
+
+    dest[2][0] = a[2] * xv + ys;
+    dest[2][1] = a[2] * yv - xs;
+    dest[2][2] = a[2] * zv + c;
+    dest[2][3] = 0.0;
+
+    dest[3][0] = 0.0;
+    dest[3][1] = 0.0;
+    dest[3][2] = 0.0;
+    dest[3][3] = 1.0;
 }
 
 void compute_rotation(Vec3 u, Vec3 v, Vec3 axis, float* angle) {

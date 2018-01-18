@@ -16,6 +16,6 @@ struct Geometry {
     void* material;
 };
 
-void geometry_render(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights, Mat4 model);
+void geometry_render(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights, Mat4 model, Mat3 inverseNormal);
 
 #endif

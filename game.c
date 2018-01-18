@@ -22,16 +22,11 @@ struct Viewer* viewer;
 int running;
 
 static void cursor_rotate_object(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
-    Mat3 rot, a, b;
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
 
     if (buttonLeft) {
-        mat4to3(a, data);
-        load_rot3(rot, x, 4.0 * dx / viewer->width);
-        mul3mm(b, rot, a);
-        load_rot3(rot, y, 4.0 * dy / viewer->height);
-        mul3mm(a, rot, b);
-        mat3to4(data, a);
+        node_rotate(data, x, 4.0 * dx / viewer->width);
+        node_rotate(data, y, 4.0 * dy / viewer->height);
     }
 }
 
@@ -54,7 +49,7 @@ static void wheel_callback(double xoffset, double yoffset, void* userData) {
 }
 
 static void key_callback(int key, int scancode, int action, int mods, void* userData) {
-    Vec3 axis = {0,1,0};
+    Vec3 axis = {0, 1, 0};
 
     switch (key) {
         case GLFW_KEY_ESCAPE:
@@ -134,19 +129,17 @@ int main() {
     double t = 0.0, dt;
     struct Mesh cubeMesh = {0}, icosphereMesh = {0};
     struct GLObject cubeGl = {0}, icosphereGl = {0};
-    struct Geometry *sphere, *texturedCube;
+    struct Geometry *sphere, *texturedCube, *coloredCube;
     struct Scene scene;
-    struct Node cube, lamp;
+    struct Node cube, lamp, cube2;
     struct SolidColorMaterial sphereMat;
-    struct PhongTextureMaterial cubeMat = {
-        0,
-        {
-            {1.0, 1.0, 1.0},
-            {1.0, 1.0, 1.0},
-            {1.0, 1.0, 1.0},
-            1.0
-        }
+    struct PhongMaterial cubeMat = {
+        {1.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0},
+        1.0
     };
+    Vec3 t1 = {0, 3, 0}, t2 = {2.5, 0, 0};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_rotate_object;
@@ -158,19 +151,20 @@ int main() {
     obj_mesh(&cubeMesh, "models/cube.obj", 0, 1, 1);
     globject_new(&cubeMesh, &cubeGl);
     mesh_free(&cubeMesh);
-    icosphere(&icosphereMesh, 1.0, 2);
+    icosphere(&icosphereMesh, 0.5, 2);
     globject_new(&icosphereMesh, &icosphereGl);
     mesh_free(&icosphereMesh);
 
-    /* cube = solid_color_geometry(&cubeGl, 0.0, 0.0, 1.0); */
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
-    texturedCube = phong_texture_geometry_shared(&cubeGl, &cubeMat);
-    cubeMat.texture = texture_load_from_file("textures/tux.png");
+    coloredCube = phong_color_geometry(&cubeGl, 1.0, 1.0, 1.0, &cubeMat);
+    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"), &cubeMat);
 
     scene_init(&scene);
     node_init(&lamp);
     node_init(&cube);
+    node_init(&cube2);
 
+    /*
     scene.lights.directional[0].direction[0] = 0;
     scene.lights.directional[0].direction[1] = 1;
     scene.lights.directional[0].direction[2] = 0;
@@ -184,15 +178,33 @@ int main() {
     scene.lights.directional[0].specular[1] = 0.2;
     scene.lights.directional[0].specular[2] = 0.2;
     scene.lights.numDirectional = 1;
+    */
+    scene.lights.local[0].position[0] = 0;
+    scene.lights.local[0].position[1] = 0;
+    scene.lights.local[0].position[2] = 0;
+    scene.lights.local[0].intensity = 2;
+    scene.lights.local[0].ambient[0] = 0.1;
+    scene.lights.local[0].ambient[1] = 0.1;
+    scene.lights.local[0].ambient[2] = 0.1;
+    scene.lights.local[0].diffuse[0] = 0.5;
+    scene.lights.local[0].diffuse[1] = 0.5;
+    scene.lights.local[0].diffuse[2] = 0.5;
+    scene.lights.local[0].specular[0] = 0.2;
+    scene.lights.local[0].specular[1] = 0.2;
+    scene.lights.local[0].specular[2] = 0.2;
+    scene.lights.numLocal = 1;
 
     lamp.geometry = sphere;
     cube.geometry = texturedCube;
-    cube.transform[3][1] = 3.0;
+    cube2.geometry = coloredCube;
+    node_translate(&cube, t1);
+    node_translate(&cube2, t2);
 
     scene_add(&scene, &lamp);
     scene_add(&scene, &cube);
+    node_add_child(&cube, &cube2);
 
-    viewer->callbackData = cube.transform;
+    viewer->callbackData = &cube;
 
     while (running) {
         viewer_process_events(viewer);
@@ -201,15 +213,17 @@ int main() {
         dt = viewer_next_frame(viewer);
         t += 50.0 * dt;
         hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat.color);
-        mul3sv(scene.lights.directional[0].ambient, 0.1, sphereMat.color);
-        mul3sv(scene.lights.directional[0].diffuse, 0.5, sphereMat.color);
+        mul3sv(scene.lights.local[0].ambient, 0.1, sphereMat.color);
+        mul3sv(scene.lights.local[0].diffuse, 1.0, sphereMat.color);
         scene_render(&scene, &viewer->camera);
     }
 
     solid_color_shader_free();
+    phong_color_shader_free();
     phong_texture_shader_free();
     free(sphere);
     free(texturedCube);
+    free(coloredCube);
     globject_free(&cubeGl);
     globject_free(&icosphereGl);
     viewer_free(viewer);

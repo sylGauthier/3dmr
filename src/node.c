@@ -1,11 +1,12 @@
-#include <float.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <float.h>
 
 #include "node.h"
 
 int node_init(struct Node* node) {
-    struct ABoundingBox centerFull = {{0,0,0},FLT_MAX,FLT_MAX,FLT_MAX};
+    struct ABoundingBox centerFull = {{0, 0, 0}, FLT_MAX, FLT_MAX, FLT_MAX};
     node->geometry = NULL;
     node->boundingBox = centerFull;
     
@@ -13,48 +14,67 @@ int node_init(struct Node* node) {
     node->nbChildren = 0;
     node->father = NULL;
 
-    load_id4(node->transform);
+    node->position[0] = 0;
+    node->position[1] = 0;
+    node->position[2] = 0;
+    quaternion_load_id(node->orientation);
+    node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
     return 1;
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
     struct Node** tmp;
 
-    if (!(tmp = realloc(node->children, ++(node->nbChildren)*sizeof(struct Node*)))) {
+    if (!(tmp = realloc(node->children, ++(node->nbChildren) * sizeof(struct Node*)))) {
         fprintf(stderr, "Error reallocating memory for node children\n");
         node->nbChildren--;
         return 0;
     }
 
     node->children = tmp;
-    node->children[node->nbChildren-1] = child;
+    node->children[node->nbChildren - 1] = child;
     child->father = node;
+    node->changedFlags |= PARENT_MODEL_CHANGED;
     return 1;
 }
 
-static int rec_render_node(const struct Node* node, struct Camera* cam, const struct Lights* lights, Mat4 model) {
-    Mat4 recModel;
+int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
     int i;
     int res = 1;
+    enum ChangedFlags modelChanged = NOTHING_CHANGED;
 
-    mul4mm(recModel, model, (void*)node->transform);
-
-    if (node->geometry)
-        geometry_render(node->geometry, cam, lights, recModel);
-
-    for (i = 0; i < node->nbChildren && res; i++) {
-        res = res && rec_render_node(node->children[i], cam, lights, recModel);
+    if (node->changedFlags & ORIENTATION_CHANGED) {
+        quaternion_to_mat4(node->transform, node->orientation);
+    }
+    if (node->changedFlags & (POSITION_CHANGED | ORIENTATION_CHANGED)) {
+        memcpy(node->transform[3], node->position, sizeof(Vec3));
+    }
+    if (node->changedFlags) {
+        if (node->father) {
+            mul4mm(node->model, node->father->model, node->transform);
+        } else {
+            memcpy(node->model, node->transform, sizeof(Mat4));
+        }
+        modelChanged = PARENT_MODEL_CHANGED;
+    }
+    if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
+        Mat3 tmp;
+        mat4to3(tmp, node->model);
+        invert3m(node->inverseNormal, tmp);
+        transpose3m(node->inverseNormal);
     }
 
+    if (node->geometry) {
+        geometry_render(node->geometry, cam, lights, node->model, node->inverseNormal);
+    }
+
+    for (i = 0; i < node->nbChildren && res; i++) {
+        node->children[i]->changedFlags |= modelChanged;
+        res = res && render_graph(node->children[i], cam, lights);
+    }
+
+    node->changedFlags = NOTHING_CHANGED;
     return res;
-}
-
-int render_graph(const struct Node* root, struct Camera* cam, const struct Lights* lights) {
-    Mat4 model;
-
-    load_id4(model);
-
-    return rec_render_node(root, cam, lights, model);
 }
 
 void graph_free(struct Node* root) {
@@ -64,4 +84,22 @@ void graph_free(struct Node* root) {
         graph_free(root->children[i]);
     }
     free(root->children);
+}
+
+void node_translate(struct Node* node, Vec3 t) {
+    incr3v(node->position, t);
+    node->changedFlags |= POSITION_CHANGED;
+}
+
+void node_rotate(struct Node* node, Vec3 axis, float angle) {
+    Quaternion q;
+    quaternion_set_axis_angle(q, axis, angle);
+    node_rotate_q(node, q);
+}
+
+void node_rotate_q(struct Node* node, Quaternion q) {
+    Quaternion old;
+    memcpy(old, node->orientation, sizeof(Quaternion));
+    quaternion_mul(node->orientation, q, old);
+    node->changedFlags |= ORIENTATION_CHANGED;
 }
