@@ -16,7 +16,7 @@ vec3 phong_compute_directional_light(DirectionalLight light, vec3 surfelToCamera
 
     vec3 ambient = light.ambient * material.ambient;
     vec3 diffuse = diffuseFactor * light.diffuse * material.diffuse;
-    vec3 specular = 0*specularFactor * light.specular * material.specular;
+    vec3 specular = specularFactor * light.specular * material.specular;
 
     return (ambient + diffuse + specular);
 }
@@ -30,14 +30,15 @@ vec3 phong_compute_local_light(LocalLight light, vec3 surfelToCamera, vec3 surfe
 
     // Specular shading
     vec3 reflectDirection = reflect(-surfelToLight, surfelNormal);
-    float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess);
+    float specularFactor = (dot(surfelNormal, surfelToLight) > 0) ? pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess) : 0;
 
-    float attenuation = light.intensity / (distance);
+    float t = light.decay * distance;
+    float attenuation = light.intensity / (1 + t + t * t / 2 + t * t * t / 6);
 
     // Combine results
-    vec3 ambient  = attenuation *                   light.ambient  * material.ambient ;
+    vec3 ambient  = attenuation *                  light.ambient  * material.ambient ;
     vec3 diffuse  = attenuation * diffuseFactor  * light.diffuse  * material.diffuse ;
-    vec3 specular = 0*attenuation * specularFactor * light.specular * material.specular;
+    vec3 specular = attenuation * specularFactor * light.specular * material.specular;
 
     return (ambient + diffuse + specular);
 }

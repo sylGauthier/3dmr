@@ -5,9 +5,9 @@
 
 #include "node.h"
 
-int node_init(struct Node* node) {
+void node_init(struct Node* node, struct Geometry* geometry) {
     struct ABoundingBox centerFull = {{0, 0, 0}, FLT_MAX, FLT_MAX, FLT_MAX};
-    node->geometry = NULL;
+    node->geometry = geometry;
     node->boundingBox = centerFull;
     
     node->children = NULL;
@@ -19,7 +19,6 @@ int node_init(struct Node* node) {
     node->position[2] = 0;
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
-    return 1;
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
@@ -38,9 +37,8 @@ int node_add_child(struct Node* node, struct Node* child) {
     return 1;
 }
 
-int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
-    int i;
-    int res = 1;
+void node_update_matrices(struct Node* node) {
+    unsigned int i;
     enum ChangedFlags modelChanged = NOTHING_CHANGED;
 
     if (node->changedFlags & ORIENTATION_CHANGED) {
@@ -64,16 +62,27 @@ int render_graph(struct Node* node, const struct Camera* cam, const struct Light
         transpose3m(node->inverseNormal);
     }
 
+    for (i = 0; i < node->nbChildren; i++) {
+        node->children[i]->changedFlags |= modelChanged;
+    }
+
+    node->changedFlags = NOTHING_CHANGED;
+}
+
+int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
+    unsigned int i;
+    int res = 1;
+
+    node_update_matrices(node);
+
     if (node->geometry) {
         geometry_render(node->geometry, cam, lights, node->model, node->inverseNormal);
     }
 
     for (i = 0; i < node->nbChildren && res; i++) {
-        node->children[i]->changedFlags |= modelChanged;
         res = res && render_graph(node->children[i], cam, lights);
     }
 
-    node->changedFlags = NOTHING_CHANGED;
     return res;
 }
 

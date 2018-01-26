@@ -22,6 +22,7 @@ struct DirectionalLight {
 struct LocalLight {
     Vec3 position;
     float intensity;
+    float decay;
 
     Vec3 ambient;
     Vec3 diffuse;

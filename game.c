@@ -164,9 +164,9 @@ int main() {
     texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"), &cubeMat);
 
     scene_init(&scene);
-    node_init(&lamp);
-    node_init(&cube);
-    node_init(&box);
+    node_init(&lamp, sphere);
+    node_init(&cube, texturedCube);
+    node_init(&box, coloredBox);
 
     /*
     scene.lights.directional[0].direction[0] = 0;
@@ -186,21 +186,19 @@ int main() {
     scene.lights.local[0].position[0] = 0;
     scene.lights.local[0].position[1] = 0;
     scene.lights.local[0].position[2] = 0;
-    scene.lights.local[0].intensity = 2;
+    scene.lights.local[0].intensity = 1;
+    scene.lights.local[0].decay = 0.1;
     scene.lights.local[0].ambient[0] = 0.1;
     scene.lights.local[0].ambient[1] = 0.1;
     scene.lights.local[0].ambient[2] = 0.1;
     scene.lights.local[0].diffuse[0] = 0.5;
     scene.lights.local[0].diffuse[1] = 0.5;
     scene.lights.local[0].diffuse[2] = 0.5;
-    scene.lights.local[0].specular[0] = 0.2;
-    scene.lights.local[0].specular[1] = 0.2;
-    scene.lights.local[0].specular[2] = 0.2;
+    scene.lights.local[0].specular[0] = 0.5;
+    scene.lights.local[0].specular[1] = 0.5;
+    scene.lights.local[0].specular[2] = 0.5;
     scene.lights.numLocal = 1;
 
-    lamp.geometry = sphere;
-    cube.geometry = texturedCube;
-    box.geometry = coloredBox;
     node_translate(&cube, t1);
     node_translate(&box, t2);
 

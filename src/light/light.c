@@ -24,6 +24,8 @@ void light_load_uniforms(GLuint shader, const struct DirectionalLight* direction
         glUniform3fv(glGetUniformLocation(shader, locName), 1, (float*)localLights[i].position);
         sprintf(locName, "localLights[%d].intensity", i);
         glUniform1fv(glGetUniformLocation(shader, locName), 1, &localLights[i].intensity);
+        sprintf(locName, "localLights[%d].decay", i);
+        glUniform1fv(glGetUniformLocation(shader, locName), 1, &localLights[i].decay);
         sprintf(locName, "localLights[%d].ambient", i);
         glUniform3fv(glGetUniformLocation(shader, locName), 1, (float*)localLights[i].ambient);
         sprintf(locName, "localLights[%d].diffuse", i);

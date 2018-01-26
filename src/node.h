@@ -31,8 +31,9 @@ struct Node {
     Mat3 inverseNormal;
 };
 
-int node_init(struct Node* node);
+void node_init(struct Node* node, struct Geometry* geometry);
 int node_add_child(struct Node* node, struct Node* children);
+void node_update_matrices(struct Node* node);
 int render_graph(struct Node* root, const struct Camera* cam, const struct Lights* lights);
 void graph_free(struct Node* root);
 

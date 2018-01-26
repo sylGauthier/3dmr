@@ -9,7 +9,7 @@ struct Scene {
     struct Node root;
 };
 
-int scene_init(struct Scene* scene);
+void scene_init(struct Scene* scene);
 #define scene_free(scene) graph_free(&(scene)->root)
 
 #define scene_add(scene, node) node_add_child(&(scene)->root, (node))

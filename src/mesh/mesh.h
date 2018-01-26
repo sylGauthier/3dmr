@@ -9,6 +9,8 @@ struct Mesh {
     unsigned int numVertices, numNormals, numTexCoords, numIndices;
 };
 
+int mesh_unindex(struct Mesh* mesh);
+
 void mesh_free(struct Mesh*);
 
 #endif
