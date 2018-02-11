@@ -11,20 +11,35 @@ static const float normals[] = {
      0,  1,  0,    0,  1,  0,    0,  1,  0,    0,  1,  0,    0,  1,  0,    0,  1,  0
 };
 
+static const float texcoords[] = {
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0,
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0,
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0,
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0,
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0,
+    0, 1,    1, 1,    1, 0,    0, 1,    0, 0,    1, 0
+};
+
+
 int make_box(struct Mesh* dest, float width, float height, float depth) {
     float a = width / 2.0f, b = height / 2.0f, c = depth / 2.0f;
 
     dest->numVertices = 36;
     dest->numNormals = 36;
-    dest->numTexCoords = 0;
+    dest->numTexCoords = 36;
     dest->numIndices = 0;
+    dest->vertices = NULL;
+    dest->normals = NULL;
     dest->texCoords = NULL;
     dest->indices = NULL;
+
     dest->vertices = malloc(sizeof(normals));
     dest->normals = malloc(sizeof(normals));
-    if (!dest->vertices || !dest->normals) {
+    dest->texCoords = malloc(sizeof(texcoords));
+    if (!dest->vertices || !dest->normals || !dest->texCoords) {
         free(dest->vertices);
         free(dest->normals);
+	free(dest->texCoords);
         return 0;
     }
 
@@ -66,6 +81,7 @@ int make_box(struct Mesh* dest, float width, float height, float depth) {
     dest->vertices[105] =  a; dest->vertices[106] =  b; dest->vertices[107] =  c;
 
     memcpy(dest->normals, normals, sizeof(normals));
+    memcpy(dest->texCoords, texcoords, sizeof(texcoords));
 
     return 1;
 }
