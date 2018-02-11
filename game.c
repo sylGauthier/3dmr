@@ -43,7 +43,7 @@ static void cursor_rotate_camera(double xpos, double ypos, double dx, double dy,
 
 static void wheel_callback(double xoffset, double yoffset, void* userData) {
     Vec3 axis;
-    
+
     camera_get_backward(&viewer->camera, axis);
     scale3v(axis, -yoffset);
     camera_move(&viewer->camera, axis);

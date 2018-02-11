@@ -9,7 +9,7 @@ void node_init(struct Node* node, struct Geometry* geometry) {
     struct ABoundingBox centerFull = {{0, 0, 0}, FLT_MAX, FLT_MAX, FLT_MAX};
     node->geometry = geometry;
     node->boundingBox = centerFull;
-    
+
     node->children = NULL;
     node->nbChildren = 0;
     node->father = NULL;

@@ -5,12 +5,14 @@
 #include "mesh/icosphere.h"
 #include <stdlib.h>
 
-void new_geom_nxn(struct Geometry *geom, int len, float space, struct Node *root) {
+void new_geom_nxn(struct Geometry* geom, int len, float space, struct Node* root) {
     struct Node *nodes, *n;
     Vec3 offset = {0};
     int i, x, z;
 
-    nodes  = malloc((len * len) * sizeof(struct Node));
+    if (!(nodes = malloc((len * len) * sizeof(struct Node)))) {
+        return;
+    }
 
     i = 0;
     for (x = 0; x < len; x++) {
@@ -25,7 +27,7 @@ void new_geom_nxn(struct Geometry *geom, int len, float space, struct Node *root
     }
 }
 
-struct Node *box_10x10(struct Geometry *mat, float size, float spacing) {
+struct Node *box_10x10(struct Geometry* mat, float size, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
@@ -33,6 +35,11 @@ struct Node *box_10x10(struct Geometry *mat, float size, float spacing) {
 
     root = malloc(sizeof(struct Node));
     g = malloc(sizeof(struct Geometry));
+    if (!root || !g) {
+        free(root);
+        free(g);
+        return NULL;
+    }
 
     *g = *mat;
 
@@ -51,7 +58,7 @@ struct Node *box_10x10(struct Geometry *mat, float size, float spacing) {
     return root;
 }
 
-struct Node *sphere_10x10(struct Geometry *mat, float radius, float spacing) {
+struct Node *sphere_10x10(struct Geometry* mat, float radius, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
@@ -59,10 +66,15 @@ struct Node *sphere_10x10(struct Geometry *mat, float radius, float spacing) {
 
     root = malloc(sizeof(struct Node));
     g = malloc(sizeof(struct Geometry));
-
-    make_icosphere(&mesh, radius, 2);
+    if (!root || !g) {
+        free(root);
+        free(g);
+        return NULL;
+    }
 
     *g = *mat;
+
+    make_icosphere(&mesh, radius, 2);
     globject_new(&mesh, &g->glObject);
     mesh_free(&mesh);
 
@@ -77,16 +89,18 @@ struct Node *sphere_10x10(struct Geometry *mat, float radius, float spacing) {
     return root;
 }
 
-void spheres_and_boxes(struct Geometry *smat, struct Geometry *bmat, struct Node *root) {
+void spheres_and_boxes(struct Geometry* smat, struct Geometry* bmat, struct Node* root) {
     struct Node *spheres, *boxes;
     Vec3 t = {0};
 
-    boxes = box_10x10(bmat, 1, 2);
-    node_add_child(root, boxes);
+    if ((boxes = box_10x10(bmat, 1, 2))) {
+        node_add_child(root, boxes);
+    }
 
-    spheres = sphere_10x10(smat, 0.5, 2);
-    t[0] = 2 * 0.5;
-    t[2] = 2 * 0.5;
-    node_translate(spheres, t);
-    node_add_child(root, spheres);
+    if ((spheres = sphere_10x10(smat, 0.5, 2))) {
+        t[0] = 2 * 0.5;
+        t[2] = 2 * 0.5;
+        node_translate(spheres, t);
+        node_add_child(root, spheres);
+    }
 }

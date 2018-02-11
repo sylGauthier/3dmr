@@ -65,7 +65,7 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
         free(map);
         return 0;
     }
-    
+
     /* Initialization */
     numVertices = 12;
     numFaces = 20;
@@ -87,7 +87,7 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
 
     memcpy(dest->indices, initialIndices, sizeof(initialIndices));
     indicesEnd = dest->indices + 60;
-    
+
     /* Splits */
     while (numSplits--) {
         for (i = 0; i < 12 * numVertices; i++) {

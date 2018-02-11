@@ -28,18 +28,15 @@ int make_box(struct Mesh* dest, float width, float height, float depth) {
     dest->numNormals = 36;
     dest->numTexCoords = 36;
     dest->numIndices = 0;
-    dest->vertices = NULL;
-    dest->normals = NULL;
-    dest->texCoords = NULL;
-    dest->indices = NULL;
 
     dest->vertices = malloc(sizeof(normals));
     dest->normals = malloc(sizeof(normals));
     dest->texCoords = malloc(sizeof(texcoords));
+    dest->indices = NULL;
     if (!dest->vertices || !dest->normals || !dest->texCoords) {
         free(dest->vertices);
         free(dest->normals);
-	free(dest->texCoords);
+        free(dest->texCoords);
         return 0;
     }
 

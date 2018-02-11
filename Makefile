@@ -7,10 +7,8 @@ CFLAGS += -DM_PI=3.14159265358979 $(shell pkg-config --cflags $(DEPS)) -I. -Isrc
 LDLIBS += -lm $(shell pkg-config --libs $(DEPS))
 LIB_SOURCES := $(wildcard src/*.c src/geometry/*.c src/mesh/*.c src/light/*.c)
 LIB_OBJECTS := $(LIB_SOURCES:.c=.o)
-APP_SOURCES := $(wildcard *.c)
+APP_SOURCES := $(wildcard *.c test/*.c)
 APP_OBJECTS := $(APP_SOURCES:.c=.o)
-TEST_SOURCES := $(wildcard test/*.c)
-TEST_OBJECTS := $(TEST_SOURCES:.c=.o)
 
 PKG_CONFIG_CHECK := $(shell pkg-config --print-errors --short-errors --errors-to-stdout --exists $(DEPS) | sed "s/No package '\([^']*\)' found/\1/")
 ifneq ($(PKG_CONFIG_CHECK),)
@@ -20,7 +18,7 @@ endif
 .PHONY: all
 all: $(APP) textures/tux.png
 
-$(APP): $(APP_OBJECTS) $(LIB) $(TEST_OBJECTS)
+$(APP): $(APP_OBJECTS) $(LIB)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 $(LIB): $(LIB_OBJECTS)
