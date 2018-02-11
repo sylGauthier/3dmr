@@ -18,6 +18,7 @@
 #include "mesh/obj.h"
 #include "mesh/box.h"
 #include "mesh/icosphere.h"
+#include "test/scenes.h"
 
 struct Viewer* viewer;
 int running;
@@ -132,7 +133,6 @@ int main() {
     struct GLObject cubeGl = {0}, boxGl = {0}, icosphereGl = {0};
     struct Geometry *sphere, *texturedCube, *coloredBox;
     struct Scene scene;
-    struct Node cube, lamp, box;
     struct SolidColorMaterial sphereMat;
     struct PhongMaterial cubeMat = {
         {1.0, 1.0, 1.0},
@@ -140,7 +140,6 @@ int main() {
         {1.0, 1.0, 1.0},
         1.0
     };
-    Vec3 t1 = {0, 3, 0}, t2 = {3, 0, 0};
 
     viewer = viewer_new(1024, 768, "Game");
     viewer->cursor_callback = cursor_rotate_object;
@@ -164,25 +163,8 @@ int main() {
     texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"), &cubeMat);
 
     scene_init(&scene);
-    node_init(&lamp, sphere);
-    node_init(&cube, texturedCube);
-    node_init(&box, coloredBox);
+    spheres_and_boxes(sphere, texturedCube, &scene.root);
 
-    /*
-    scene.lights.directional[0].direction[0] = 0;
-    scene.lights.directional[0].direction[1] = 1;
-    scene.lights.directional[0].direction[2] = 0;
-    scene.lights.directional[0].ambient[0] = 0.1;
-    scene.lights.directional[0].ambient[1] = 0.1;
-    scene.lights.directional[0].ambient[2] = 0.1;
-    scene.lights.directional[0].diffuse[0] = 0.5;
-    scene.lights.directional[0].diffuse[1] = 0.5;
-    scene.lights.directional[0].diffuse[2] = 0.5;
-    scene.lights.directional[0].specular[0] = 0.2;
-    scene.lights.directional[0].specular[1] = 0.2;
-    scene.lights.directional[0].specular[2] = 0.2;
-    scene.lights.numDirectional = 1;
-    */
     scene.lights.local[0].position[0] = 0;
     scene.lights.local[0].position[1] = 0;
     scene.lights.local[0].position[2] = 0;
@@ -199,14 +181,7 @@ int main() {
     scene.lights.local[0].specular[2] = 0.5;
     scene.lights.numLocal = 1;
 
-    node_translate(&cube, t1);
-    node_translate(&box, t2);
-
-    scene_add(&scene, &lamp);
-    scene_add(&scene, &cube);
-    node_add_child(&cube, &box);
-
-    viewer->callbackData = &cube;
+    viewer->callbackData = &scene.root;
 
     while (running) {
         viewer_process_events(viewer);
