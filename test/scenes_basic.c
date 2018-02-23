@@ -5,7 +5,7 @@
 #include "mesh/icosphere.h"
 #include "linear_algebra.h"
 
-struct Node *box_surface(struct Geometry* mat, float size, float spacing) {
+struct Node *box_surface(struct Geometry* mat, float size, int slen, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
@@ -26,13 +26,13 @@ struct Node *box_surface(struct Geometry* mat, float size, float spacing) {
 
     node_init(root, NULL);
 
-    new_geom_surface(g, 10, spacing, root);
-    translate_to_center(10, spacing, root);
+    new_geom_surface(g, slen, spacing, root);
+    translate_to_center(slen, spacing, root);
 
     return root;
 }
 
-struct Node *sphere_surface(struct Geometry* mat, float radius, float spacing) {
+struct Node *sphere_surface(struct Geometry* mat, float radius, int slen, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
@@ -53,24 +53,20 @@ struct Node *sphere_surface(struct Geometry* mat, float radius, float spacing) {
 
     node_init(root, NULL);
 
-    new_geom_surface(g, 10, spacing, root);
-    translate_to_center(10, spacing, root);
+    new_geom_surface(g, slen, spacing, root);
+    translate_to_center(slen, spacing, root);
 
     return root;
 }
 
 void spheres_and_boxes(struct Geometry* smat, struct Geometry* bmat, struct Node* root) {
     struct Node *spheres, *boxes;
-    Vec3 t = {0};
 
-    if ((boxes = box_surface(bmat, 1, 2))) {
+    if ((boxes = box_surface(bmat, 1, 10, 2))) {
         node_add_child(root, boxes);
     }
 
-    if ((spheres = sphere_surface(smat, 0.5, 2))) {
-        t[0] = 2 * 0.5;
-        t[2] = 2 * 0.5;
-        node_translate(spheres, t);
+    if ((spheres = sphere_surface(smat, 0.5, 11, 2))) {
         node_add_child(root, spheres);
     }
 }
