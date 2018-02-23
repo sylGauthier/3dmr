@@ -4,6 +4,8 @@
 #include "node.h"
 #include "geometry/geometry.h"
 
-void new_geom_nxn(struct Geometry* geom, int len, float space, struct Node* root);
+void new_geom_nxn(struct Geometry* geom, int slen, float space, struct Node* root);
+
+void translate_to_center(const int slen, const float spacing, struct Node* node);
 
 #endif

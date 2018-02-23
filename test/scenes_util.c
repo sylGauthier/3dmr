@@ -3,19 +3,19 @@
 #include "linear_algebra.h"
 #include "mesh/mesh.h"
 
-void new_geom_nxn(struct Geometry* geom, int len, float space, struct Node* root) {
+void new_geom_nxn(struct Geometry* geom, int slen, float space, struct Node* root) {
     struct Node *nodes, *n;
     Vec3 offset = {0, 0, 0};
     int i, x, z;
 
-    if (!(nodes = malloc((len * len) * sizeof(struct Node)))) {
+    if (!(nodes = malloc((slen * slen) * sizeof(struct Node)))) {
         return;
     }
 
     i = 0;
-    for (x = 0; x < len; x++) {
+    for (x = 0; x < slen; x++) {
         offset[0] = x * space;
-        for (z = 0; z < len; z++, i++) {
+        for (z = 0; z < slen; z++, i++) {
             n = &nodes[i];
             node_init(n, geom);
             node_add_child(root, n);
@@ -25,3 +25,12 @@ void new_geom_nxn(struct Geometry* geom, int len, float space, struct Node* root
     }
 }
 
+void translate_to_center(const int slen, const float spacing, struct Node* node) {
+    Vec3 offset;
+
+    offset[0] = -spacing * (slen-1) / 2.0;
+    offset[1] = 0.0;
+    offset[2] = -spacing * (slen-1) / 2.0;
+
+    node_translate(node, &offset);
+}

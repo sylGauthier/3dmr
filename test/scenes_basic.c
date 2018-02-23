@@ -9,7 +9,6 @@ struct Node *box_10x10(struct Geometry* mat, float size, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
-    Vec3 offset;
 
     root = malloc(sizeof(struct Node));
     g = malloc(sizeof(struct Geometry));
@@ -28,10 +27,7 @@ struct Node *box_10x10(struct Geometry* mat, float size, float spacing) {
     node_init(root, NULL);
 
     new_geom_nxn(g, 10, spacing, root);
-
-    offset[0] = -spacing * 5.5;
-    offset[2] = -spacing * 5.5;
-    node_translate(root, offset);
+    translate_to_center(10, spacing, root);
 
     return root;
 }
@@ -40,7 +36,6 @@ struct Node *sphere_10x10(struct Geometry* mat, float radius, float spacing) {
     struct Node *root;
     struct Mesh mesh;
     struct Geometry *g;
-    Vec3 offset;
 
     root = malloc(sizeof(struct Node));
     g = malloc(sizeof(struct Geometry));
@@ -59,10 +54,7 @@ struct Node *sphere_10x10(struct Geometry* mat, float radius, float spacing) {
     node_init(root, NULL);
 
     new_geom_nxn(g, 10, spacing, root);
-
-    offset[0] = -spacing * 5.5;
-    offset[2] = -spacing * 5.5;
-    node_translate(root, offset);
+    translate_to_center(10, spacing, root);
 
     return root;
 }
