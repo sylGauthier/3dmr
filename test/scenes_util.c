@@ -3,7 +3,7 @@
 #include "linear_algebra.h"
 #include "mesh/mesh.h"
 
-void new_geom_nxn(struct Geometry* geom, int slen, float space, struct Node* root) {
+void new_geom_surface(struct Geometry* geom, int slen, float spacing, struct Node* root) {
     struct Node *nodes, *n;
     Vec3 offset = {0, 0, 0};
     int i, x, z;
@@ -14,12 +14,12 @@ void new_geom_nxn(struct Geometry* geom, int slen, float space, struct Node* roo
 
     i = 0;
     for (x = 0; x < slen; x++) {
-        offset[0] = x * space;
+        offset[0] = x * spacing;
         for (z = 0; z < slen; z++, i++) {
             n = &nodes[i];
             node_init(n, geom);
             node_add_child(root, n);
-            offset[2] = z * space;
+            offset[2] = z * spacing;
             node_translate(n, &offset);
         }
     }
