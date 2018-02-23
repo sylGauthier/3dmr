@@ -1,31 +1,9 @@
-#include "scenes.h"
-#include "linear_algebra.h"
-#include "mesh/mesh.h"
+#include <stdlib.h>
+#include "test/scenes_util.h"
+#include "test/scenes_basic.h"
 #include "mesh/box.h"
 #include "mesh/icosphere.h"
-#include <stdlib.h>
-
-void new_geom_nxn(struct Geometry* geom, int len, float space, struct Node* root) {
-    struct Node *nodes, *n;
-    Vec3 offset = {0};
-    int i, x, z;
-
-    if (!(nodes = malloc((len * len) * sizeof(struct Node)))) {
-        return;
-    }
-
-    i = 0;
-    for (x = 0; x < len; x++) {
-        offset[0] = x * space;
-        for (z = 0; z < len; z++, i++) {
-            n = &nodes[i];
-            node_init(n, geom);
-            node_add_child(root, n);
-            offset[2] = z * space;
-            node_translate(n, offset);
-        }
-    }
-}
+#include "linear_algebra.h"
 
 struct Node *box_10x10(struct Geometry* mat, float size, float spacing) {
     struct Node *root;

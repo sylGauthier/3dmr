@@ -18,7 +18,7 @@
 #include "mesh/obj.h"
 #include "mesh/box.h"
 #include "mesh/icosphere.h"
-#include "test/scenes.h"
+#include "test/scenes_basic.h"
 
 struct Viewer* viewer;
 int running;
