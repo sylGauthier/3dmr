@@ -93,6 +93,9 @@ static void key_callback(int key, int scancode, int action, int mods, void* user
             scale3v(axis, -0.1);
             camera_move(&viewer->camera, axis);
             break;
+        case GLFW_KEY_F12:
+            viewer_screenshot(viewer, "screenshot.png");
+            break;
     }
 }
 

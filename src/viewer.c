@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "viewer.h"
+#include "png.h"
 
 struct ViewerImpl {
     struct Viewer user;
@@ -139,4 +140,26 @@ double viewer_next_frame(struct Viewer* viewer) {
     glfwSwapBuffers(((struct ViewerImpl*)viewer)->window);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return dt;
+}
+
+#define ALIGN 4
+int viewer_screenshot(struct Viewer* viewer, const char* filename) {
+    unsigned char* data;
+    unsigned int rowStride;
+    int ret;
+
+    rowStride = 3 * viewer->width;
+    if (rowStride % ALIGN) {
+        rowStride += ALIGN - (rowStride % ALIGN);
+    }
+
+    if (!(data = malloc(rowStride * viewer->height))) {
+        fprintf(stderr, "Error: cannot allocate memory for screenshot\n");
+        return 0;
+    }
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, viewer->width, viewer->height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    ret = png_write(filename, ALIGN, viewer->width, viewer->height, 0, 1, data);
+    free(data);
+    return ret;
 }
