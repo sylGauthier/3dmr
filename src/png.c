@@ -81,10 +81,10 @@ int png_read(const char* filename, unsigned int alignRows, unsigned int* width, 
     return ret;
 }
 
-int png_write(const char* filename, unsigned int alignRows, unsigned int width, unsigned int height, int alpha, int vReverse, void* buffer) {
+int png_write(const char* filename, unsigned int alignRows, unsigned int width, unsigned int height, int alpha, int vReverse, const void* buffer) {
     int y;
     FILE* out;
-    unsigned char* ptr = buffer;
+    const unsigned char* ptr = buffer;
     int ret = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -112,6 +112,48 @@ int png_write(const char* filename, unsigned int alignRows, unsigned int width, 
                             png_write_row(png_ptr, ptr);
                             ptr += rowStride;
                         }
+                    }
+                    png_write_end(png_ptr, NULL);
+
+                    ret = 1;
+                } else {
+                    fprintf(stderr, "Error during png creation, %s\n", filename);
+                }
+                png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+            } else {
+                fprintf(stderr, "Could not allocate info struct for %s\n", filename);
+            }
+            png_destroy_write_struct(&png_ptr, &info_ptr);
+        } else {
+            fprintf(stderr, "Could not allocate write struct for %s\n", filename);
+        }
+        fclose(out);
+    } else {
+        fprintf(stderr, "Could not open file %s for writing\n", filename);
+    }
+
+    return ret;
+}
+
+int png_write_grayscale(const char* filename, unsigned int width, unsigned int height, const void* buffer) {
+    int y;
+    FILE* out;
+    const unsigned char* ptr = buffer;
+    int ret = 0;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+
+    if ((out = fopen(filename, "wb"))) {
+        if ((png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+            if ((info_ptr = png_create_info_struct(png_ptr))) {
+                if (!setjmp(png_jmpbuf(png_ptr))) {
+                    png_init_io(png_ptr, out);
+                    png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+                    png_write_info(png_ptr, info_ptr);
+                    for (y = 0; y < height; y++) {
+                        png_write_row(png_ptr, ptr);
+                        ptr += width;
                     }
                     png_write_end(png_ptr, NULL);
 
