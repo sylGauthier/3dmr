@@ -26,7 +26,7 @@ $(LIB): $(LIB_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -f $(wildcard $(APP) $(APP).o $(LIB) $(LIB_OBJECTS))
+	rm -f $(wildcard $(APP) $(APP).o $(LIB) $(LIB_OBJECTS) $(APP_OBJECTS))
 
 tags: $(LIB_SOURCES)
 	ctags $^
