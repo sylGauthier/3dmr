@@ -36,6 +36,9 @@ int png_read(const char* filename, unsigned int alignRows, unsigned int* width, 
                         if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8) {
                             png_set_expand_gray_1_2_4_to_8(png_ptr);
                         }
+                        if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA) {
+                            png_set_gray_to_rgb(png_ptr);
+                        }
                         if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
                             *alpha = 1;
                             png_set_tRNS_to_alpha(png_ptr);
