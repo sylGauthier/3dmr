@@ -39,6 +39,15 @@ tags: $(LIB_SOURCES)
 
 test: $(TEST_EXECS)
 
+test-assets:
+	./test/scripts/gen_png_assets.sh
+
+run-test: test test-assets
+	./test/scripts/run_all_tests.sh
+
+clean-test:
+	rm -f $(wildcard test/assets/* test/out/*) $(TEST_OBJECTS) $(TEST_EXECS)
+
 $(TEST_EXECS): %:%.o $(TEST_OBJECTS) $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
