@@ -37,13 +37,12 @@ clean:
 tags: $(LIB_SOURCES)
 	ctags $^
 
-test: $(TEST_EXECS)
+.PHONY: test test-assets clean-test
+test: $(TEST_EXECS) test-assets
+	./test/scripts/run_all_tests.sh
 
 test-assets:
 	./test/scripts/gen_png_assets.sh
-
-run-test: test test-assets
-	./test/scripts/run_all_tests.sh
 
 clean-test:
 	rm -f $(wildcard test/assets/* test/out/*) $(TEST_OBJECTS) $(TEST_EXECS)
