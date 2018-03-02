@@ -163,7 +163,7 @@ int main() {
 
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
     coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
-    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("textures/tux.png"), &cubeMat);
+    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("test/assets/rgb_tux.png"), &cubeMat);
 
     scene_init(&scene);
     spheres_and_boxes(sphere, texturedCube, &scene.root);

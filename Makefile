@@ -22,7 +22,7 @@ $(error Missing packages: $(PKG_CONFIG_CHECK))
 endif
 
 .PHONY: all
-all: $(APP) textures/tux.png
+all: $(APP) test/assets/tux.png
 
 $(APP): $(APP_OBJECTS) $(TEST_OBJECTS) $(LIB)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -43,14 +43,11 @@ test: $(TEST_EXECS) test-assets
 
 test-assets:
 	./test/scripts/gen_png_assets.sh
+test/assets/%:
+	$(MAKE) test-assets
 
 clean-test:
 	rm -f $(wildcard test/assets/* test/out/*) $(TEST_OBJECTS) $(TEST_EXECS)
 
 $(TEST_EXECS): %:%.o $(TEST_OBJECTS) $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
-
-textures/tux.png:
-	mkdir -p textures
-	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/200px-Tux.svg.png"
-	convert $@ -background white -alpha remove -flatten $@
