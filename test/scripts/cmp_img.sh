@@ -23,4 +23,4 @@ if [ ! -f "$2" ]; then
 fi
 
 diff=`compare -metric AE "$1" "$2" -compose difference /dev/null 2>&1`
-[ "$diff" == "0" ] && exit 0 || exit 1
+[ "$diff" = "0" ]

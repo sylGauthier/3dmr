@@ -8,4 +8,6 @@ if [[ "${PWD##*/}" != "test" ]]; then
 	exit 2
     fi
 fi
-./scripts/run_png_tests.sh
+error=0
+./scripts/run_png_tests.sh || error=1
+exit $error

@@ -15,6 +15,7 @@ else
     export PATH=./scripts/:./main:$PATH
 
     mkdir -p out/
+    error=0
     for png in $(find "assets/" -type f -name "*.png")
     do
 	echo -n "testing $png ... "
@@ -22,7 +23,13 @@ else
 	if [ $? -ne 0 ]; then
 	    echo "png_rw exited with error"
 	else
-	    $(cmp_img.sh "$png" "out/${png##*/}") && echo "PASSED" || echo "FAIL"
+	    if cmp_img.sh "$png" "out/${png##*/}"; then
+            echo "PASSED"
+        else
+            echo "FAIL"
+            error=1
+        fi
 	fi
     done
 fi
+exit $error
