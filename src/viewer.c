@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "viewer.h"
-#include "png.h"
+#include "img/png.h"
 
 struct ViewerImpl {
     struct Viewer user;

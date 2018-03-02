@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../src/png.h"
+#include "img/png.h"
 
 int png_read_write(const char *in, const char *out, unsigned int alignRow) {
     unsigned int width, height;

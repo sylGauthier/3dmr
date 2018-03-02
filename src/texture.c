@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glew.h>
-#include "png.h"
+#include "img/png.h"
 
 GLuint texture_load_from_buffer(const unsigned char* buffer, int width, int height, int alpha) {
     GLuint texture = 0;
