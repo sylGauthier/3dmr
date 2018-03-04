@@ -3,6 +3,10 @@
 #include <math.h>
 #include "linear_algebra.h"
 
+const Vec3 VEC3_AXIS_X = {1,0,0};
+const Vec3 VEC3_AXIS_Y = {0,1,0};
+const Vec3 VEC3_AXIS_Z = {0,0,1};
+
 #define SWAP(a, b) tmp = a; a = b; b = tmp;
 #define VAL "%8.2f"
 #define SEP ", "

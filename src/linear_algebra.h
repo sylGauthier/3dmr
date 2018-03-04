@@ -27,6 +27,10 @@ typedef Vec2 Mat2[2];
 typedef Vec3 Mat3[3];
 typedef Vec4 Mat4[4];
 
+extern const Vec3 VEC3_AXIS_X;
+extern const Vec3 VEC3_AXIS_Y;
+extern const Vec3 VEC3_AXIS_Z;
+
 void normalize2(Vec2 v);
 void mul2sv(Vec2 dest, float s, Vec2 v);
 float dot2(Vec2 v1, Vec2 v2);
