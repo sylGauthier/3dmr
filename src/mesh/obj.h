@@ -3,8 +3,6 @@
 #ifndef OBJ_H
 #define OBJ_H
 
-#include <stdio.h>
-
 struct OBJ {
     float *vertices, *normals, *texCoords;
     struct OBJFace {
