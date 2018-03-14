@@ -7,3 +7,5 @@ tags
 game
 test/main/*
 !test/main/*.c
+test/assets/*
+test/out/*
