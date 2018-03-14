@@ -8,7 +8,6 @@
 #include "shader.h"
 #include "geometry/shaders.h"
 
-#define MAX_SHADER_NAME_SIZE 128
 struct ShaderFilename {
     const char* vertexShaderFilename;
     const char* fragmentShaderFilename;
