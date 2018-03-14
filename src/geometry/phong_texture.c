@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include "phong_texture.h"
-#include "shader.h"
-
-static GLuint shader = 0;
+#include "shaders.h"
 
 static void phong_texture_prerender(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureMaterial*)geometry->material)->texture);
@@ -16,10 +14,7 @@ static void phong_texture_postrender(const struct Geometry* geometry, const stru
 
 static void phong_texture_geometry_init(struct Geometry* dest, const struct GLObject* glObject) {
     dest->glObject = *glObject;
-    if (!shader) {
-        shader = shader_compile("shaders/phong_texture.vert", "shaders/phong_texture.frag");
-    }
-    dest->shader = shader;
+    dest->shader = game_shaders[SHADER_PHONG_TEXTURE];
     dest->mode = GL_FILL;
     dest->prerender = phong_texture_prerender;
     dest->postrender = phong_texture_postrender;
@@ -54,8 +49,4 @@ struct Geometry* phong_texture_geometry_shared(const struct GLObject* glObject, 
     dest->material = material;
 
     return dest;
-}
-
-void phong_texture_shader_free(void) {
-    glDeleteProgram(shader);
 }

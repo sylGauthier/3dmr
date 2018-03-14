@@ -11,16 +11,16 @@
 #include "globject.h"
 #include "texture.h"
 #include "scene.h"
+#include "asset_manager.h"
 #include "geometry/phong_color.h"
 #include "geometry/phong_texture.h"
 #include "test/scenes_basic.h"
 #include "test/color_util.h"
 #include "test/checkerboard.h"
 
-struct Viewer* viewer;
 int running;
 
-static void key_callback(int key, int scancode, int action, int mods, void* userData) {
+static void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* userData) {
     switch (key) {
         case GLFW_KEY_ESCAPE:
             running = 0;
@@ -31,7 +31,7 @@ static void key_callback(int key, int scancode, int action, int mods, void* user
     }
 }
 
-static void close_callback(void* userData) {
+static void close_callback(struct Viewer* viewer, void* userData) {
     running = 0;
 }
 
@@ -53,6 +53,7 @@ static void init_local_light(struct LocalLight *light) {
 }
 
 int run() {
+    struct Viewer* viewer;
     struct Scene scene;
     struct GLObject bloat = {0};
     struct Geometry *mat_checkerboard;
@@ -64,6 +65,9 @@ int run() {
         1.0
     };
 
+    asset_manager_add_path(".");
+    asset_manager_add_path("..");
+    asset_manager_add_path("../..");
     viewer = viewer_new(1024, 768, "test_scenes");
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
@@ -88,7 +92,6 @@ int run() {
         scene_render(&scene, &viewer->camera);
     }
 
-    phong_texture_shader_free();
     free(mat_checkerboard);
     free(mat_solidcolor);
     viewer_free(viewer);

@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include "solid_color.h"
 #include "phong_color.h"
-#include "shader.h"
-
-static GLuint shader = 0;
+#include "shaders.h"
 
 static void load_phong_color_uniforms(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
     solid_color_load_uniform(geometry, ((const struct PhongColorMaterial*)geometry->material)->color);
@@ -13,10 +11,7 @@ static void load_phong_color_uniforms(const struct Geometry* geometry, const str
 
 static void phong_color_geometry_init(struct Geometry* dest, const struct GLObject* glObject) {
     dest->glObject = *glObject;
-    if (!shader) {
-        shader = shader_compile("shaders/phong_color.vert", "shaders/phong_color.frag");
-    }
-    dest->shader = shader;
+    dest->shader = game_shaders[SHADER_PHONG_COLOR];
     dest->mode = GL_FILL;
     dest->prerender = load_phong_color_uniforms;
     dest->postrender = 0;
@@ -53,8 +48,4 @@ struct Geometry* phong_color_geometry_shared(const struct GLObject* glObject, st
     dest->material = material;
 
     return dest;
-}
-
-void phong_color_shader_free(void) {
-    glDeleteProgram(shader);
 }

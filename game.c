@@ -11,6 +11,7 @@
 #include "globject.h"
 #include "texture.h"
 #include "scene.h"
+#include "asset_manager.h"
 #include "geometry/solid_color.h"
 #include "geometry/solid_texture.h"
 #include "geometry/phong_color.h"
@@ -21,10 +22,9 @@
 #include "test/scenes_basic.h"
 #include "test/color_util.h"
 
-struct Viewer* viewer;
 int running;
 
-static void cursor_rotate_object(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
+static void cursor_rotate_object(struct Viewer* viewer, double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
     Vec3 x = {0, 1, 0}, y = {1, 0, 0};
 
     if (buttonLeft) {
@@ -33,7 +33,7 @@ static void cursor_rotate_object(double xpos, double ypos, double dx, double dy,
     }
 }
 
-static void cursor_rotate_camera(double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
+static void cursor_rotate_camera(struct Viewer* viewer, double xpos, double ypos, double dx, double dy, int buttonLeft, int buttonMiddle, int buttonRight, void* data) {
     Vec3 axis = {0, 1, 0};
 
     if (buttonLeft) {
@@ -43,7 +43,7 @@ static void cursor_rotate_camera(double xpos, double ypos, double dx, double dy,
     }
 }
 
-static void wheel_callback(double xoffset, double yoffset, void* userData) {
+static void wheel_callback(struct Viewer* viewer, double xoffset, double yoffset, void* userData) {
     Vec3 axis;
 
     camera_get_backward(&viewer->camera, axis);
@@ -51,7 +51,7 @@ static void wheel_callback(double xoffset, double yoffset, void* userData) {
     camera_move(&viewer->camera, axis);
 }
 
-static void key_callback(int key, int scancode, int action, int mods, void* userData) {
+static void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* userData) {
     Vec3 axis = {0, 1, 0};
 
     switch (key) {
@@ -100,16 +100,18 @@ static void key_callback(int key, int scancode, int action, int mods, void* user
     }
 }
 
-static void close_callback(void* userData) {
+static void close_callback(struct Viewer* viewer, void* userData) {
     running = 0;
 }
 
 int main() {
+    struct Viewer *viewer, *viewer2;
     double t = 0.0, dt;
     struct Mesh cubeMesh = {0}, boxMesh = {0}, icosphereMesh = {0};
-    struct GLObject cubeGl = {0}, boxGl = {0}, icosphereGl = {0};
-    struct Geometry *sphere, *texturedCube, *coloredBox;
-    struct Scene scene;
+    struct GLObject cubeGl = {0}, boxGl = {0}, icosphereGl = {0}, cubeGl2 = {0};
+    struct Geometry *sphere, *texturedCube, *coloredBox, *cube2;
+    struct Scene scene, scene2;
+    struct Node nodeCube;
     struct SolidColorMaterial sphereMat;
     struct PhongMaterial cubeMat = {
         {1.0, 1.0, 1.0},
@@ -118,27 +120,40 @@ int main() {
         1.0
     };
 
-    viewer = viewer_new(1024, 768, "Game");
+    asset_manager_add_path(".");
+    viewer = viewer_new(640, 480, "Game");
     viewer->cursor_callback = cursor_rotate_object;
     viewer->wheel_callback = wheel_callback;
     viewer->key_callback = key_callback;
     viewer->close_callback = close_callback;
+    viewer2 = viewer_new(640, 480, "Game 2");
+    viewer2->cursor_callback = cursor_rotate_object;
+    viewer2->wheel_callback = wheel_callback;
+    viewer2->key_callback = key_callback;
+    viewer2->close_callback = close_callback;
     running = 1;
 
     make_obj(&cubeMesh, "models/cube.obj", 0, 1, 1);
-    globject_new(&cubeMesh, &cubeGl);
-    mesh_free(&cubeMesh);
     make_box(&boxMesh, 4.0, 1.0, 1.0);
-    globject_new(&boxMesh, &boxGl);
-    mesh_free(&boxMesh);
     make_icosphere(&icosphereMesh, 0.5, 2);
+    viewer_make_current(viewer);
+    globject_new(&cubeMesh, &cubeGl);
+    globject_new(&boxMesh, &boxGl);
     globject_new(&icosphereMesh, &icosphereGl);
+    viewer_make_current(viewer2);
+    globject_new(&cubeMesh, &cubeGl2);
+    mesh_free(&cubeMesh);
+    mesh_free(&boxMesh);
     mesh_free(&icosphereMesh);
 
+    viewer_make_current(viewer);
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
     coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
     texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("test/assets/rgb_tux.png"), &cubeMat);
+    viewer_make_current(viewer2);
+    cube2 = solid_texture_geometry(&cubeGl, texture_load_from_file("test/assets/rgb_tux.png"));
 
+    viewer_make_current(viewer);
     scene_init(&scene);
     spheres_and_boxes(sphere, texturedCube, &scene.root);
 
@@ -158,26 +173,36 @@ int main() {
     scene.lights.local[0].specular[2] = 0.5;
     scene.lights.numLocal = 1;
 
+    viewer_make_current(viewer2);
+    scene_init(&scene2);
+    node_init(&nodeCube, cube2);
+    node_add_child(&scene2.root, &nodeCube);
+
     viewer->callbackData = &scene.root;
+    viewer2->callbackData = &scene2.root;
 
     while (running) {
         viewer_process_events(viewer);
+        viewer_process_events(viewer2);
         usleep(10 * 1000);
 
+        viewer_make_current(viewer);
         dt = viewer_next_frame(viewer);
         t += 50.0 * dt;
         hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat.color);
         mul3sv(scene.lights.local[0].ambient, 0.1, sphereMat.color);
         mul3sv(scene.lights.local[0].diffuse, 1.0, sphereMat.color);
         scene_render(&scene, &viewer->camera);
+
+        viewer_make_current(viewer2);
+        viewer_next_frame(viewer2);
+        scene_render(&scene2, &viewer2->camera);
     }
 
-    solid_color_shader_free();
-    phong_color_shader_free();
-    phong_texture_shader_free();
     free(sphere);
     free(texturedCube);
     free(coloredBox);
+    free(cube2);
     globject_free(&cubeGl);
     globject_free(&boxGl);
     globject_free(&icosphereGl);

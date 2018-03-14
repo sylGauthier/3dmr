@@ -12,6 +12,4 @@ struct Geometry* solid_color_geometry_shared(const struct GLObject* glObject, st
 
 void solid_color_load_uniform(const struct Geometry* geometry, const float* color);
 
-void solid_color_shader_free(void);
-
 #endif

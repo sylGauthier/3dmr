@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include "solid_color.h"
-#include "shader.h"
-
-static GLuint shader = 0;
+#include "shaders.h"
 
 void solid_color_load_uniform(const struct Geometry* geometry, const float* color) {
     glUniform3fv(glGetUniformLocation(geometry->shader, "solidColor"), 1, color);
@@ -14,10 +12,7 @@ static void load_solid_color_uniforms(const struct Geometry* geometry, const str
 
 static void solid_color_geometry_init(struct Geometry* dest, const struct GLObject* glObject) {
     dest->glObject = *glObject;
-    if (!shader) {
-        shader = shader_compile("shaders/solid_color.vert", "shaders/solid_color.frag");
-    }
-    dest->shader = shader;
+    dest->shader = game_shaders[SHADER_SOLID_COLOR];
     dest->mode = GL_FILL;
     dest->prerender = load_solid_color_uniforms;
     dest->postrender = 0;
@@ -53,8 +48,4 @@ struct Geometry* solid_color_geometry_shared(const struct GLObject* glObject, st
     dest->material = material;
 
     return dest;
-}
-
-void solid_color_shader_free(void) {
-    glDeleteProgram(shader);
 }

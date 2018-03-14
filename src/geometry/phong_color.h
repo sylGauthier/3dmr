@@ -12,6 +12,4 @@ struct PhongColorMaterial {
 struct Geometry* phong_color_geometry(const struct GLObject* glObject, float r, float g, float b, const struct PhongMaterial* phong);
 struct Geometry* phong_color_geometry_shared(const struct GLObject* glObject, struct PhongColorMaterial* material);
 
-void phong_color_shader_free(void);
-
 #endif
