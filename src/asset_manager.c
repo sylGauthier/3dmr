@@ -32,18 +32,17 @@ void asset_manager_remove_path(const char* path) {
     }
 }
 
-static char* asset_manager_find_file(const char* type, const char* filename) {
+char* asset_manager_find_file(const char* filename) {
     unsigned int i;
     size_t filenameSize = strlen(filename);
-    size_t typeSize = strlen(type);
     char* path;
     FILE* test;
 
-    if (!(path = malloc(maxPathSize + 1 + typeSize + 1 + filenameSize + 1))) {
+    if (!(path = malloc(maxPathSize + 1 + filenameSize + 1))) {
         return 0;
     }
     for (i = 0; i < numPaths; i++) {
-        sprintf(path, "%s/%s/%s", paths[i], type, filename);
+        sprintf(path, "%s/%s", paths[i], filename);
         if ((test = fopen(path, "r"))) {
             fclose(test);
             return path;
@@ -53,14 +52,10 @@ static char* asset_manager_find_file(const char* type, const char* filename) {
     return NULL;
 }
 
-char* asset_manager_find_shader(const char* filename) {
-    return asset_manager_find_file("shaders", filename);
-}
-
 GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename) {
     GLuint res = 0;
-    char* vertexShaderPath = asset_manager_find_shader(vertexShaderFilename);
-    char* fragmentShaderPath = asset_manager_find_shader(fragmentShaderFilename);
+    char* vertexShaderPath = asset_manager_find_file(vertexShaderFilename);
+    char* fragmentShaderPath = asset_manager_find_file(fragmentShaderFilename);
 
     if (!vertexShaderPath || !fragmentShaderPath) {
         if (!vertexShaderPath) fprintf(stderr, "Error: failed to find shader source '%s'\n", vertexShaderFilename);

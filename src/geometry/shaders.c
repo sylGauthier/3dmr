@@ -13,10 +13,10 @@ struct ShaderFilename {
     const char* vertexShaderFilename;
     const char* fragmentShaderFilename;
 } shaderFilenames[NUM_SHADERS] = {
-    {"solid_color.vert", "solid_color.frag"},
-    {"solid_texture.vert", "solid_texture.frag"},
-    {"phong_color.vert", "phong_color.frag"},
-    {"phong_texture.vert", "phong_texture.frag"}
+    {"shaders/solid_color.vert", "shaders/solid_color.frag"},
+    {"shaders/solid_texture.vert", "shaders/solid_texture.frag"},
+    {"shaders/phong_color.vert", "shaders/phong_color.frag"},
+    {"shaders/phong_texture.vert", "shaders/phong_texture.frag"}
 };
 
 GLuint* game_shaders;
