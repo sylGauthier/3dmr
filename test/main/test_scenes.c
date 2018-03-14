@@ -16,6 +16,7 @@
 #include "geometry/phong_texture.h"
 #include "test/scenes_basic.h"
 #include "test/color_util.h"
+#include "test/light_util.h"
 #include "test/checkerboard.h"
 
 int running;
@@ -33,23 +34,6 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
 
 static void close_callback(struct Viewer* viewer, void* userData) {
     running = 0;
-}
-
-static void init_local_light(struct LocalLight *light) {
-    light->position[0] = 0;
-    light->position[1] = 0;
-    light->position[2] = 0;
-    light->intensity = 1;
-    light->decay = 0.1;
-    light->ambient[0] = 0.1;
-    light->ambient[1] = 0.1;
-    light->ambient[2] = 0.1;
-    light->diffuse[0] = 0.5;
-    light->diffuse[1] = 0.5;
-    light->diffuse[2] = 0.5;
-    light->specular[0] = 0.5;
-    light->specular[1] = 0.5;
-    light->specular[2] = 0.5;
 }
 
 int run() {
@@ -78,7 +62,7 @@ int run() {
 
     scene_init(&scene);
     scene.lights.numLocal = 1;
-    init_local_light(&scene.lights.local[0]);
+    test_init_local_light(&scene.lights.local[0]);
 
     spheres_and_boxes(mat_solidcolor, mat_checkerboard, &scene.root);
     node_rotate(&scene.root, (void *)VEC3_AXIS_X, M_PI / 2.0);

@@ -21,6 +21,7 @@
 #include "mesh/icosphere.h"
 #include "test/scenes_basic.h"
 #include "test/color_util.h"
+#include "test/light_util.h"
 
 int running;
 
@@ -157,20 +158,7 @@ int main() {
     scene_init(&scene);
     spheres_and_boxes(sphere, texturedCube, &scene.root);
 
-    scene.lights.local[0].position[0] = 0;
-    scene.lights.local[0].position[1] = 0;
-    scene.lights.local[0].position[2] = 0;
-    scene.lights.local[0].intensity = 1;
-    scene.lights.local[0].decay = 0.1;
-    scene.lights.local[0].ambient[0] = 0.1;
-    scene.lights.local[0].ambient[1] = 0.1;
-    scene.lights.local[0].ambient[2] = 0.1;
-    scene.lights.local[0].diffuse[0] = 0.5;
-    scene.lights.local[0].diffuse[1] = 0.5;
-    scene.lights.local[0].diffuse[2] = 0.5;
-    scene.lights.local[0].specular[0] = 0.5;
-    scene.lights.local[0].specular[1] = 0.5;
-    scene.lights.local[0].specular[2] = 0.5;
+    test_init_local_light(&scene.lights.local[0]);
     scene.lights.numLocal = 1;
 
     viewer_make_current(viewer2);
