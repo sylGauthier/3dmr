@@ -21,8 +21,8 @@ ifneq ($(PKG_CONFIG_CHECK),)
 $(error Missing packages: $(PKG_CONFIG_CHECK))
 endif
 
-.PHONY: all
-all: $(APP) test/assets/tux.png
+.PHONY: all test
+all: $(APP) test/assets/tux.png test
 
 $(APP): $(APP_OBJECTS) $(TEST_OBJECTS) $(LIB)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -37,8 +37,10 @@ clean:
 tags: $(LIB_SOURCES)
 	ctags $^
 
-.PHONY: test test-assets clean-test
-test: $(TEST_EXECS) test-assets
+.PHONY: test run-test test-assets clean-test
+test: $(TEST_EXECS)
+
+run-test: test test-assets
 	./test/scripts/run_all_tests.sh
 
 test-assets:
@@ -47,7 +49,8 @@ test/assets/%:
 	$(MAKE) test-assets
 
 clean-test:
-	rm -f $(wildcard test/assets/* test/out/*) $(TEST_OBJECTS) $(TEST_EXECS)
+	rm -rf test/assets test/out
+	rm -f $(TEST_OBJECTS) $(TEST_EXECS)
 
 $(TEST_EXECS): %:%.o $(TEST_OBJECTS) $(LIB_OBJECTS)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
