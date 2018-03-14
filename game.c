@@ -150,9 +150,9 @@ int main() {
     viewer_make_current(viewer);
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
     coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
-    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("test/assets/rgb_tux.png"), &cubeMat);
+    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("test/assets/png/rgb_tux.png"), &cubeMat);
     viewer_make_current(viewer2);
-    cube2 = solid_texture_geometry(&cubeGl, texture_load_from_file("test/assets/rgb_tux.png"));
+    cube2 = solid_texture_geometry(&cubeGl, texture_load_from_file("test/assets/png/rgb_tux.png"));
 
     viewer_make_current(viewer);
     scene_init(&scene);

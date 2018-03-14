@@ -22,7 +22,7 @@ $(error Missing packages: $(PKG_CONFIG_CHECK))
 endif
 
 .PHONY: all test
-all: $(APP) test/assets/tux.png test
+all: $(APP) test/assets/png/tux.png test
 
 $(APP): $(APP_OBJECTS) $(TEST_OBJECTS) $(LIB)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -44,7 +44,7 @@ run-test: test test-assets
 	./test/scripts/run_all_tests.sh
 
 test-assets:
-	./test/scripts/gen_png_assets.sh
+	./test/scripts/setup_assets.sh
 test/assets/%:
 	$(MAKE) test-assets
 
