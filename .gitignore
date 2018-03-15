@@ -1,6 +1,8 @@
 *.o
 *.a
 *.png
+*.ttf
+*.zip
 *.swp
 *~
 tags

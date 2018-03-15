@@ -1,7 +1,7 @@
-PNGS: tux
+IMAGES := tux
 
-.PHONY: all $(PNGS)
-all: tux $(PNGS)
+.PHONY: all images $(IMAGES) fonts
+all: images fonts
 
 rgb_%.png: %.png
 	convert $< -background white -alpha remove -flatten $@
@@ -14,10 +14,23 @@ indexed24_alpha_%.png: %.png
 indexed24_%.png: %.png
 	convert $< -background white -alpha remove -flatten -colors 24 $@
 
-tux: $(addsuffix tux.png,rgb_ gray_alpha_ gray_ indexed24_alpha_ indexed24_)
-tux.png:
+images: $(IMAGES)
+tux: $(addprefix png/,$(addsuffix tux.png,rgb_ gray_alpha_ gray_ indexed24_alpha_ indexed24_))
+png/tux.png:
+	@mkdir -p $(dir $@)
 	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/200px-Tux.svg.png"
+
+fonts: font/FreeSans.ttf
+font/FreeSans.ttf: freefont-20120503.zip
+	unzip $<
+	mkdir -p font
+	touch $(basename $<)/*.ttf
+	mv $(basename $<)/*.ttf font
+	rm -r $(basename $<)
+
+freefont-20120503.zip:
+	wget -O $@ "https://ftp.gnu.org/gnu/freefont/freefont-ttf-20120503.zip"
 
 .PHONY: clean
 clean:
-	rm $(wildcard *.png)
+	rm -f $(wildcard *.zip png/*.png font/*.ttf)
