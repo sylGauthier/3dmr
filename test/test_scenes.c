@@ -18,23 +18,8 @@
 #include "test/util/color.h"
 #include "test/util/light.h"
 #include "test/util/checkerboard.h"
+#include "test/util/callbacks.h"
 
-int running;
-
-static void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* userData) {
-    switch (key) {
-        case GLFW_KEY_ESCAPE:
-            running = 0;
-            break;
-        case GLFW_KEY_F12:
-            viewer_screenshot(viewer, "test_scene_screenshot.png");
-            break;
-    }
-}
-
-static void close_callback(struct Viewer* viewer, void* userData) {
-    running = 0;
-}
 
 int run() {
     struct Viewer* viewer;

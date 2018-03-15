@@ -36,11 +36,9 @@ tags: $(SOURCES)
 
 .PHONY: test test-assets clean-assets
 test: all
-	$(foreach test,$(wildcard test/scripts/test_*.sh),$(test);)
-test-assets:
-	@+$(MAKE) --no-print-directory -C test/assets all
-clean-assets:
-	@+$(MAKE) --no-print-directory -C test/assets clean
+	@$(foreach test,$(wildcard test/scripts/test_*.sh),$(test);)
+test-assets clean-assets:
+	@+$(MAKE) --no-print-directory -C test/assets $@
 
 $(TEST_EXECS): %:%.o $(TEST_UTIL_OBJECTS) $(LIB)
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@

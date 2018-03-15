@@ -1,7 +1,7 @@
 IMAGES := tux
 
-.PHONY: all images $(IMAGES) fonts
-all: images fonts
+.PHONY: test-assets images $(IMAGES) fonts
+test-assets: images fonts
 
 rgb_%.png: %.png
 	convert $< -background white -alpha remove -flatten $@
@@ -31,6 +31,6 @@ font/FreeSans.ttf: freefont-20120503.zip
 freefont-20120503.zip:
 	wget -O $@ "https://ftp.gnu.org/gnu/freefont/freefont-ttf-20120503.zip"
 
-.PHONY: clean
-clean:
+.PHONY: clean-assets
+clean-assets:
 	rm -f $(wildcard *.zip png/*.png font/*.ttf)
