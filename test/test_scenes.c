@@ -14,10 +14,10 @@
 #include "asset_manager.h"
 #include "geometry/phong_color.h"
 #include "geometry/phong_texture.h"
-#include "test/scenes_basic.h"
-#include "test/color_util.h"
-#include "test/light_util.h"
-#include "test/checkerboard.h"
+#include "test/util/scenes_basic.h"
+#include "test/util/color.h"
+#include "test/util/light.h"
+#include "test/util/checkerboard.h"
 
 int running;
 

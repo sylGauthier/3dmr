@@ -19,9 +19,9 @@
 #include "mesh/obj.h"
 #include "mesh/box.h"
 #include "mesh/icosphere.h"
-#include "test/scenes_basic.h"
-#include "test/color_util.h"
-#include "test/light_util.h"
+#include "test/util/scenes_basic.h"
+#include "test/util/color.h"
+#include "test/util/light.h"
 
 int running;
 
@@ -122,6 +122,7 @@ int main() {
     };
 
     asset_manager_add_path(".");
+    asset_manager_add_path("..");
     viewer = viewer_new(640, 480, "Game");
     viewer->cursor_callback = cursor_rotate_object;
     viewer->wheel_callback = wheel_callback;

@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "test/scenes_util.h"
-#include "test/scenes_basic.h"
+#include "scenes_util.h"
+#include "scenes_basic.h"
 #include "mesh/box.h"
 #include "mesh/icosphere.h"
 #include "linear_algebra.h"
