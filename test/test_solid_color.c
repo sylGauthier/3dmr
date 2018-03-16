@@ -13,16 +13,19 @@ int main(int argc, char** argv) {
     struct Mesh cube = {0};
     struct GLObject cubeGl = {0};
     struct Geometry* geom = NULL;
+    double size;
     int ret = 1;
 
     asset_manager_add_path(".");
     asset_manager_add_path("..");
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s out.png\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s size out.png\n", argv[0]);
+    } else if (!(size = strtod(argv[1], NULL))) {
+        fprintf(stderr, "Error: bad size\n");
     } else if (!(viewer = viewer_new(640, 480, __FILE__))) {
         fprintf(stderr, "Error: cannot start viewer\n");
-    } else if (!make_box(&cube, 2.0, 2.0, 2.0)) {
+    } else if (!make_box(&cube, size, size, size)) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else {
         globject_new(&cube, &cubeGl);
@@ -35,7 +38,7 @@ int main(int argc, char** argv) {
             viewer_next_frame(viewer);
             scene_render(&scene, &viewer->camera);
 
-            if (viewer_screenshot(viewer, argv[1])) {
+            if (viewer_screenshot(viewer, argv[2])) {
                 ret = 0;
             } else {
                 fprintf(stderr, "Error: failed to take screenshot\n");
