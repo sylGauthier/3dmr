@@ -36,7 +36,7 @@ tags: $(SOURCES)
 
 .PHONY: test test-assets clean-assets
 test: all
-	@$(foreach test,$(wildcard test/scripts/test_*.sh),$(test);)
+	@$(foreach test,$(wildcard test/scripts/test_*.sh),$(test) && ) echo "All tests passed"
 test-assets clean-assets:
 	@+$(MAKE) --no-print-directory -C test/assets $@
 

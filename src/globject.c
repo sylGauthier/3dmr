@@ -60,9 +60,11 @@ void globject_new(const struct Mesh* mesh, struct GLObject* glo) {
 }
 
 void globject_free(struct GLObject* glo) {
-    glDeleteBuffers(glo->numVBOs, glo->vbo);
-    glo->numVBOs = 0;
-    if (glIsVertexArray(glo->vao) == GL_TRUE) {
+    if (glo->numVBOs) {
+        glDeleteBuffers(glo->numVBOs, glo->vbo);
+        glo->numVBOs = 0;
+    }
+    if (glo->vao && glIsVertexArray(glo->vao) == GL_TRUE) {
         glDeleteVertexArrays(1, &glo->vao);
     }
 }
