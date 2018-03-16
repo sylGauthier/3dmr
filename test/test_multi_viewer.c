@@ -41,7 +41,9 @@ int main() {
     };
 
     asset_manager_add_path(".");
+    asset_manager_add_path("./test/assets");
     asset_manager_add_path("..");
+    asset_manager_add_path("../test/assets");
     viewer = viewer_new(640, 480, "Game");
     viewer->cursor_callback = cursor_rotate_object;
     viewer->wheel_callback = wheel_callback;
@@ -70,9 +72,9 @@ int main() {
     viewer_make_current(viewer);
     sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
     coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
-    texturedCube = phong_texture_geometry(&cubeGl, texture_load_from_file("test/assets/png/rgb_tux.png"), &cubeMat);
+    texturedCube = phong_texture_geometry(&cubeGl, asset_manager_load_texture("png/rgb_tux.png"), &cubeMat);
     viewer_make_current(viewer2);
-    cube2 = solid_texture_geometry(&cubeGl, texture_load_from_file("test/assets/png/rgb_tux.png"));
+    cube2 = solid_texture_geometry(&cubeGl, asset_manager_load_texture("png/rgb_tux.png"));
 
     viewer_make_current(viewer);
     scene_init(&scene);

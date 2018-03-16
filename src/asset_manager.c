@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "shader.h"
+#include "texture.h"
 
 #define MAX_NUM_PATHS 128
 
@@ -66,5 +67,19 @@ GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* f
 
     free(vertexShaderPath);
     free(fragmentShaderPath);
+    return res;
+}
+
+GLuint asset_manager_load_texture(const char* filename) {
+    GLuint res = 0;
+    char* path = asset_manager_find_file(filename);
+
+    if (!path) {
+        fprintf(stderr, "Error: failed to find texture '%s'\n", filename);
+    } else {
+        res = texture_load_from_file(path);
+    }
+
+    free(path);
     return res;
 }
