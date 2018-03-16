@@ -56,7 +56,7 @@ int main() {
     viewer2->close_callback = close_callback;
     running = 1;
 
-    make_obj(&cubeMesh, "models/cube.obj", 0, 1, 1);
+    make_box(&cubeMesh, 2.0, 2.0, 2.0);
     make_box(&boxMesh, 4.0, 1.0, 1.0);
     make_icosphere(&icosphereMesh, 0.5, 2);
     viewer_make_current(viewer);
