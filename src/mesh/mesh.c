@@ -7,8 +7,8 @@ int mesh_unindex(struct Mesh* mesh) {
     unsigned int i, index;
 
     if ((mesh->numVertices && !(vertices = malloc(3 * mesh->numIndices * sizeof(float))))
-     || (mesh->numNormals && !(normals = malloc(3 * mesh->numIndices * sizeof(float))))
-     || (mesh->numTexCoords && !(texCoords = malloc(2 * mesh->numTexCoords * sizeof(float))))) {
+     || (mesh->hasNormals && !(normals = malloc(3 * mesh->numIndices * sizeof(float))))
+     || (mesh->hasTexCoords && !(texCoords = malloc(2 * mesh->numIndices * sizeof(float))))) {
         free(vertices);
         free(normals);
         free(texCoords);
@@ -31,8 +31,6 @@ int mesh_unindex(struct Mesh* mesh) {
     mesh->texCoords = texCoords;
     mesh->indices = NULL;
     mesh->numVertices = mesh->numIndices;
-    mesh->numNormals = mesh->numIndices;
-    mesh->numTexCoords = mesh->numIndices;
     mesh->numIndices = 0;
 
     return 1;

@@ -6,7 +6,8 @@ struct Mesh {
     float* normals;
     float* texCoords;
     unsigned int* indices;
-    unsigned int numVertices, numNormals, numTexCoords, numIndices;
+    unsigned int numVertices, numIndices;
+    int hasNormals, hasTexCoords;
 };
 
 int mesh_unindex(struct Mesh* mesh);

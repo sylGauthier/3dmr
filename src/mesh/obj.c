@@ -152,15 +152,15 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
     } else {
         if (!withIndices) {
             dest->numVertices = 3 * obj.numFaces;
-            dest->numNormals = (withNormals && obj.numNormals) ? dest->numVertices : 0;
-            dest->numTexCoords = (withTexCoords && obj.numTexCoords) ? dest->numVertices : 0;
+            dest->hasNormals = (withNormals && obj.numNormals);
+            dest->hasTexCoords = (withTexCoords && obj.numTexCoords);
             dest->numIndices = 0;
             dest->indices = NULL;
             dest->normals = NULL;
             dest->texCoords = NULL;
             if (!(dest->vertices = malloc(3 * dest->numVertices * sizeof(float)))
-             || (dest->numNormals && !(dest->normals = malloc(3 * dest->numVertices * sizeof(float))))
-             || (dest->numTexCoords && !(dest->texCoords = malloc(2 * dest->numVertices * sizeof(float))))) {
+             || (dest->hasNormals && !(dest->normals = malloc(3 * dest->numVertices * sizeof(float))))
+             || (dest->hasTexCoords && !(dest->texCoords = malloc(2 * dest->numVertices * sizeof(float))))) {
                 fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
                 free(dest->vertices);
                 free(dest->normals);
@@ -169,8 +169,8 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
                 for (i = k = l = 0; i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {
                         memcpy(dest->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
-                        if (dest->numNormals) memcpy(dest->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
-                        if (dest->numTexCoords) memcpy(dest->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
+                        if (dest->hasNormals) memcpy(dest->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
+                        if (dest->hasTexCoords) memcpy(dest->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
                         k += 3;
                         l += 2;
                     }
@@ -185,9 +185,9 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
                 dest->numVertices = obj.numVertices;
                 dest->vertices = obj.vertices;
                 obj.vertices = NULL;
-                dest->numNormals = 0;
+                dest->hasNormals = 0;
                 dest->normals = NULL;
-                dest->numTexCoords = 0;
+                dest->hasTexCoords = 0;
                 dest->texCoords = NULL;
                 for (i = k = 0; i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {

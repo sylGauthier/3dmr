@@ -50,11 +50,11 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
 
     /* Allocate vertices, normals, indices arrays */
     dest->numVertices = 12 + 10 * (q - 1);
-    dest->numNormals = dest->numVertices;
-    dest->numTexCoords = 0;
+    dest->hasNormals = 1;
+    dest->hasTexCoords = 0;
     dest->numIndices = 60 * q;
     dest->vertices = malloc(dest->numVertices * 3 * sizeof(float));
-    dest->normals = malloc(dest->numNormals * 3 * sizeof(float));
+    dest->normals = malloc(dest->numVertices * 3 * sizeof(float));
     dest->texCoords = NULL;
     dest->indices = malloc(dest->numIndices * sizeof(unsigned int));
     map = malloc(dest->numVertices * 12 * sizeof(unsigned int));

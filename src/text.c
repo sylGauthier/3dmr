@@ -345,10 +345,12 @@ int new_text(struct BitmapFont *font, const char *text, struct Mesh *mesh)
     }
 
     mesh->vertices = vertices;
+    mesh->normals = NULL;
     mesh->texCoords = textures;
+    mesh->indices = NULL;
     mesh->numVertices = index * 2 * 3;
-    mesh->numTexCoords = index * 2 * 3;
-    mesh->numNormals = 0;
+    mesh->hasNormals = 0;
+    mesh->hasTexCoords = 1;
     mesh->numIndices = 0;
 
     return 0;
