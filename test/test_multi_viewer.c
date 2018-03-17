@@ -32,7 +32,13 @@ int main() {
     struct Geometry *sphere, *texturedCube, *coloredBox, *cube2;
     struct Scene scene, scene2;
     struct Node nodeCube;
-    struct SolidColorMaterial sphereMat;
+    struct PhongColorMaterial sphereMat = {
+        {0,0,0},{
+        {1.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0},
+        1.0}
+    };
     struct PhongMaterial cubeMat = {
         {1.0, 1.0, 1.0},
         {1.0, 1.0, 1.0},
@@ -70,7 +76,7 @@ int main() {
     mesh_free(&icosphereMesh);
 
     viewer_make_current(viewer);
-    sphere = solid_color_geometry_shared(&icosphereGl, &sphereMat);
+    sphere = phong_color_geometry_shared(&icosphereGl, &sphereMat);
     coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
     texturedCube = phong_texture_geometry(&cubeGl, asset_manager_load_texture("png/rgb_tux.png"), &cubeMat);
     viewer_make_current(viewer2);
