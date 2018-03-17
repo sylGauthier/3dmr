@@ -22,9 +22,9 @@ png/tux.png:
 
 .INTERMEDIATE: png/earth_miller.jpg png/earth_central_cylindric.jpg png/earth_mercator.jpg png/earth_equirectangular.jpg
 png/earth_miller.jpg:
-	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Miller_projection_SW.jpg/1024px-Miller_projection_SW.jpg"
+	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/5/5f/Miller_projection_SW.jpg"
 png/earth_miller.png: png/earth_miller.jpg
-	convert $< -crop 1016x745+4+4 -background black -extent 1024x1024 $@
+	convert $< -crop 2044x1498+7+8 -background black -extent 2048x2048 $@
 png/earth_central_cylindric.jpg:
 	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/1/19/Central_cylindric_projection_square.JPG"
 png/earth_central_cylindric.png: png/earth_central_cylindric.jpg

@@ -203,3 +203,50 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
     if (objFile) fclose(objFile);
     return ret;
 }
+
+#define save_tri_vnt(n, i1, i2, i3) \
+    for (i = 0; ret && i < n; i += 3) { \
+        ret &= fprintf(dest, "f %u/%u/%u %u/%u/%u %u/%u/%u\n", i1, i1, i1, i2, i2, i2, i3, i3, i3) >= 0; \
+    }
+#define save_tri_vn(n, i1, i2, i3) \
+    for (i = 0; ret && i < n; i += 3) { \
+        ret &= fprintf(dest, "f %u//%u %u//%u %u//%u\n", i1, i1, i2, i2, i3, i3) >= 0; \
+    }
+#define save_tri_vt(n, i1, i2, i3) \
+    for (i = 0; ret && i < n; i += 3) { \
+        ret &= fprintf(dest, "f %u/%u %u/%u %u/%u\n", i1, i1, i2, i2, i3, i3) >= 0; \
+    }
+#define save_tri_v(n, i1, i2, i3) \
+    for (i = 0; ret && i < n; i += 3) { \
+        ret &= fprintf(dest, "f %u %u %u\n", i1, i2, i3) >= 0; \
+    }
+#define save_tri(n, i1, i2, i3) \
+    if (mesh->hasNormals && mesh->hasTexCoords) { \
+        save_tri_vnt(n, i1, i2, i3); \
+    } else if (mesh->hasNormals) { \
+        save_tri_vn(n, i1, i2, i3); \
+    } else if (mesh->hasTexCoords) { \
+        save_tri_vt(n, i1, i2, i3); \
+    } else { \
+        save_tri_v(n, i1, i2, i3); \
+    }
+int mesh_save_obj(const struct Mesh* mesh, FILE* dest) {
+    unsigned int i;
+    int ret = 1;
+
+    for (i = 0; ret && i < 3 * mesh->numVertices; i += 3) {
+        ret &= fprintf(dest, "v %f %f %f\n", mesh->vertices[i], mesh->vertices[i + 1], mesh->vertices[i + 2]) >= 0;
+    }
+    for (i = 0; ret && i < 3 * mesh->numVertices; i += 3) {
+        ret &= fprintf(dest, "vn %f %f %f\n", mesh->normals[i], mesh->normals[i + 1], mesh->normals[i + 2]) >= 0;
+    }
+    for (i = 0; ret && i < 2 * mesh->numVertices; i += 2) {
+        ret &= fprintf(dest, "vt %f %f\n", mesh->texCoords[i], mesh->texCoords[i + 1]) >= 0;
+    }
+    if (mesh->numIndices) {
+        save_tri(mesh->numIndices, mesh->indices[i] + 1, mesh->indices[i + 1] + 1, mesh->indices[i + 2] + 1);
+    } else {
+        save_tri(mesh->numVertices, i + 1, i + 2, i + 3);
+    }
+    return ret;
+}

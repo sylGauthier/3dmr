@@ -36,6 +36,32 @@ int mesh_unindex(struct Mesh* mesh) {
     return 1;
 }
 
+unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index) {
+    float* tmp;
+
+    if (!(tmp = realloc(mesh->vertices, 3 * (mesh->numVertices + 1) * sizeof(float)))) {
+        return 0;
+    }
+    mesh->vertices = tmp;
+    memcpy(mesh->vertices + 3 * mesh->numVertices, mesh->vertices + 3 * index, 3 * sizeof(float));
+    if (mesh->hasNormals) {
+        if (!(tmp = realloc(mesh->normals, 3 * (mesh->numVertices + 1) * sizeof(float)))) {
+            return 0;
+        }
+        mesh->normals = tmp;
+        memcpy(mesh->normals + 3 * mesh->numVertices, mesh->normals + 3 * index, 3 * sizeof(float));
+    }
+    if (mesh->hasTexCoords) {
+        if (!(tmp = realloc(mesh->texCoords, 2 * (mesh->numVertices + 1) * sizeof(float)))) {
+            return 0;
+        }
+        mesh->texCoords = tmp;
+        memcpy(mesh->texCoords + 2 * mesh->numVertices, mesh->texCoords + 2 * index, 2 * sizeof(float));
+    }
+
+    return mesh->numVertices++;
+}
+
 void mesh_free(struct Mesh* mesh) {
     free(mesh->vertices);
     free(mesh->normals);

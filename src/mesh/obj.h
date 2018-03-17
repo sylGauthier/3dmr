@@ -21,4 +21,6 @@ int obj_triangulate(struct OBJ* obj);
 
 int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords);
 
+int mesh_save_obj(const struct Mesh* mesh, FILE* dest);
+
 #endif

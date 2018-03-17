@@ -17,7 +17,7 @@ static const struct EarthTexture {
 } texture[NUM_SPHERE_MAP] = {
     {"png/earth_central_cylindric.png", 702.0 / 1024.0, 702.0 / 1024.0, 1.0},
     {"png/earth_mercator.png", 2044.0 / 2048.0, 1730.0 / 2048.0, 1.0},
-    {"png/earth_miller.png", 1016.0 / 1024.0, 745.0 / 1024.0, 1.0},
+    {"png/earth_miller.png", 2044.0 / 2048.0, 1498.0 / 2048.0, 1.0},
     {"png/earth_equirectangular.png", 2042.0 / 2048.0, 1020.0 / 1024.0, 2.0}
 };
 
@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
                 viewer_next_frame(viewer);
                 scene_render(&scene, &viewer->camera);
             }
+            ret = 0;
 
             scene_free(&scene);
         }
