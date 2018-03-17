@@ -31,58 +31,95 @@ extern const Vec3 VEC3_AXIS_X;
 extern const Vec3 VEC3_AXIS_Y;
 extern const Vec3 VEC3_AXIS_Z;
 
+/* Vec2 */
+void zero2v(Vec2 v);
+void print2v(Vec2 v);
+void add2v(RESTRICT_VEC2(dest), RESTRICT_VEC2(u), RESTRICT_VEC2(v));
+void incr2v(RESTRICT_VEC2(dest), RESTRICT_VEC2(incr));
+void sub2v(RESTRICT_VEC2(dest), RESTRICT_VEC2(u), RESTRICT_VEC2(v));
+void decr2v(RESTRICT_VEC2(dest), RESTRICT_VEC2(decr));
+void mul2sv(RESTRICT_VEC2(dest), float s, RESTRICT_VEC2(v));
+void scale2v(Vec2 dest, float s);
+void neg2v(Vec2 v);
+float norm2sq(Vec2 v);
+float norm2(Vec2 v);
 void normalize2(Vec2 v);
-void mul2sv(Vec2 dest, float s, Vec2 v);
-float dot2(Vec2 v1, Vec2 v2);
+float dot2(RESTRICT_VEC2(u), RESTRICT_VEC2(v));
 
+/* Vec3 */
+void zero3v(Vec3 v);
+void print3v(Vec3 v);
 void add3v(RESTRICT_VEC3(dest), RESTRICT_VEC3(u), RESTRICT_VEC3(v));
 void incr3v(RESTRICT_VEC3(dest), RESTRICT_VEC3(incr));
 void sub3v(RESTRICT_VEC3(dest), RESTRICT_VEC3(u), RESTRICT_VEC3(v));
 void decr3v(RESTRICT_VEC3(dest), RESTRICT_VEC3(decr));
 void mul3sv(RESTRICT_VEC3(dest), float s, RESTRICT_VEC3(v));
 void scale3v(Vec3 dest, float s);
+void neg3v(Vec3 v);
+float norm3sq(Vec3 v);
+float norm3(Vec3 v);
+void normalize3(Vec3 v);
+float dot3(RESTRICT_VEC3(u), RESTRICT_VEC3(v));
+void cross3(RESTRICT_VEC3(dest), RESTRICT_VEC3(u), RESTRICT_VEC3(v));
+
+/* Vec4 */
+void zero4v(Vec4 v);
+void print4v(Vec4 v);
+void add4v(RESTRICT_VEC4(dest), RESTRICT_VEC4(u), RESTRICT_VEC4(v));
+void incr4v(RESTRICT_VEC4(dest), RESTRICT_VEC4(incr));
+void sub4v(RESTRICT_VEC4(dest), RESTRICT_VEC4(u), RESTRICT_VEC4(v));
+void decr4v(RESTRICT_VEC4(dest), RESTRICT_VEC4(decr));
+void mul4sv(RESTRICT_VEC4(dest), float s, RESTRICT_VEC4(v));
+void scale4v(Vec4 dest, float s);
+void neg4v(Vec4 v);
+float norm4sq(Vec4 v);
+float norm4(Vec4 v);
+void normalize4(Vec4 v);
+float dot4(RESTRICT_VEC4(u), RESTRICT_VEC4(v));
+
+/* Mat2 */
+void load_id2(Mat2 dest);
+void print2m(Mat2 m);
+void mul2sm(RESTRICT_MAT2(dest), float s, RESTRICT_MAT2(m));
+void mul2mv(RESTRICT_VEC2(dest), RESTRICT_MAT2(m), RESTRICT_VEC2(v));
+void mul2mm(RESTRICT_MAT2(dest), RESTRICT_MAT2(a), RESTRICT_MAT2(b));
+void neg2m(Mat2 m);
+void transpose2m(Mat2 m);
+float det2(Mat2 m);
+int invert2m(RESTRICT_MAT2(dest), RESTRICT_MAT2(src));
+
+/* Mat3 */
+void load_id3(Mat3 dest);
+void print3m(Mat3 m);
+void mul3sm(RESTRICT_MAT3(dest), float s, RESTRICT_MAT3(m));
 void mul3mv(RESTRICT_VEC3(dest), RESTRICT_MAT3(m), RESTRICT_VEC3(v));
 void mul3mm(RESTRICT_MAT3(dest), RESTRICT_MAT3(a), RESTRICT_MAT3(b));
-void neg3v(Vec3 v);
 void neg3m(Mat3 m);
 void transpose3m(Mat3 m);
 float det3(Mat3 m);
 int invert3m(RESTRICT_MAT3(dest), RESTRICT_MAT3(src));
-float norm3sq(Vec3 v);
-float norm3(Vec3 v);
-void normalize3(Vec3 v);
-float dot3(Vec3 u, Vec3 v);
-void cross3(Vec3 dest, Vec3 u, Vec3 v);
+
+
+/* Mat4 */
+void load_id4(Mat4 dest);
+void print4m(Mat4 m);
+void mul4sm(RESTRICT_MAT4(dest), float s, RESTRICT_MAT4(m));
+void mul4mv(RESTRICT_VEC4(res), RESTRICT_MAT4(m), RESTRICT_VEC4(v));
+void mul4mm(RESTRICT_MAT4(res), RESTRICT_MAT4(a), RESTRICT_MAT4(b));
+void neg4m(Mat4 m);
+void transpose4m(Mat4 m);
+
+/* Conversions */
 void row3m3(RESTRICT_VEC3(dest), RESTRICT_MAT3(m), unsigned int row);
 void row3m4(RESTRICT_VEC3(dest), RESTRICT_MAT4(m), unsigned int row);
-void load_id3(Mat3 dest);
-void print3v(Vec3 v);
-void print3m(Mat3 m);
-
-void vec4to3(RESTRICT_VEC3(dest), RESTRICT_VEC3(src));
+void row4m4(RESTRICT_VEC4(dest), RESTRICT_MAT4(m), unsigned int row);
+void vec4to3(RESTRICT_VEC3(dest), RESTRICT_VEC4(src));
 void mat4to3(RESTRICT_MAT3(dest), RESTRICT_MAT4(src));
 void mat3to4(RESTRICT_MAT4(dest), RESTRICT_MAT3(src));
 
-void add4v(RESTRICT_VEC4(dest), RESTRICT_VEC4(u), RESTRICT_VEC4(v));
-void mul4sv(RESTRICT_VEC4(dest), float s, RESTRICT_VEC4(v));
-void mul4sm(RESTRICT_MAT4(dest), float s, RESTRICT_MAT4(m));
-void scale4v(Vec4 dest, float s);
-void mul4mv(RESTRICT_VEC4(res), RESTRICT_MAT4(m), RESTRICT_VEC4(v));
-void mul4mm(RESTRICT_MAT4(res), RESTRICT_MAT4(a), RESTRICT_MAT4(b));
-void neg4v(Vec4 v);
-void neg4m(Mat4 m);
-void transpose4m(Mat4 m);
-float norm4sq(Vec4 v);
-float norm4(Vec4 v);
-void normalize4(Vec4 v);
-float dot4(Vec4 u, Vec4 v);
-void row4(RESTRICT_VEC4(dest), RESTRICT_MAT4(m), unsigned int row);
-void load_id4(Mat4 dest);
-void print4v(Vec4 v);
-void print4m(Mat4 m);
-
+/* Rotations */
 void load_rot3(RESTRICT_MAT3(dest), RESTRICT_VEC3(axis), float angle);
 void load_rot4(RESTRICT_MAT4(dest), RESTRICT_VEC3(axis), float angle);
-void compute_rotation(Vec3 u, Vec3 v, Vec3 axis, float* angle);
+void compute_rotation(RESTRICT_VEC3(u), RESTRICT_VEC3(v), RESTRICT_VEC3(axis), float* angle);
 
 #endif
