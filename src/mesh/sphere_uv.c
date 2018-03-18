@@ -88,7 +88,7 @@ int compute_sphere_uv(struct Mesh* sphere, double texWidth, double texHeight, do
             uv[1] = -1.0f;
         } else {
             uv[0] = (longitude + M_PI) / (2.0 * M_PI) * texWidth;
-            uv[1] = ((1.0 - (y / yMax)) / 2.0) * texHeight;
+            uv[1] = 1.0 - ((1.0 - (y / yMax)) / 2.0) * texHeight;
         }
         vertex += 3;
         uv += 2;

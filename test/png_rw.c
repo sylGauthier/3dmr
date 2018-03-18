@@ -8,7 +8,7 @@ int png_read_write(const char *in, const char *out, unsigned int alignRow) {
     void *buffer;
     int retval;
 
-    retval = png_read(in, alignRow, &width, &height, &alpha, &buffer);
+    retval = png_read(in, alignRow, &width, &height, &alpha, 0, &buffer);
     if (!retval) {
 	return EXIT_FAILURE;
     }

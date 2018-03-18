@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <png.h>
 
-int png_read(const char* filename, unsigned int alignRows, unsigned int* width, unsigned int* height, int* alpha, void* buffer) {
+int png_read(const char* filename, unsigned int alignRows, unsigned int* width, unsigned int* height, int* alpha, int vReverse, void* buffer) {
     int y, nbBytes;
     unsigned char header[8];
     FILE* in;
@@ -11,7 +11,7 @@ int png_read(const char* filename, unsigned int alignRows, unsigned int* width, 
     int ret = 0;
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
-    png_byte** output = buffer;
+    png_byte **output = buffer, *ptr;
 
     if ((in = fopen(filename, "rb"))) {
         nbBytes = fread(header, 1, 8, in);
@@ -53,8 +53,18 @@ int png_read(const char* filename, unsigned int alignRows, unsigned int* width, 
                         }
                         if ((*output = (png_byte*) malloc(h * rowStride))) {
                             for (nPass = 0; nPass < nbPasses; nPass++) {
-                                for (y = 0; y < h; y++) {
-                                    png_read_row(png_ptr, *output + y * rowStride, NULL);
+                                if (vReverse) {
+                                    ptr = *output + (h - 1) * rowStride;
+                                    for (y = 0; y < h; y++) {
+                                        png_read_row(png_ptr, ptr, NULL);
+                                        ptr -= rowStride;
+                                    }
+                                } else {
+                                    ptr = *output;
+                                    for (y = 0; y < h; y++) {
+                                        png_read_row(png_ptr, ptr, NULL);
+                                        ptr += rowStride;
+                                    }
                                 }
                             }
                             png_read_end(png_ptr, info_ptr);

@@ -23,7 +23,7 @@ GLuint texture_load_from_file(const char* filename) {
     unsigned int width, height;
     int alpha;
 
-    if (png_read(filename, 4, &width, &height, &alpha, &buffer)) {
+    if (png_read(filename, 4, &width, &height, &alpha, 1, &buffer)) {
         texture = texture_load_from_buffer(buffer, width, height, alpha);
         free(buffer);
     }
