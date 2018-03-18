@@ -53,19 +53,19 @@ int run(const char* text) {
 
     ttf = asset_manager_find_file("font/FreeSans.ttf");
     if (!ttf) {
-	fprintf(stderr, "Failed to find font: %s\n", "font/FreeSans.ttf");
-	return 1;
+        fprintf(stderr, "Failed to find font: %s\n", "font/FreeSans.ttf");
+        return 1;
     }
     font = ttf_bitmap_font(ttf, 32);
     if (!font) {
-	fprintf(stderr, "Failed to initialise font\n");
-	return 1;
+        fprintf(stderr, "Failed to initialise font\n");
+        return 1;
     }
 
     err = new_text(font, text, &text_mesh);
     if (err) {
-	fprintf(stderr, "Failed to create text mesh\n");
-	return err;
+        fprintf(stderr, "Failed to create text mesh\n");
+        return err;
     }
     globject_new(&text_mesh, &text_gl);
     /* create geometry by hand */
@@ -104,8 +104,8 @@ void usage() {
 int main(int argc, char* argv[]) {
     char* text = "Hello world!";
     if (argc > 1) {
-	usage();
-	return EXIT_FAILURE;
+        usage();
+        return EXIT_FAILURE;
     }
     return run(text);
 }

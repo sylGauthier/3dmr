@@ -76,8 +76,8 @@ void usage() {
 
 int main(int argc, char *argv[]) {
     if (argc > 1) {
-	usage();
-	return EXIT_FAILURE;
+        usage();
+        return EXIT_FAILURE;
     }
     return run();
 }
