@@ -15,14 +15,13 @@
 #include "test/util/callbacks.h"
 
 int run(const char* text) {
-    struct Viewer *viewer;
+    struct Viewer* viewer;
     struct Scene scene;
     struct BitmapFont* font;
     struct Mesh text_mesh;
-    struct GLObject text_gl;
-    struct Geometry* text_geom;
-    struct Node text_node;
-    GLuint text_shader;
+    struct GLObject textGl;
+    struct Geometry* textGeom;
+    struct Node textNode;
     char* ttf;
     int err;
 
@@ -41,31 +40,28 @@ int run(const char* text) {
     scene_init(&scene);
     viewer->callbackData = &scene.root;
 
-    ttf = asset_manager_find_file("font/FreeSans.ttf");
-    if (!ttf) {
+    if (!(ttf = asset_manager_find_file("font/FreeSans.ttf"))) {
         fprintf(stderr, "Failed to find font: %s\n", "font/FreeSans.ttf");
         return 1;
     }
-    font = ttf_bitmap_font(ttf, 32);
-    if (!font) {
+    if (!(font = ttf_bitmap_font(ttf, 32))) {
         fprintf(stderr, "Failed to initialise font\n");
         return 1;
     }
 
-    err = new_text(font, text, &text_mesh);
-    if (err) {
+    if ((err = new_text(font, text, &text_mesh))) {
         fprintf(stderr, "Failed to create text mesh\n");
         return err;
     }
-    globject_new(&text_mesh, &text_gl);
+    globject_new(&text_mesh, &textGl);
 
-    if (!(text_geom = solid_text_geometry(&text_gl, 1.0, 1.0, 1.0, font))) {
+    if (!(textGeom = solid_text_geometry(&textGl, 1.0, 1.0, 1.0, font))) {
         fprintf(stderr, "Failed to create text geometry\n");
         return err;
     }
 
-    node_init(&text_node, text_geom);
-    scene_add(&scene, &text_node);
+    node_init(&textNode, textGeom);
+    scene_add(&scene, &textNode);
 
     while (running) {
         viewer_process_events(viewer);
@@ -75,7 +71,7 @@ int run(const char* text) {
     }
 
     scene_free(&scene);
-    globject_free(&text_gl);
+    globject_free(&textGl);
     mesh_free(&text_mesh);
     font_free(font);
     viewer_free(viewer);
@@ -87,8 +83,8 @@ void usage() {
     puts("Usage: test_text");
 }
 
-int main(int argc, char* argv[]) {
-    char* text = "Hello world!";
+int main(int argc, char** argv) {
+    const char* text = "Hello world!";
     if (argc > 1) {
         usage();
         return EXIT_FAILURE;
