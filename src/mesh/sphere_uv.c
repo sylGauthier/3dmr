@@ -23,91 +23,71 @@ static double (*latitude_to_y[NUM_SPHERE_MAP])(double latitude) = {
     equirectangular
 };
 
-static void get_longitude_latidude(float* p, double* longitude, double* latitude) {
-    double r = sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
-    *longitude = atan2(p[1], p[0]);
-    *latitude = (M_PI / 2.0) - acos(p[2] / r);
+static void get_longitude_latidude(double p0, double p1, double p2, double* longitude, double* latitude) {
+    double r = sqrt(p0 * p0 + p1 * p1 + p2 * p2);
+    *longitude = atan2(p1, p0);
+    *latitude = (M_PI / 2.0) - acos(p2 / r);
 }
 
-static void fix(float* u, double texWidth, void (*update)(struct Mesh*, unsigned int, float), struct Mesh* mesh, unsigned int i) {
-    int wa, wb, wc;
-    unsigned int w;
-
-    if ((u[0] < 0.0) + (u[1] < 0.0) + (u[2] < 0.0)) {
-        return;
-    }
-    wa = fabs(u[0] - u[1]) > (texWidth / 2.0);
-    wb = fabs(u[1] - u[2]) > (texWidth / 2.0);
-    wc = fabs(u[2] - u[0]) > (texWidth / 2.0);
-    if (!(wa + wb + wc)) {
-        return;
-    }
-    if (wa && wb) {
-        w = 1;
-    } else if (wa && wc) {
-        w = 0;
-    } else if (wb && wc) {
-        w = 2;
-    } else {
-        return;
-    }
-    update(mesh, i + w, (u[w] > (texWidth / 2.0)) ? (u[w] - texWidth) : (u[w] + texWidth));
-}
-
-static void update_indexed(struct Mesh* mesh, unsigned int i, float val) {
-    unsigned int newIndex;
-    if (!(newIndex = mesh_duplicate_index(mesh, mesh->indices[i]))) {
-        return;
-    }
-    mesh->indices[i] = newIndex;
-    mesh->texCoords[2 * newIndex] = val;
-}
-
-static void update_continuous(struct Mesh* mesh, unsigned int i, float val) {
-    mesh->texCoords[2 * i] = val;
-}
+#define GET_FACE_VERTEX(mesh, nFace, nVertex) (mesh->vertices + 3 * (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex)))
+#define GET_FACE_UV(mesh, nFace, nVertex) (mesh->texCoords + 2 * (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex)))
 
 int compute_sphere_uv(struct Mesh* sphere, double texWidth, double texHeight, double texRatio, enum SphereMapType type) {
     double y, yMax = M_PI * (texHeight / texWidth) / texRatio;
     double longitude, latitude;
-    unsigned int i;
-    float* vertex = sphere->vertices;
-    float *uv, u[3];
+    unsigned int i, j, k, w, o, n, a, b, numFaces = (sphere->numIndices ? sphere->numIndices : sphere->numVertices) / 3;
+    float *vertex, *uv[3], u[3], v[3];
 
-    if (!(uv = malloc(2 * sphere->numVertices * sizeof(float)))) {
+    if (!(sphere->texCoords = malloc(2 * sphere->numVertices * sizeof(float)))) {
         return 0;
     }
-    sphere->texCoords = uv;
     sphere->hasTexCoords = 1;
 
-    for (i = 0; i < sphere->numVertices; i++) {
-        get_longitude_latidude(vertex, &longitude, &latitude);
-        y = latitude_to_y[type](latitude);
-        if (fabs(y) > yMax) {
-            uv[0] = -1.0f;
-            uv[1] = -1.0f;
+    for (i = 0; i < numFaces; i++) {
+        o = 0;
+        for (j = 0; j < 3; j++) {
+            vertex = GET_FACE_VERTEX(sphere, i, j);
+            uv[j] = GET_FACE_UV(sphere, i, j);
+            get_longitude_latidude(vertex[0], vertex[1], vertex[2], &longitude, &latitude);
+            y = latitude_to_y[type](latitude);
+            o |= (fabs(y) > yMax) << j;
+            y = (y > yMax) ? yMax : (y < -yMax) ? -yMax : y;
+            u[j] = (longitude + M_PI) / (2.0 * M_PI) * texWidth;
+            v[j] = 1.0 - ((1.0 - (y / yMax)) / 2.0) * texHeight;
+        }
+        if (o) {
+            k = o >> 1;
+            if ((fabs(u[(k + 1) % 3] - u[(k + 2) % 3]) > (texWidth / 2.0))) {
+                a = (u[(k + 1) % 3] > (texWidth / 2.0)) ? (texWidth - u[(k + 1) % 3]) : u[(k + 1) % 3];
+                b = (u[(k + 2) % 3] > (texWidth / 2.0)) ? (texWidth - u[(k + 2) % 3]) : u[(k + 2) % 3];
+                w = 1 << ((k + 1 + (a < b)) % 3);
+            } else {
+                w = 7;
+            }
         } else {
-            uv[0] = (longitude + M_PI) / (2.0 * M_PI) * texWidth;
-            uv[1] = 1.0 - ((1.0 - (y / yMax)) / 2.0) * texHeight;
+            w = ((fabs(u[1] - u[2]) < (texWidth / 2.0)))
+              | ((fabs(u[2] - u[0]) < (texWidth / 2.0)) << 1)
+              | ((fabs(u[0] - u[1]) < (texWidth / 2.0)) << 2);
         }
-        vertex += 3;
-        uv += 2;
-    }
-
-    /* Ensure all "u"s of each face are on "the same side" */
-    if (sphere->numIndices) {
-        for (i = 0; i < sphere->numIndices; i += 3) {
-            u[0] = sphere->texCoords[2 * sphere->indices[i]];
-            u[1] = sphere->texCoords[2 * sphere->indices[i + 1]];
-            u[2] = sphere->texCoords[2 * sphere->indices[i + 2]];
-            fix(u, texWidth, update_indexed, sphere, i);
+        for (j = 0; j < 3; j++) {
+            if ((w == (1 << j))) {
+                u[j] = (u[j] > (texWidth / 2.0)) ? (u[j] - texWidth) : (u[j] + texWidth);
+            }
         }
-    } else {
-        for (i = 0; i < sphere->numVertices; i += 3) {
-            u[0] = sphere->texCoords[2 * (i)];
-            u[1] = sphere->texCoords[2 * (i + 1)];
-            u[2] = sphere->texCoords[2 * (i + 2)];
-            fix(u, texWidth, update_continuous, sphere, i);
+        for (j = 0; j < 3; j++) {
+            if ((o == (1 << j))) {
+                u[j] = (u[(j + 1) % 3] + u[(j + 2) % 3]) / 2.0;
+            }
+        }
+        for (j = 0; j < 3; j++) {
+            if (sphere->numIndices && ((w == (1 << j)) | (o == (1 << j)))) {
+                if ((n = mesh_duplicate_index(sphere, sphere->indices[k = (3 * i + j)]))) {
+                    sphere->indices[k] = n;
+                    uv[j] = sphere->texCoords + 2 * n;
+                }
+            }
+            uv[j][0] = u[j];
+            uv[j][1] = v[j];
         }
     }
 
