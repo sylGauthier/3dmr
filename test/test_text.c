@@ -10,19 +10,9 @@
 #include "scene.h"
 #include "globject.h"
 #include "text.h"
-#include "shader.h"
+#include "geometry/solid_text.h"
 #include "asset_manager.h"
 #include "test/util/callbacks.h"
-
-static void text_prerender(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
-    static const float color[3] = {1,1,1};
-    glUniform3fv(glGetUniformLocation(geometry->shader, "textColor"), 1, color);
-    glBindTexture(GL_TEXTURE_2D, ((struct BitmapFont *)geometry->material)->texture_atlas);
-}
-
-static void text_postrender(const struct Geometry* geometry, const struct Camera* camera, const struct Lights* lights) {
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
 
 int run(const char* text) {
     struct Viewer *viewer;
@@ -30,7 +20,7 @@ int run(const char* text) {
     struct BitmapFont* font;
     struct Mesh text_mesh;
     struct GLObject text_gl;
-    struct Geometry text_geom;
+    struct Geometry* text_geom;
     struct Node text_node;
     GLuint text_shader;
     char* ttf;
@@ -68,17 +58,13 @@ int run(const char* text) {
         return err;
     }
     globject_new(&text_mesh, &text_gl);
-    /* create geometry by hand */
-    text_shader = asset_manager_load_shader("shaders/text.vert", "shaders/text.frag");
 
-    text_geom.glObject = text_gl;
-    text_geom.shader = text_shader;
-    text_geom.mode = GL_FILL;
-    text_geom.material = (void*) font;
-    text_geom.prerender = text_prerender;
-    text_geom.postrender = text_postrender;
+    if (!(text_geom = solid_text_geometry(&text_gl, 1.0, 1.0, 1.0, font))) {
+        fprintf(stderr, "Failed to create text geometry\n");
+        return err;
+    }
 
-    node_init(&text_node, &text_geom);
+    node_init(&text_node, text_geom);
     scene_add(&scene, &text_node);
 
     while (running) {

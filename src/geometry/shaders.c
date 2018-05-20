@@ -15,7 +15,8 @@ struct ShaderFilename {
     {"shaders/solid_color.vert", "shaders/solid_color.frag"},
     {"shaders/solid_texture.vert", "shaders/solid_texture.frag"},
     {"shaders/phong_color.vert", "shaders/phong_color.frag"},
-    {"shaders/phong_texture.vert", "shaders/phong_texture.frag"}
+    {"shaders/phong_texture.vert", "shaders/phong_texture.frag"},
+    {"shaders/text.vert", "shaders/text.frag"}
 };
 
 GLuint* game_shaders;
