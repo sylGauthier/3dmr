@@ -20,7 +20,7 @@ void new_geom_surface(struct Geometry* geom, int slen, float spacing, struct Nod
             node_init(n, geom);
             node_add_child(root, n);
             offset[2] = z * spacing;
-            node_translate(n, &offset);
+            node_translate(n, (void*)&offset);
         }
     }
 }
@@ -32,5 +32,5 @@ void translate_to_center(const int slen, const float spacing, struct Node* node)
     offset[1] = 0.0;
     offset[2] = -spacing * (slen-1) / 2.0;
 
-    node_translate(node, &offset);
+    node_translate(node, (void*)&offset);
 }

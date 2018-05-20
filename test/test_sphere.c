@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "viewer.h"
 #include "scene.h"
 #include "node.h"
