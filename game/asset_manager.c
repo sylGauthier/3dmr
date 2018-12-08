@@ -6,16 +6,16 @@
 
 #define MAX_NUM_PATHS 128
 
-static const char* paths[MAX_NUM_PATHS];
+static char* paths[MAX_NUM_PATHS];
 static unsigned int numPaths = 0;
 static size_t maxPathSize = 0;
 
 int asset_manager_add_path(const char* path) {
     size_t pathSize;
-    if (numPaths >= MAX_NUM_PATHS) {
+    if (numPaths >= MAX_NUM_PATHS || !(paths[numPaths] = malloc(strlen(path) + 1))) {
         return 0;
     }
-    paths[numPaths++] = path;
+    strcpy(paths[numPaths++], path);
     if (maxPathSize < (pathSize = strlen(path))) {
         maxPathSize = pathSize;
     }
@@ -28,6 +28,7 @@ void asset_manager_remove_path(const char* path) {
         if (strcmp(paths[i], path)) {
             i++;
         } else {
+            free(paths[i]);
             paths[i] = paths[--numPaths];
         }
     }
@@ -82,4 +83,10 @@ GLuint asset_manager_load_texture(const char* filename) {
 
     free(path);
     return res;
+}
+
+void asset_manager_free(void) {
+    while (numPaths) {
+        free(paths[--numPaths]);
+    }
 }

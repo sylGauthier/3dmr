@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include <game/asset_manager.h>
-#include <game/material/solid_color.h>
+#include <game/material/solid_texture.h>
 #include <game/mesh/box.h>
 #include <game/render/globject.h>
 #include <game/render/viewer.h>
@@ -17,14 +17,14 @@ int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
     int ret = 1;
 
     if (argc != 1) {
-        fprintf(stderr, "Usage: test_solid_color [-d width height] [-t timeout] [-s screenshotPath] size\n");
+        fprintf(stderr, "Usage: test_solid_texture [-d width height] [-t timeout] [-s screenshotPath] size\n");
     } else if (!(size = strtod(argv[0], NULL))) {
         fprintf(stderr, "Error: bad size\n");
     } else if (!make_box(&cubeMesh, size, size, size)) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else {
         cube.vertexArray = vertex_array_new(&cubeMesh);
-        if (!(cube.material = (struct Material*)solid_color_material_new(1.0, 0.0, 1.0))) {
+        if (!(cube.material = (struct Material*)solid_texture_material_new(asset_manager_load_texture("png/rgb_tux.png")))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
             scene->root.object = &cube;

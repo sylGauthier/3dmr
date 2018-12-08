@@ -7,7 +7,10 @@ cd "$(dirname "$0")/.." || die "wrong directory"
 mkdir -p out
 
 for png in assets/png/*tux.png; do
-    testing "$(basename "$png")"
-    ./png_rw "$png" "out/${png##*/}" 2>&- || fail "png_rw"
-    ./scripts/cmp_img.sh "$png" "out/${png##*/}" 2>&- && pass || fail "cmp_img"
+    testing "$(basename "$png")"; (
+        ./png_rw "$png" "out/${png##*/}" 2>&- || fail "png_rw"
+        ./scripts/cmp_img.sh "$png" "out/${png##*/}" 2>&- || fail "cmp_img"
+    ) && pass || set_failed
 done
+
+exit "$code"

@@ -10,4 +10,6 @@ char* asset_manager_find_file(const char* filename);
 GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename);
 GLuint asset_manager_load_texture(const char* filename);
 
+void asset_manager_free(void);
+
 #endif

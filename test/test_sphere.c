@@ -13,6 +13,7 @@
 #include <game/scene/scene.h>
 
 #include "test/util/callbacks.h"
+#include "test/util/main.h"
 
 static const struct EarthTexture {
     const char* path;
@@ -24,24 +25,20 @@ static const struct EarthTexture {
     {"png/earth_equirectangular.png", 2042.0 / 2048.0, 1020.0 / 1024.0, 2.0}
 };
 
-static const enum SphereMapType type = SPHERE_MAP_MILLER;
+static struct GLObject sphere = {0};
 
-int main(int argc, char** argv) {
-    struct Viewer* viewer = NULL;
-    struct Scene scene;
+int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
     struct Mesh sphereMesh = {0};
-    struct GLObject sphere = {0};
-    struct Geometry* geom = NULL;
+    enum SphereMapType type = SPHERE_MAP_MILLER;
     int ret = 1;
 
-    asset_manager_add_path(".");
-    asset_manager_add_path("./test/assets");
-    asset_manager_add_path("..");
-    asset_manager_add_path("../test/assets");
+    if (argc >= 1) {
+        if ((type = strtoul(argv[0], NULL, 10)) < NUM_SPHERE_MAP) {
+            type = SPHERE_MAP_MILLER;
+        }
+    }
 
-    if (!(viewer = viewer_new(640, 480, __FILE__))) {
-        fprintf(stderr, "Error: cannot start viewer\n");
-    } else if (!make_icosphere(&sphereMesh, 2.0, 4)) {
+    if (!make_icosphere(&sphereMesh, 2.0, 4)) {
         fprintf(stderr, "Error: failed to create sphere\n");
     } else if (!compute_sphere_uv(&sphereMesh, texture[type].width, texture[type].height, texture[type].ratio, type)) {
         fprintf(stderr, "Error: failed to compute UVs\n");
@@ -50,31 +47,16 @@ int main(int argc, char** argv) {
         if (!(sphere.material = (struct Material*)solid_texture_material_new(asset_manager_load_texture(texture[type].path)))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
-            scene_init(&scene);
-            scene.root.object = &sphere;
-            node_rotate(&scene.root, VEC3_AXIS_X, -M_PI / 2.0);
-            viewer->close_callback = close_callback;
+            scene->root.object = &sphere;
+            node_rotate(&scene->root, VEC3_AXIS_X, -M_PI / 2.0);
             viewer->wheel_callback = wheel_callback;
             viewer->cursor_callback = cursor_rotate_object;
-            viewer->callbackData = &scene.root;
-
-            running = 1;
-            while (running) {
-                usleep(10 * 1000);
-                viewer_process_events(viewer);
-                viewer_next_frame(viewer);
-                scene_render(&scene, &viewer->camera);
-            }
+            viewer->callbackData = &scene->root;
             ret = 0;
-
-            scene_free(&scene);
         }
     }
 
-    free(sphere.material);
-    vertex_array_free(sphere.vertexArray);
     mesh_free(&sphereMesh);
-    viewer_free(viewer);
 
     return ret;
 }

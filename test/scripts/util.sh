@@ -1,3 +1,5 @@
+code=0
+
 die() {
     printf '[%s] \e[1;31mError: \e[0;31m%s\e[0m\n' "$(basename "$0" .sh)" "$1"
     exit 1
@@ -14,4 +16,8 @@ fail() {
 
 pass() {
     printf '\e[1;32mPASS\e[0m\n'
+}
+
+set_failed() {
+    code=1
 }
