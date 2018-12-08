@@ -1,6 +1,6 @@
-#include "light/light.h"
+#include <game/light/point_light.h>
 
-void test_init_local_light(struct LocalLight *light) {
+void test_init_point_light(struct PointLight* light) {
     light->position[0] = 0;
     light->position[1] = 0;
     light->position[2] = 0;

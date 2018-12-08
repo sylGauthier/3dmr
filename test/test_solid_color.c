@@ -1,18 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "viewer.h"
-#include "scene.h"
-#include "asset_manager.h"
-#include "globject.h"
-#include "mesh/box.h"
-#include "geometry/solid_color.h"
+#include <unistd.h>
+
+#include <game/asset_manager.h>
+#include <game/material/solid_color.h>
+#include <game/mesh/box.h>
+#include <game/render/globject.h>
+#include <game/render/viewer.h>
+#include <game/scene/scene.h>
 
 int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct Scene scene;
-    struct Mesh cube = {0};
-    struct GLObject cubeGl = {0};
-    struct Geometry* geom = NULL;
+    struct Mesh cubeMesh = {0};
+    struct GLObject cube = {0};
     double size;
     int ret = 1;
 
@@ -25,18 +26,19 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: bad size\n");
     } else if (!(viewer = viewer_new(640, 480, __FILE__))) {
         fprintf(stderr, "Error: cannot start viewer\n");
-    } else if (!make_box(&cube, size, size, size)) {
+    } else if (!make_box(&cubeMesh, size, size, size)) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else {
-        globject_new(&cube, &cubeGl);
-        if (!(geom = solid_color_geometry(&cubeGl, 1.0, 0.0, 1.0))) {
+        cube.vertexArray = vertex_array_new(&cubeMesh);
+        if (!(cube.material = (struct Material*)solid_color_material_new(1.0, 0.0, 1.0))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
             scene_init(&scene);
-            scene.root.geometry = geom;
+            scene.root.object = &cube;
 
             viewer_next_frame(viewer);
             scene_render(&scene, &viewer->camera);
+            usleep(1000000);
 
             if (viewer_screenshot(viewer, argv[2])) {
                 ret = 0;
@@ -47,9 +49,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    free(geom);
-    globject_free(&cubeGl);
-    mesh_free(&cube);
+    free(cube.material);
+    vertex_array_free(cube.vertexArray);
+    mesh_free(&cubeMesh);
     viewer_free(viewer);
 
     return ret;

@@ -1,10 +1,12 @@
 #define GLSL
-#include "../src/light/phong.h"
+#include "../game/light/directional_light.h"
+#include "../game/light/point_light.h"
+#include "../game/material/phong.h"
 
 uniform int nbDirectionalLights;
 uniform int nbLocalLights;
 uniform DirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
-uniform LocalLight localLights[MAX_LOCAL_LIGHTS];
+uniform PointLight localLights[MAX_POINT_LIGHTS];
 uniform PhongMaterial material;
 
 vec3 phong_compute_directional_light(DirectionalLight light, vec3 surfelToCamera, vec3 surfelNormal) {
@@ -21,7 +23,7 @@ vec3 phong_compute_directional_light(DirectionalLight light, vec3 surfelToCamera
     return (ambient + diffuse + specular);
 }
 
-vec3 phong_compute_local_light(LocalLight light, vec3 surfelToCamera, vec3 surfelPosition, vec3 surfelNormal) {
+vec3 phong_compute_local_light(PointLight light, vec3 surfelToCamera, vec3 surfelPosition, vec3 surfelNormal) {
     // Diffuse shading
     vec3 surfelToLight = light.position - surfelPosition;
     float distance = length(surfelToLight);

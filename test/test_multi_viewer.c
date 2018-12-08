@@ -6,19 +6,16 @@
 #include <GLFW/glfw3.h>
 #include <unistd.h>
 
-#include "viewer.h"
-#include "camera.h"
-#include "globject.h"
-#include "texture.h"
-#include "scene.h"
-#include "asset_manager.h"
-#include "geometry/solid_color.h"
-#include "geometry/solid_texture.h"
-#include "geometry/phong_color.h"
-#include "geometry/phong_texture.h"
-#include "mesh/obj.h"
-#include "mesh/box.h"
-#include "mesh/icosphere.h"
+#include <game/asset_manager.h>
+#include <game/material/phong_color.h>
+#include <game/material/phong_texture.h>
+#include <game/material/solid_color.h>
+#include <game/material/solid_texture.h>
+#include <game/mesh/box.h>
+#include <game/render/texture.h>
+#include <game/render/viewer.h>
+#include <game/scene/scene.h>
+
 #include "test/util/scenes_basic.h"
 #include "test/util/color.h"
 #include "test/util/light.h"
@@ -27,24 +24,19 @@
 int main() {
     struct Viewer *viewer, *viewer2;
     double t = 0.0, dt;
-    struct Mesh cubeMesh = {0}, boxMesh = {0}, icosphereMesh = {0};
-    struct GLObject cubeGl = {0}, boxGl = {0}, icosphereGl = {0}, cubeGl2 = {0};
-    struct Geometry *sphere, *texturedCube, *coloredBox, *cube2;
+    struct Mesh cubeMesh;
+    struct GLObject cube = {0};
     struct Scene scene, scene2;
     struct Node nodeCube;
-    struct PhongColorMaterial sphereMat = {
-        {0,0,0},{
-        {1.0, 1.0, 1.0},
-        {1.0, 1.0, 1.0},
-        {1.0, 1.0, 1.0},
-        1.0}
-    };
-    struct PhongMaterial cubeMat = {
+    struct PhongMaterial phongMat = {
         {1.0, 1.0, 1.0},
         {1.0, 1.0, 1.0},
         {1.0, 1.0, 1.0},
         1.0
     };
+    struct PhongColorMaterial* sphereMat;
+    struct PhongTextureMaterial* phongCubeMat;
+    struct SolidTextureMaterial* solidCubeMat;
 
     asset_manager_add_path(".");
     asset_manager_add_path("./test/assets");
@@ -63,35 +55,27 @@ int main() {
     running = 1;
 
     make_box(&cubeMesh, 2.0, 2.0, 2.0);
-    make_box(&boxMesh, 4.0, 1.0, 1.0);
-    make_icosphere(&icosphereMesh, 0.5, 2);
-    viewer_make_current(viewer);
-    globject_new(&cubeMesh, &cubeGl);
-    globject_new(&boxMesh, &boxGl);
-    globject_new(&icosphereMesh, &icosphereGl);
     viewer_make_current(viewer2);
-    globject_new(&cubeMesh, &cubeGl2);
+    cube.vertexArray = vertex_array_new(&cubeMesh);
     mesh_free(&cubeMesh);
-    mesh_free(&boxMesh);
-    mesh_free(&icosphereMesh);
 
     viewer_make_current(viewer);
-    sphere = phong_color_geometry_shared(&icosphereGl, &sphereMat);
-    coloredBox = phong_color_geometry(&boxGl, 1.0, 1.0, 1.0, &cubeMat);
-    texturedCube = phong_texture_geometry(&cubeGl, asset_manager_load_texture("png/rgb_tux.png"), &cubeMat);
+    sphereMat = phong_color_material_new(0, 0, 0, &phongMat);
+    phongCubeMat = phong_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"), &phongMat);
     viewer_make_current(viewer2);
-    cube2 = solid_texture_geometry(&cubeGl, asset_manager_load_texture("png/rgb_tux.png"));
+    solidCubeMat = solid_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"));
+    cube.material = (struct Material*)solidCubeMat;
 
     viewer_make_current(viewer);
     scene_init(&scene);
-    spheres_and_boxes(sphere, texturedCube, &scene.root);
+    spheres_and_boxes((struct Material*)sphereMat, (struct Material*)phongCubeMat, &scene.root);
 
-    test_init_local_light(&scene.lights.local[0]);
-    scene.lights.numLocal = 1;
+    test_init_point_light(&scene.lights.point[0]);
+    scene.lights.numPointLights = 1;
 
     viewer_make_current(viewer2);
     scene_init(&scene2);
-    node_init(&nodeCube, cube2);
+    node_init(&nodeCube, &cube);
     node_add_child(&scene2.root, &nodeCube);
 
     viewer->callbackData = &scene.root;
@@ -105,9 +89,9 @@ int main() {
         viewer_make_current(viewer);
         dt = viewer_next_frame(viewer);
         t += 50.0 * dt;
-        hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat.color);
-        mul3sv(scene.lights.local[0].ambient, 0.1, sphereMat.color);
-        mul3sv(scene.lights.local[0].diffuse, 1.0, sphereMat.color);
+        hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat->color);
+        mul3sv(scene.lights.point[0].ambient, 0.1, sphereMat->color);
+        mul3sv(scene.lights.point[0].diffuse, 1.0, sphereMat->color);
         scene_render(&scene, &viewer->camera);
 
         viewer_make_current(viewer2);
@@ -115,15 +99,14 @@ int main() {
         scene_render(&scene2, &viewer2->camera);
     }
 
-    free(sphere);
-    free(texturedCube);
-    free(coloredBox);
-    free(cube2);
-    globject_free(&cubeGl);
-    globject_free(&boxGl);
-    globject_free(&icosphereGl);
+    free(sphereMat);
+    free(phongCubeMat);
+    free(solidCubeMat);
+    vertex_array_free(cube.vertexArray);
     viewer_free(viewer);
+    viewer_free(viewer2);
     scene_free(&scene);
+    scene_free(&scene2);
 
     return 0;
 }

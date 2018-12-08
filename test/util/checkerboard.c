@@ -1,8 +1,10 @@
+#include <game/math/linear_algebra.h>
+#include <game/render/texture.h>
 #include "checkerboard.h"
 
 GLuint default_checkerboard() {
-    Vec4 black =  {0,0,0, 1};
-    Vec4 purple = {1,0,1, 1};
+    Vec4 black =  {0, 0, 0, 1};
+    Vec4 purple = {1, 0, 1, 1};
 
     return texture_checkerboard(black, purple);
 }

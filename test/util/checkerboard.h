@@ -1,8 +1,7 @@
+#include <GL/glew.h>
+
 #ifndef CHECKERBOARD_H
 #define CHECKERBOARD_H
-#include <GL/glew.h>
-#include "linear_algebra.h"
-#include "texture.h"
 
 GLuint default_checkerboard();
 

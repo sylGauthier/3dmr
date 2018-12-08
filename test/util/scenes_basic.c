@@ -1,65 +1,65 @@
 #include <stdlib.h>
+#include <game/mesh/box.h>
+#include <game/mesh/icosphere.h>
+#include <game/render/vertex_array.h>
 #include "scenes_util.h"
 #include "scenes_basic.h"
-#include "mesh/box.h"
-#include "mesh/icosphere.h"
-#include "linear_algebra.h"
 
-struct Node *box_surface(struct Geometry* mat, float size, int slen, float spacing) {
-    struct Node *root;
+struct Node* box_surface(struct Material* mat, float size, int slen, float spacing) {
+    struct Node* root;
     struct Mesh mesh;
-    struct Geometry *g;
+    struct GLObject* o;
 
     root = malloc(sizeof(struct Node));
-    g = malloc(sizeof(struct Geometry));
-    if (!root || !g) {
+    o = malloc(sizeof(struct GLObject));
+    if (!root || !o) {
         free(root);
-        free(g);
+        free(o);
         return NULL;
     }
 
-    *g = *mat;
+    o->material = mat;
 
     make_box(&mesh, size, size, size);
-    globject_new(&mesh, &g->glObject);
+    o->vertexArray = vertex_array_new(&mesh);
     mesh_free(&mesh);
 
     node_init(root, NULL);
 
-    new_geom_surface(g, slen, spacing, root);
+    new_geom_surface(o, slen, spacing, root);
     translate_to_center(slen, spacing, root);
 
     return root;
 }
 
-struct Node *sphere_surface(struct Geometry* mat, float radius, int slen, float spacing) {
-    struct Node *root;
+struct Node* sphere_surface(struct Material* mat, float radius, int slen, float spacing) {
+    struct Node* root;
     struct Mesh mesh;
-    struct Geometry *g;
+    struct GLObject* o;
 
     root = malloc(sizeof(struct Node));
-    g = malloc(sizeof(struct Geometry));
-    if (!root || !g) {
+    o = malloc(sizeof(struct GLObject));
+    if (!root || !o) {
         free(root);
-        free(g);
+        free(o);
         return NULL;
     }
 
-    *g = *mat;
+    o->material = mat;
 
     make_icosphere(&mesh, radius, 2);
-    globject_new(&mesh, &g->glObject);
+    o->vertexArray = vertex_array_new(&mesh);
     mesh_free(&mesh);
 
     node_init(root, NULL);
 
-    new_geom_surface(g, slen, spacing, root);
+    new_geom_surface(o, slen, spacing, root);
     translate_to_center(slen, spacing, root);
 
     return root;
 }
 
-void spheres_and_boxes(struct Geometry* smat, struct Geometry* bmat, struct Node* root) {
+void spheres_and_boxes(struct Material* smat, struct Material* bmat, struct Node* root) {
     struct Node *spheres, *boxes;
 
     if ((boxes = box_surface(bmat, 1, 10, 2))) {

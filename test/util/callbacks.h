@@ -1,3 +1,5 @@
+#include <game/render/viewer.h>
+
 #ifndef TEST_UTIL_CALLBACKS_H
 #define TEST_UTIL_CALLBACKS_H
 

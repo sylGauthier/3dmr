@@ -6,7 +6,6 @@
 *.swp
 *~
 tags
-game
 test/*
 !test/*/
 !test/*.c

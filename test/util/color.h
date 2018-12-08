@@ -1,4 +1,4 @@
-#include "linear_algebra.h"
+#include <game/math/linear_algebra.h>
 
 #ifndef COLOR_UTIL_H
 #define COLOR_UTIL_H

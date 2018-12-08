@@ -5,22 +5,22 @@
 #include <GLFW/glfw3.h>
 #include <unistd.h>
 
-#include "viewer.h"
-#include "camera.h"
-#include "scene.h"
-#include "globject.h"
-#include "text.h"
-#include "geometry/solid_text.h"
-#include "asset_manager.h"
+#include <game/asset_manager.h>
+#include <game/material/solid_text.h>
+#include <game/render/camera.h>
+#include <game/render/globject.h>
+#include <game/render/viewer.h>
+#include <game/scene/scene.h>
+#include <game/text.h>
+
 #include "test/util/callbacks.h"
 
 int run(const char* text) {
     struct Viewer* viewer;
     struct Scene scene;
     struct BitmapFont* font;
-    struct Mesh text_mesh;
-    struct GLObject textGl;
-    struct Geometry* textGeom;
+    struct Mesh textMesh;
+    struct GLObject textObj;
     struct Node textNode;
     char* ttf;
     int err;
@@ -49,18 +49,18 @@ int run(const char* text) {
         return 1;
     }
 
-    if ((err = new_text(font, text, &text_mesh))) {
+    if ((err = new_text(font, text, &textMesh))) {
         fprintf(stderr, "Failed to create text mesh\n");
         return err;
     }
-    globject_new(&text_mesh, &textGl);
+    textObj.vertexArray = vertex_array_new(&textMesh);
 
-    if (!(textGeom = solid_text_geometry(&textGl, 1.0, 1.0, 1.0, font))) {
-        fprintf(stderr, "Failed to create text geometry\n");
+    if (!(textObj.material = (struct Material*)solid_text_material_new(1.0, 1.0, 1.0, font))) {
+        fprintf(stderr, "Failed to create text material\n");
         return err;
     }
 
-    node_init(&textNode, textGeom);
+    node_init(&textNode, &textObj);
     scene_add(&scene, &textNode);
 
     while (running) {
@@ -71,8 +71,9 @@ int run(const char* text) {
     }
 
     scene_free(&scene);
-    globject_free(&textGl);
-    mesh_free(&text_mesh);
+    free(textObj.material);
+    vertex_array_free(textObj.vertexArray);
+    mesh_free(&textMesh);
     font_free(font);
     viewer_free(viewer);
 

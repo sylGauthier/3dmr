@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "viewer.h"
-#include "scene.h"
-#include "node.h"
-#include "asset_manager.h"
-#include "globject.h"
-#include "linear_algebra.h"
-#include "mesh/icosphere.h"
-#include "mesh/sphere_uv.h"
-#include "geometry/solid_texture.h"
+
+#include <game/asset_manager.h>
+#include <game/material/solid_texture.h>
+#include <game/math/linear_algebra.h>
+#include <game/mesh/icosphere.h>
+#include <game/mesh/sphere_uv.h>
+#include <game/render/globject.h>
+#include <game/render/viewer.h>
+#include <game/scene/node.h>
+#include <game/scene/scene.h>
+
 #include "test/util/callbacks.h"
 
 static const struct EarthTexture {
@@ -27,8 +29,8 @@ static const enum SphereMapType type = SPHERE_MAP_MILLER;
 int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct Scene scene;
-    struct Mesh sphere = {0};
-    struct GLObject sphereGl = {0};
+    struct Mesh sphereMesh = {0};
+    struct GLObject sphere = {0};
     struct Geometry* geom = NULL;
     int ret = 1;
 
@@ -39,17 +41,17 @@ int main(int argc, char** argv) {
 
     if (!(viewer = viewer_new(640, 480, __FILE__))) {
         fprintf(stderr, "Error: cannot start viewer\n");
-    } else if (!make_icosphere(&sphere, 2.0, 4)) {
+    } else if (!make_icosphere(&sphereMesh, 2.0, 4)) {
         fprintf(stderr, "Error: failed to create sphere\n");
-    } else if (!compute_sphere_uv(&sphere, texture[type].width, texture[type].height, texture[type].ratio, type)) {
+    } else if (!compute_sphere_uv(&sphereMesh, texture[type].width, texture[type].height, texture[type].ratio, type)) {
         fprintf(stderr, "Error: failed to compute UVs\n");
     } else {
-        globject_new(&sphere, &sphereGl);
-        if (!(geom = solid_texture_geometry(&sphereGl, asset_manager_load_texture(texture[type].path)))) {
+        sphere.vertexArray = vertex_array_new(&sphereMesh);
+        if (!(sphere.material = (struct Material*)solid_texture_material_new(asset_manager_load_texture(texture[type].path)))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
             scene_init(&scene);
-            scene.root.geometry = geom;
+            scene.root.object = &sphere;
             node_rotate(&scene.root, VEC3_AXIS_X, -M_PI / 2.0);
             viewer->close_callback = close_callback;
             viewer->wheel_callback = wheel_callback;
@@ -69,9 +71,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    free(geom);
-    globject_free(&sphereGl);
-    mesh_free(&sphere);
+    free(sphere.material);
+    vertex_array_free(sphere.vertexArray);
+    mesh_free(&sphereMesh);
     viewer_free(viewer);
 
     return ret;
