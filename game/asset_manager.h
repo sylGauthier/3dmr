@@ -1,5 +1,4 @@
-#include <game/render/shader.h>
-#include <game/render/texture.h>
+#include <GL/glew.h>
 
 #ifndef ASSET_MANAGER_H
 #define ASSET_MANAGER_H

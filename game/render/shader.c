@@ -2,30 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include <GL/glew.h>
+#include <game/asset_manager.h>
 
-#define MAX_INCLUDE_DEPTH 16
-
-static int check_compilation(GLuint shader, const char* path) {
-    GLint error, size;
-    char* errorString;
-
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &error);
-    if (error != GL_TRUE) {
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
-        if ((errorString = malloc(size))) {
-            glGetShaderInfoLog(shader, size, &size, errorString);
-            errorString[size] = '\0';
-            fprintf(stderr, "Error: failed to compile '%s':\n%s\n", path ? path : "<in memory shader>", errorString);
-            free(errorString);
-        } else {
-            fprintf(stderr, "Error: failed to compile '%s' and failed to retrieve the compilation error\n", path);
-        }
-        return 0;
-    }
-
-    return 1;
-}
+#define MAX_INCLUDE_DEPTH 32
+#define MAX_SHADER_PATHS 32
 
 static int check_link(GLuint prog) {
     GLint error, size;
@@ -48,120 +30,189 @@ static int check_link(GLuint prog) {
     return 1;
 }
 
-static GLuint compile_string(const char* code, GLint size, GLenum type, const char* filepathHint) {
-    GLuint shader, ret = 0;
+static int append_code(const char* string, char** code, unsigned int* codeSize, unsigned int* allocSize) {
+    size_t size = strlen(string), newSize;
+    char* tmp;
 
-    if ((shader = glCreateShader(type))) {
-        glShaderSource(shader, 1, (const char**)&code, &size);
-        glCompileShader(shader);
-        if (check_compilation(shader, filepathHint)) {
-            ret = shader;
-        } else {
-            glDeleteShader(shader);
+    if (((size_t)*codeSize) + size >= ((size_t)*allocSize)) {
+        newSize = *allocSize + size + 1024;
+        if (newSize > (size_t)UINT_MAX) {
+            fprintf(stderr, "Error: shader size is too large\n");
+            return 0;
         }
-    } else {
-        fprintf(stderr, "Error: failed to create shader\n");
+        if (!(tmp = realloc(*code, newSize))) {
+            fprintf(stderr, "Error: memory allocation failed\n");
+            return 0;
+        }
+        *code = tmp;
+        *allocSize = newSize;
     }
-
-    return ret;
+    memcpy(*code + *codeSize, string, size);
+    *codeSize += size;
+    return 1;
 }
 
 static GLuint compile(const char* path, GLenum type) {
     char buffer[2048];
-    GLuint ret = 0;
-    GLint size = 0;
-    char *code = NULL, *tmp, *start, *end, *currentPath[MAX_INCLUDE_DEPTH];
-    unsigned int directorySize, oldSize = 0, newSize, lineSize, ifLevel = 0;
-    FILE* source[MAX_INCLUDE_DEPTH];
-    int i, currentSource = 0, ok = 1;
+    struct File {
+        FILE* fd;
+        unsigned long line;
+        unsigned int pathNum;
+        char* altPath;
+    } files[MAX_INCLUDE_DEPTH];
+    char* paths[MAX_SHADER_PATHS];
+    char* code = NULL;
+    char *ptr, *cur, *end, *dirEnd, *altPath;
+    size_t n;
+    unsigned long curFile = 0, curPath = 0, ifLevel = 0;
+    unsigned int codeSize = 0, codeAllocSize = 0;
+    int ok = 1, keepGoing, found;
+    GLuint shader = 0;
+    GLint error, errorSize;
+    char* errorString;
 
-    if (!(source[0] = fopen(path, "r"))) {
-        fprintf(stderr, "Error: failed to open '%s'\n", path);
+    if (!(paths[0] = malloc(strlen(path) + 1))) {
+        fprintf(stderr, "Error: memory allocation error\n");
         return 0;
     }
-    currentPath[0] = (char*)path;
-
+    strcpy(paths[0], path);
+    files[0].pathNum = 0;
+    files[0].fd = NULL;
+    files[0].altPath = NULL;
     do {
-        while (fgets(buffer, sizeof(buffer), source[currentSource])) {
-            if (!strncmp(buffer, "#include", 8) && isspace(buffer[8])) {
-                if (ifLevel) continue;
-                ok = 0;
-                for (start = buffer + 9; *start && *start != '\"'; start++);
-                if (*start != '\"' || !(end = strchr(++start, '\"'))) {
-                    fprintf(stderr, "Error: failed to preprocess shader, #include syntax error\n\tin %s\n", currentPath[currentSource]);
-                    for (i = currentSource - 1; i >= 0; i--) {
-                        fprintf(stderr, "\t included from %s\n", currentPath[i]);
-                    }
-                } else if (currentSource >= (sizeof(source) / sizeof(*source)) - 1) {
-                    fprintf(stderr, "Error: failed to preprocess shader, max #include depth reached\n\tin %s\n", currentPath[currentSource]);
-                    for (i = currentSource - 1; i >= 0; i--) {
-                        fprintf(stderr, "\t included from %s\n", currentPath[i]);
-                    }
+        if (!files[curFile].fd) {
+            files[curFile].line = 1;
+            altPath = NULL;
+            if (!(files[curFile].fd = fopen(paths[files[curFile].pathNum], "r"))
+             && (!(altPath = files[curFile].altPath) || !(files[curFile].fd = fopen(altPath, "r")))) {
+                if (curFile) {
+                    fprintf(stderr, "Error: %s:%lu #include file not found %s\n", paths[files[curFile - 1].pathNum], files[curFile - 1].line, paths[files[curFile].pathNum]);
                 } else {
-                    *end = 0;
-                    directorySize = ((tmp = strrchr(currentPath[currentSource], '/'))) ? (tmp - currentPath[currentSource] + 1) : 0;
-                    if ((currentPath[currentSource + 1] = malloc(directorySize + end - start + 1))) {
-                        currentSource++;
-                        memcpy(currentPath[currentSource], currentPath[currentSource - 1], directorySize);
-                        memcpy(currentPath[currentSource] + directorySize, start, end - start + 1);
-                        if ((source[currentSource] = fopen(currentPath[currentSource], "r"))) {
-                            ok = 1;
-                        } else {
-                            fprintf(stderr, "Error: failed to open included shader '%s'\n\tin %s\n", currentPath[currentSource], currentPath[currentSource - 1]);
-                            currentSource--;
-                            for (i = currentSource - 1; i >= 0; i--) {
-                                fprintf(stderr, "\t included from %s\n", currentPath[i]);
-                            }
-                        }
-                    } else {
-                        fprintf(stderr, "Error: memory allocation failed\n");
-                    }
+                    fprintf(stderr, "Error: shader file %s not found\n", path);
                 }
-                break;
-            } else {
-                if ((!strncmp(buffer, "#if", 3) && isspace(buffer[3]))
-                 || (!strncmp(buffer, "#ifdef", 6) && isspace(buffer[6]))
-                 || (!strncmp(buffer, "#ifndef", 7) && isspace(buffer[7]))) {
-                    ifLevel++;
-                } else if (ifLevel && !strncmp(buffer, "#endif", 6) && isspace(buffer[6])) {
-                    ifLevel--;
-                }
-                lineSize = strlen(buffer);
-                if (oldSize < (newSize = ((size + lineSize + 1023) / 1024) * 1024)) {
-                    if ((tmp = realloc(code, newSize))) {
-                        code = tmp;
-                        oldSize = newSize;
-                    } else {
-                        fprintf(stderr, "Error: memory allocation failed\n");
-                        ok = 0;
-                        break;
-                    }
-                }
-                memcpy(code + size, buffer, lineSize);
-                size += lineSize;
+                ok = 0; break;
+            }
+            if (altPath) {
+                free(paths[files[curFile].pathNum]);
+                paths[files[curFile].pathNum] = altPath;
+            } else if (files[curFile].altPath) {
+                free(files[curFile].altPath);
+                files[curFile].altPath = NULL;
             }
         }
-        if (feof(source[currentSource])) {
-            fclose(source[currentSource]);
-            if (currentSource) free(currentPath[currentSource]);
-            currentSource--;
+        if (curFile || files[curFile].line > 1) {
+            sprintf(buffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+            if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
+                ok = 0; break;
+            }
         }
-    } while (ok && currentSource >= 0);
+        keepGoing = 1;
+        while (ok && keepGoing && fgets(buffer, sizeof(buffer), files[curFile].fd)) {
+            for (ptr = buffer; *ptr == ' ' || *ptr == '\t'; ptr++);
+            if (!ifLevel && !strncmp(ptr, "#include", 8) && (ptr[8] == ' ' || ptr[8] == '\t')) {
+                for (dirEnd = end = paths[files[curFile].pathNum]; *end; end++) {
+                    if (*end == '/') dirEnd = end + 1;
+                }
+                for (ptr += 9; *ptr == ' ' || *ptr == '\t'; ptr++);
+                for (end = ptr; *end; end++);
+                for (--end; end > ptr && (*end == ' ' || *end == '\t' || *end == '\n'); --end);
+                for (cur = ptr + 1; cur < end - 1 && *cur != '"'; cur++);
+                ok = 0;
+                if (((*ptr != '"' || *end != '"') && (*ptr != '<' || *end != '>')) || end <= ptr || *cur == '"') {
+                    fprintf(stderr, "Error: %s:%lu invalid #include directive\n", paths[files[curFile].pathNum], files[curFile].line);
+                } else if (curFile + 1 >= MAX_INCLUDE_DEPTH) {
+                    fprintf(stderr, "Error: %s:%lu #include depth limit reached\n", paths[files[curFile].pathNum], files[curFile].line);
+                } else if (curPath + 1 >= MAX_SHADER_PATHS) {
+                    fprintf(stderr, "Error: %s:%lu shader path number limit reached\n", paths[files[curFile].pathNum], files[curFile].line);
+                } else if (!(cur = malloc((dirEnd - paths[files[curFile].pathNum]) + (end - ptr)))) {
+                    fprintf(stderr, "Error: memory allocation failed\n");
+                } else {
+                    memcpy(cur, paths[files[curFile].pathNum], n = (dirEnd - paths[files[curFile].pathNum]));
+                    memcpy(cur + n, ptr + 1, (end - ptr) - 1);
+                    cur[n + (end - ptr) - 1] = 0;
+                    paths[++curPath] = cur;
+                    files[++curFile].pathNum = curPath;
+                    files[curFile].fd = NULL;
+                    if (*ptr == '<' && (altPath = asset_manager_find_file(cur + n))) {
+                        files[curFile].altPath = cur;
+                        paths[curPath] = altPath;
+                    } else {
+                        files[curFile].altPath = NULL;
+                    }
+                    ok = 1;
+                    keepGoing = 0;
+                }
+            } else {
+                if ((!strncmp(ptr, "#if", 3) && (ptr[3] == ' ' || ptr[3] == '\t'))
+                 || (!strncmp(ptr, "#ifdef", 6) && (ptr[6] == ' ' || ptr[6] == '\t'))
+                 || (!strncmp(ptr, "#ifndef", 7) && (ptr[7] == ' ' || ptr[7] == '\t'))) {
+                    ifLevel++;
+                } else if (ifLevel && !strncmp(ptr, "#endif", 6) && (ptr[6] == ' ' || ptr[6] == '\t' || ptr[6] == '\n' || !ptr[6])) {
+                    ifLevel--;
+                }
+                if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
+                    ok = 0;
+                }
+                files[curFile].line++;
+            }
+        }
+        if (!ok) break;
+        if (!keepGoing) continue;
+        if (!curFile) break;
+        curFile--;
+        files[curFile].line++;
+    } while (1);
 
-    while (currentSource >= 0) {
-        fclose(source[currentSource]);
-        if (currentSource) free(currentPath[currentSource]);
-        currentSource--;
-    }
+#if 0
+    code[codeSize] = 0;
+    printf("\n===%s\n%s\n", path, code);
+#endif
 
     if (ok) {
-        /*printf("Compiling %s\n", path);
-        fwrite(code, 1, size, stdout);*/
-        ret = compile_string(code, size, type, path);
+        if (!(shader = glCreateShader(type))) {
+            fprintf(stderr, "Error: failed to create shader\n");
+        } else {
+            glShaderSource(shader, 1, (const char**)&code, &codeSize);
+            glCompileShader(shader);
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &error);
+            ok = (error == GL_TRUE);
+            if (!ok) {
+                glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errorSize);
+                if (!(errorString = malloc(errorSize))) {
+                    fprintf(stderr, "Error: failed to compile '%s' and failed to retrieve the compilation error\n", path);
+                } else {
+                    glGetShaderInfoLog(shader, errorSize, &errorSize, errorString);
+                    fprintf(stderr, "Error: failed to compile '%s'\n", path);
+                    found = 0;
+                    for (cur = errorString; *cur; cur++) {
+                        if (!found && *cur >= '0' && *cur <= '9') {
+                            unsigned long pathNum = strtoul(cur, &ptr, 10);
+                            if (pathNum <= curPath && (*ptr == ':' || *ptr == '(')) {
+                                unsigned long line = strtoul(ptr + 1, &end, 10);
+                                if ((*ptr == ':' && *end == ':') || (*ptr == ':' && *end == '(') || (*ptr == '(' && *end == ')')) {
+                                    fprintf(stderr, "%s: %lu", paths[pathNum], line);
+                                    cur = end - (*ptr == ':');
+                                    found = 1;
+                                    continue;
+                                }
+                            }
+                        }
+                        if (*cur == '\n') found = 0;
+                        fputc(*cur, stderr);
+                    }
+                    errorString[errorSize] = '\0';
+                    free(errorString);
+                }
+                glDeleteShader(shader);
+                shader = 0;
+            }
+        }
     }
-    free(code);
+    do {
+        free(paths[curPath]);
+    } while (curPath--);
 
-    return ret;
+    return shader;
 }
 
 GLuint shader_compile(const char* vertexShaderPath, const char* fragmentShaderPath) {
