@@ -4,11 +4,11 @@
 
 in vec3 surfelPosition;
 in vec3 surfelNormal;
-in vec4 color;
+in vec3 color;
 out vec4 out_Color;
 
 uniform vec3 cameraPosition;
 
 void main() {
-    out_Color = color * vec4(phong_light_factor(cameraPosition, surfelPosition, surfelNormal), 1.0);
+    out_Color = vec4(color * phong(cameraPosition, surfelPosition, surfelNormal), 1.0);
 }

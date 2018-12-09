@@ -12,17 +12,43 @@
 
 int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv);
 
+int usage(const char* testname, const char* args) {
+    printf("Usage: %s [-d width height] [-t timeout] [-s screenshotPath] [other args] %s\n", testname, args);
+    printf(
+            "Light arguments:\n"
+            " -La <color>: define the ambiant light\n"
+            " -Lp <position;color;radius>: define a point light\n"
+            " -Ld <direction;color>: define a directional light\n"
+          );
+}
+
+static int test_parse_vec3(const char* s, char** e, Vec3 out) {
+    unsigned int i;
+    for (i = 0; i < 3; i++) {
+        out[i] = strtod(s, e);
+        if (*e == s || (i < 2 && *(*e)++ != ',')) {
+            return 0;
+        }
+        s = *e;
+    }
+    return 1;
+}
+
 int main(int argc, char** argv) {
     struct Scene scene;
     struct Viewer* viewer = NULL;
-    char *ptr, *tmp, *title;
+    char *ptr, *tmp, *title, *arg;
     const char* screenshot = NULL;
     unsigned int width = 640, height = 480;
+    struct PointLight* pointLight;
+    struct DirectionalLight* directionalLight;
     int timeout = -1;
     time_t start, t;
     int ret = 0;
 
-    if (!(title = strrchr(argv[0], '/'))) {
+    if ((title = strrchr(argv[0], '/'))) {
+        title++;
+    } else {
         title = argv[0];
     }
     if ((ptr = strstr(argv[0], "test/")) && !strchr(ptr + 5, '/')) {
@@ -44,6 +70,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    scene_init(&scene);
     argv++; argc--;
     while (argc && **argv == '-') {
         if ((*argv)[1] == '-') {
@@ -84,6 +111,47 @@ int main(int argc, char** argv) {
                         return 1;
                     }
                     break;
+                case 'L':
+                    switch (*++ptr) {
+                        case 'a':
+                            if (!argc || !test_parse_vec3(*++argv, &arg, scene.lights.ambiantLight.color) || *arg) {
+                                fprintf(stderr, "Error: wrong -La parameter, see usage\n");
+                                return 1;
+                            }
+                            argc--;
+                            break;
+                        case 'p':
+                            if (scene.lights.numPointLights >= MAX_POINT_LIGHTS) {
+                                fprintf(stderr, "Error: too much point lights\n");
+                                return 1;
+                            }
+                            pointLight = scene.lights.point + scene.lights.numPointLights++;
+                            if (!argc || !test_parse_vec3(*++argv, &arg, pointLight->position) || *arg++ != ';'
+                                      || !test_parse_vec3(arg, &arg, pointLight->color) || *arg++ != ';'
+                                      || (pointLight->radius = strtod(arg, &arg)) < 0.0 || *arg) {
+                                fprintf(stderr, "Error: wrong -Lp parameter, see usage\n");
+                                return 1;
+                            }
+                            argc--;
+                            break;
+                        case 'd':
+                            if (scene.lights.numDirectionalLights >= MAX_DIRECTIONAL_LIGHTS) {
+                                fprintf(stderr, "Error: too much directional lights\n");
+                                return 1;
+                            }
+                            directionalLight = scene.lights.directional + scene.lights.numDirectionalLights++;
+                            if (!argc || !test_parse_vec3(*++argv, &arg, directionalLight->direction) || *arg++ != ';'
+                                      || !test_parse_vec3(arg, &arg, directionalLight->color) || *arg) {
+                                fprintf(stderr, "Error: wrong -Ld parameter, see usage\n");
+                                return 1;
+                            }
+                            argc--;
+                            break;
+                        default:
+                            fprintf(stderr, "Error: unknown light type, see usage\n");
+                            return 1;
+                    }
+                    break;
                 default:
                     fprintf(stderr, "Error: unrecognised option: %c\n", *ptr);
                     return 1;
@@ -96,7 +164,6 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: cannot start viewer\n");
         return 1;
     }
-    scene_init(&scene);
     if (run(viewer, &scene, argc, argv)) {
         ret = 1;
     } else {

@@ -17,7 +17,7 @@ int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
     int ret = 1;
 
     if (argc != 1) {
-        fprintf(stderr, "Usage: test_solid_texture [-d width height] [-t timeout] [-s screenshotPath] size\n");
+        usage("test_solid_texture", "size");
     } else if (!(size = strtod(argv[0], NULL))) {
         fprintf(stderr, "Error: bad size\n");
     } else if (!make_box(&cubeMesh, size, size, size)) {

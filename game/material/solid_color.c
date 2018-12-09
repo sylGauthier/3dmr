@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <game/asset_manager.h>
 #include "solid_color.h"
 #include "shaders.h"
 
@@ -13,6 +14,11 @@ static void solid_color_prerender(const struct Material* material, const struct 
 struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
     struct SolidColorMaterial* solidColor;
 
+    if (!game_shaders[SHADER_SOLID_COLOR]) {
+        if (!(game_shaders[SHADER_SOLID_COLOR] = asset_manager_load_shader("shaders/solid_color.vert", "shaders/solid_color.frag"))) {
+            return NULL;
+        }
+    }
     if (!(solidColor = malloc(sizeof(*solidColor)))) {
         return NULL;
     }

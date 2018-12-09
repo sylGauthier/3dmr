@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <game/asset_manager.h>
 #include "phong_texture.h"
 #include "shaders.h"
 
@@ -15,6 +16,11 @@ static void phong_texture_postrender(const struct Material* material, const stru
 struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const struct PhongMaterial* phong) {
     struct PhongTextureMaterial* phongTexture;
 
+    if (!game_shaders[SHADER_PHONG_TEXTURE]) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE] = asset_manager_load_shader("shaders/phong_texture.vert", "shaders/phong_texture.frag"))) {
+            return NULL;
+        }
+    }
     if (!(phongTexture = malloc(sizeof(*phongTexture)))) {
         return NULL;
     }

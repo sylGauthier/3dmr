@@ -5,41 +5,25 @@
 #include <limits.h>
 #include <GL/glew.h>
 #include <game/asset_manager.h>
+#include "shader.h"
 
 #define MAX_INCLUDE_DEPTH 32
 #define MAX_SHADER_PATHS 32
 
-static int check_link(GLuint prog) {
-    GLint error, size;
-    char* errorString;
-
-    glGetProgramiv(prog, GL_LINK_STATUS, &error);
-    if (error != GL_TRUE) {
-        glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &size);
-        if ((errorString = malloc(size))) {
-            glGetProgramInfoLog(prog, size, &size, errorString);
-            errorString[size] = '\0';
-            fprintf(stderr, "Error: failed to link shaders:\n%s\n", errorString);
-            free(errorString);
-        } else {
-            fprintf(stderr, "Error: failed to link shaders and to retrieve the error\n");
-        }
-        return 0;
-    }
-
-    return 1;
-}
-
-static int append_code(const char* string, char** code, unsigned int* codeSize, unsigned int* allocSize) {
+static int append_code(const char* string, char** code, GLint* codeSize, unsigned int* allocSize) {
     size_t size = strlen(string), newSize;
     char* tmp;
 
+    if ((size_t)(INT_MAX - *codeSize) < size) {
+        fprintf(stderr, "Error: shader size is too large\n");
+        return 0;
+    }
     if (((size_t)*codeSize) + size >= ((size_t)*allocSize)) {
-        newSize = *allocSize + size + 1024;
-        if (newSize > (size_t)UINT_MAX) {
+        if ((size_t)(INT_MAX - *allocSize) < (size + 1024)) {
             fprintf(stderr, "Error: shader size is too large\n");
             return 0;
         }
+        newSize = *allocSize + size + 1024;
         if (!(tmp = realloc(*code, newSize))) {
             fprintf(stderr, "Error: memory allocation failed\n");
             return 0;
@@ -52,52 +36,53 @@ static int append_code(const char* string, char** code, unsigned int* codeSize, 
     return 1;
 }
 
-static GLuint compile(const char* path, GLenum type) {
+GLuint shader_compile(const char* path, GLenum type) {
+    FILE* fd;
+    GLuint shader = 0;
+
+    if (!(fd = fopen(path, "r"))) {
+        fprintf(stderr, "Error: shader file %s not found\n", path);
+    } else {
+        shader = shader_compile_fd(fd, path, type);
+        fclose(fd);
+    }
+
+    return shader;
+}
+
+GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
     char buffer[2048];
     struct File {
         FILE* fd;
         unsigned long line;
         unsigned int pathNum;
-        char* altPath;
     } files[MAX_INCLUDE_DEPTH];
     char* paths[MAX_SHADER_PATHS];
     char* code = NULL;
     char *ptr, *cur, *end, *dirEnd, *altPath;
     size_t n;
     unsigned long curFile = 0, curPath = 0, ifLevel = 0;
-    unsigned int codeSize = 0, codeAllocSize = 0;
+    unsigned int codeAllocSize = 0;
     int ok = 1, keepGoing, found;
     GLuint shader = 0;
-    GLint error, errorSize;
+    GLint error, errorSize, codeSize = 0;
     char* errorString;
 
-    if (!(paths[0] = malloc(strlen(path) + 1))) {
-        fprintf(stderr, "Error: memory allocation error\n");
-        return 0;
-    }
-    strcpy(paths[0], path);
+    paths[0] = (char*)pathInfo;
+    files[0].line = 1;
     files[0].pathNum = 0;
-    files[0].fd = NULL;
-    files[0].altPath = NULL;
+    files[0].fd = fd;
     do {
         if (!files[curFile].fd) {
             files[curFile].line = 1;
             altPath = NULL;
-            if (!(files[curFile].fd = fopen(paths[files[curFile].pathNum], "r"))
-             && (!(altPath = files[curFile].altPath) || !(files[curFile].fd = fopen(altPath, "r")))) {
+            if (!(files[curFile].fd = fopen(paths[files[curFile].pathNum], "r"))) {
                 if (curFile) {
                     fprintf(stderr, "Error: %s:%lu #include file not found %s\n", paths[files[curFile - 1].pathNum], files[curFile - 1].line, paths[files[curFile].pathNum]);
                 } else {
-                    fprintf(stderr, "Error: shader file %s not found\n", path);
+                    fprintf(stderr, "Error: shader file %s not found\n", paths[files[curFile].pathNum]);
                 }
                 ok = 0; break;
-            }
-            if (altPath) {
-                free(paths[files[curFile].pathNum]);
-                paths[files[curFile].pathNum] = altPath;
-            } else if (files[curFile].altPath) {
-                free(files[curFile].altPath);
-                files[curFile].altPath = NULL;
             }
         }
         if (curFile || files[curFile].line > 1) {
@@ -130,14 +115,13 @@ static GLuint compile(const char* path, GLenum type) {
                     memcpy(cur, paths[files[curFile].pathNum], n = (dirEnd - paths[files[curFile].pathNum]));
                     memcpy(cur + n, ptr + 1, (end - ptr) - 1);
                     cur[n + (end - ptr) - 1] = 0;
-                    paths[++curPath] = cur;
-                    files[++curFile].pathNum = curPath;
+                    files[++curFile].pathNum = ++curPath;
                     files[curFile].fd = NULL;
                     if (*ptr == '<' && (altPath = asset_manager_find_file(cur + n))) {
-                        files[curFile].altPath = cur;
                         paths[curPath] = altPath;
+                        free(cur);
                     } else {
-                        files[curFile].altPath = NULL;
+                        paths[curPath] = cur;
                     }
                     ok = 1;
                     keepGoing = 0;
@@ -159,14 +143,19 @@ static GLuint compile(const char* path, GLenum type) {
         if (!ok) break;
         if (!keepGoing) continue;
         if (!curFile) break;
+        fclose(files[curFile].fd);
         curFile--;
         files[curFile].line++;
     } while (1);
 
 #if 0
     code[codeSize] = 0;
-    printf("\n===%s\n%s\n", path, code);
+    printf("\n===%s\n%s\n", pathInfo, code);
 #endif
+
+    while (curFile) {
+        fclose(files[curFile--].fd);
+    }
 
     if (ok) {
         if (!(shader = glCreateShader(type))) {
@@ -179,10 +168,11 @@ static GLuint compile(const char* path, GLenum type) {
             if (!ok) {
                 glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &errorSize);
                 if (!(errorString = malloc(errorSize))) {
-                    fprintf(stderr, "Error: failed to compile '%s' and failed to retrieve the compilation error\n", path);
+                    fprintf(stderr, "Error: failed to compile '%s' and failed to retrieve the compilation error\n", pathInfo);
                 } else {
                     glGetShaderInfoLog(shader, errorSize, &errorSize, errorString);
-                    fprintf(stderr, "Error: failed to compile '%s'\n", path);
+                    errorString[errorSize] = '\0';
+                    fprintf(stderr, "Error: failed to compile '%s'\n", pathInfo);
                     found = 0;
                     for (cur = errorString; *cur; cur++) {
                         if (!found && *cur >= '0' && *cur <= '9') {
@@ -200,7 +190,6 @@ static GLuint compile(const char* path, GLenum type) {
                         if (*cur == '\n') found = 0;
                         fputc(*cur, stderr);
                     }
-                    errorString[errorSize] = '\0';
                     free(errorString);
                 }
                 glDeleteShader(shader);
@@ -208,36 +197,66 @@ static GLuint compile(const char* path, GLenum type) {
             }
         }
     }
-    do {
-        free(paths[curPath]);
-    } while (curPath--);
+    while (curPath) {
+        free(paths[curPath--]);
+    }
+    free(code);
 
     return shader;
 }
 
-GLuint shader_compile(const char* vertexShaderPath, const char* fragmentShaderPath) {
-    GLuint prog = 0, vertexShader, fragmentShader;
+GLuint shader_link(GLuint* shaders, size_t numShaders) {
+    char* errorString;
+    size_t i;
+    GLint error, size;
+    GLuint prog = 0;
 
-    if ((vertexShader = compile(vertexShaderPath, GL_VERTEX_SHADER))) {
-        if ((fragmentShader = compile(fragmentShaderPath, GL_FRAGMENT_SHADER))) {
-            prog = glCreateProgram();
-            glAttachShader(prog, vertexShader);
-            glAttachShader(prog, fragmentShader);
-            glBindAttribLocation(prog, 0, "in_Vertex");
-            glBindAttribLocation(prog, 1, "in_Normal");
-            glBindAttribLocation(prog, 2, "in_TexCoord");
-            glLinkProgram(prog);
-            if (check_link(prog)) {
-                glDetachShader(prog, vertexShader);
-                glDetachShader(prog, fragmentShader);
-            } else {
-                fprintf(stderr, "The shaders were '%s' and '%s'\n", vertexShaderPath, fragmentShaderPath);
-                glDeleteProgram(prog);
-                prog = 0;
-            }
-            glDeleteShader(fragmentShader);
+    if (!(prog = glCreateProgram())) {
+        fprintf(stderr, "Error: failed to create program\n");
+        return 0;
+    }
+    for (i = 0; i < numShaders; i++) {
+        glAttachShader(prog, shaders[i]);
+    }
+    glBindAttribLocation(prog, LOCATION_VERTEX, "in_Vertex");
+    glBindAttribLocation(prog, LOCATION_NORMAL, "in_Normal");
+    glBindAttribLocation(prog, LOCATION_TEXCOORD, "in_TexCoord");
+    glLinkProgram(prog);
+
+    glGetProgramiv(prog, GL_LINK_STATUS, &error);
+    if (error != GL_TRUE) {
+        glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &size);
+        if ((errorString = malloc(size))) {
+            glGetProgramInfoLog(prog, size, &size, errorString);
+            errorString[size] = '\0';
+            fprintf(stderr, "Error: failed to link shaders:\n%s\n", errorString);
+            free(errorString);
+        } else {
+            fprintf(stderr, "Error: failed to link shaders and to retrieve the error\n");
         }
-        glDeleteShader(vertexShader);
+    }
+    for (i = 0; i < numShaders; i++) {
+        glDetachShader(prog, shaders[i]);
+    }
+    if (error != GL_TRUE) {
+        glDeleteProgram(prog);
+        prog = 0;
+    }
+
+    return prog;
+}
+
+GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath) {
+    GLuint prog = 0, shaders[2];
+
+    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER))) {
+        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER))) {
+            if (!(prog = shader_link(shaders, 2))) {
+                fprintf(stderr, "The shaders were '%s' and '%s'\n", vertexShaderPath, fragmentShaderPath);
+            }
+            glDeleteShader(shaders[1]);
+        }
+        glDeleteShader(shaders[0]);
     }
 
     return prog;

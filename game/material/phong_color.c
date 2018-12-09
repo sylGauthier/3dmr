@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <game/asset_manager.h>
 #include "solid_color.h"
 #include "phong_color.h"
 #include "shaders.h"
@@ -12,6 +13,11 @@ static void phong_color_prerender(const struct Material* material, const struct 
 struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, const struct PhongMaterial* phong) {
     struct PhongColorMaterial* phongColor;
 
+    if (!game_shaders[SHADER_PHONG_COLOR]) {
+        if (!(game_shaders[SHADER_PHONG_COLOR] = asset_manager_load_shader("shaders/phong_color.vert", "shaders/phong_color.frag"))) {
+            return NULL;
+        }
+    }
     if (!(phongColor = malloc(sizeof(*phongColor)))) {
         return NULL;
     }

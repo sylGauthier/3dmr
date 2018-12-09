@@ -20,6 +20,13 @@
 #define RESTRICT_MAT4(var) Mat4 var
 #endif
 
+#define vec2 Vec2
+#define vec3 Vec3
+#define vec4 Vec4
+#define mat2 Mat2
+#define mat3 Mat3
+#define mat4 Mat4
+
 typedef float Vec2[2];
 typedef float Vec3[3];
 typedef float Vec4[4];

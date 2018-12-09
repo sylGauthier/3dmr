@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <game/asset_manager.h>
 #include "solid_text.h"
 #include "shaders.h"
 
@@ -15,6 +16,11 @@ static void text_postrender(const struct Material* material, const struct Camera
 struct SolidTextMaterial* solid_text_material_new(float r, float g, float b, const struct BitmapFont* font) {
     struct SolidTextMaterial* solidText;
 
+    if (!game_shaders[SHADER_SOLID_TEXT]) {
+        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/text.vert", "shaders/text.frag"))) {
+            return NULL;
+        }
+    }
     if (!(solidText = malloc(sizeof(*solidText)))) {
         return NULL;
     }

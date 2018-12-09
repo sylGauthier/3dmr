@@ -1,61 +1,46 @@
 #define GLSL
-#include "../game/light/directional_light.h"
-#include "../game/light/point_light.h"
-#include "../game/material/phong.h"
 
-uniform int nbDirectionalLights;
-uniform int nbLocalLights;
-uniform DirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
-uniform PointLight localLights[MAX_POINT_LIGHTS];
+#include "lights.glsl"
+#include "material/phong.h"
+
 uniform PhongMaterial material;
 
 vec3 phong_compute_directional_light(DirectionalLight light, vec3 surfelToCamera, vec3 surfelNormal) {
     vec3 surfelToLight = -light.direction;
 
     float diffuseFactor = max(dot(surfelToLight, surfelNormal), 0.0);
+
     vec3 reflectDirection = reflect(surfelToLight, surfelNormal);
     float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess);
 
-    vec3 ambient = light.ambient * material.ambient;
-    vec3 diffuse = diffuseFactor * light.diffuse * material.diffuse;
-    vec3 specular = specularFactor * light.specular * material.specular;
-
-    return (ambient + diffuse + specular);
+    return (diffuseFactor * material.diffuse + specularFactor * material.specular) * light.color;
 }
 
-vec3 phong_compute_local_light(PointLight light, vec3 surfelToCamera, vec3 surfelPosition, vec3 surfelNormal) {
-    // Diffuse shading
+vec3 phong_compute_point_light(PointLight light, vec3 surfelToCamera, vec3 surfelPosition, vec3 surfelNormal) {
     vec3 surfelToLight = light.position - surfelPosition;
     float distance = length(surfelToLight);
-    surfelToLight *= float(1) / distance;     // normalization
-    float diffuseFactor = max(dot(surfelNormal, surfelToLight), 0.0);
+    surfelToLight *= float(1) / distance;
 
-    // Specular shading
-    vec3 reflectDirection = reflect(-surfelToLight, surfelNormal);
-    float specularFactor = (dot(surfelNormal, surfelToLight) > 0) ? pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess) : 0;
+    float diffuseFactor = max(dot(surfelToLight, surfelNormal), 0.0);
 
-    float t = light.decay * distance;
-    float attenuation = light.intensity / (1 + t + t * t / 2 + t * t * t / 6);
+    vec3 reflectDirection = reflect(surfelToLight, surfelNormal);
+    float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess);
 
-    // Combine results
-    vec3 ambient  = attenuation *                  light.ambient  * material.ambient ;
-    vec3 diffuse  = attenuation * diffuseFactor  * light.diffuse  * material.diffuse ;
-    vec3 specular = attenuation * specularFactor * light.specular * material.specular;
-
-    return (ambient + diffuse + specular);
+    float attenuation = 1.0 / (1.0 + (2.0 / light.radius) * distance + (1.0 / (light.radius * light.radius)) * distance);
+    return attenuation * (diffuseFactor * material.diffuse + specularFactor * material.specular) * light.color;
 }
 
-vec3 phong_light_factor(vec3 cameraPosition, vec3 surfelPosition, vec3 surfelNormal) {
-    vec3 lightFactor = vec3(0.0, 0.0, 0.0);
+vec3 phong(vec3 cameraPosition, vec3 surfelPosition, vec3 surfelNormal) {
+    vec3 lightFactor = material.ambient * ambiantLight.color;
     vec3 surfelToCamera = normalize(cameraPosition - surfelPosition);
     int i;
 
-    for (i = 0; i < nbDirectionalLights; i++) {
+    for (i = 0; i < numDirectionalLights; i++) {
         lightFactor += phong_compute_directional_light(directionalLights[i], surfelToCamera, surfelNormal);
     }
 
-    for (i = 0; i < nbLocalLights; i++) {
-        lightFactor += phong_compute_local_light(localLights[i], surfelToCamera, surfelPosition, surfelNormal);
+    for (i = 0; i < numPointLights; i++) {
+        lightFactor += phong_compute_point_light(pointLights[i], surfelToCamera, surfelPosition, surfelNormal);
     }
 
     return lightFactor;

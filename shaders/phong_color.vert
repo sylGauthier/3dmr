@@ -2,7 +2,7 @@
 
 in vec3 in_Vertex;
 in vec3 in_Normal;
-out vec4 color;
+out vec3 color;
 out vec3 surfelPosition;
 out vec3 surfelNormal;
 
@@ -14,7 +14,7 @@ uniform vec3 solidColor;
 
 void main() {
     gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
-    color = vec4(solidColor, 1.0);
+    color = solidColor;
 
     surfelPosition = vec3(model * vec4(in_Vertex, 1.0));
     surfelNormal = normalize(inverseNormal * in_Normal);

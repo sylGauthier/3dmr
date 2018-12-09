@@ -11,6 +11,7 @@ LIB_OBJECTS := $(LIB_SOURCES:.c=.o)
 TEST_SOURCES := $(wildcard test/*.c)
 TEST_OBJECTS := $(TEST_SOURCES:.c=.o)
 TEST_EXECS := $(TEST_SOURCES:.c=)
+TESTS := $(patsubst %.sh,%,$(notdir $(wildcard test/scripts/test_*.sh)))
 TEST_UTIL_SOURCES := $(wildcard test/util/*.c)
 TEST_UTIL_OBJECTS := $(TEST_UTIL_SOURCES:.c=.o)
 SOURCES := $(LIB_SOURCES) $(TEST_SOURCES) $(TEST_UTIL_SOURCES)
@@ -34,9 +35,11 @@ clean:
 tags: $(SOURCES)
 	ctags $^
 
-.PHONY: test test-assets clean-assets
+.PHONY: test test-assets clean-assets $(TESTS)
 test: all
-	@f=0; $(foreach test,$(wildcard test/scripts/test_*.sh),$(test) || f=`printf "$$f 1 +n" | dc`; ) printf '%d test(s) failed\n' $$f; [ $$f -eq 0 ]
+	@+$(MAKE) -k $(TESTS)
+$(TESTS): test_%: ./test/scripts/test_%.sh
+	@$<
 test-assets clean-assets:
 	@+$(MAKE) --no-print-directory -C test/assets $@
 

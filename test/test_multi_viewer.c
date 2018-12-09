@@ -18,6 +18,7 @@
 
 #include "test/util/scenes_basic.h"
 #include "test/util/color.h"
+#include "test/util/materials.h"
 #include "test/util/light.h"
 #include "test/util/callbacks.h"
 
@@ -28,12 +29,6 @@ int main() {
     struct GLObject cube = {0};
     struct Scene scene, scene2;
     struct Node nodeCube;
-    struct PhongMaterial phongMat = {
-        {1.0, 1.0, 1.0},
-        {1.0, 1.0, 1.0},
-        {1.0, 1.0, 1.0},
-        1.0
-    };
     struct PhongColorMaterial* sphereMat;
     struct PhongTextureMaterial* phongCubeMat;
     struct SolidTextureMaterial* solidCubeMat;
@@ -60,8 +55,8 @@ int main() {
     mesh_free(&cubeMesh);
 
     viewer_make_current(viewer);
-    sphereMat = phong_color_material_new(0, 0, 0, &phongMat);
-    phongCubeMat = phong_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"), &phongMat);
+    sphereMat = phong_color_material_new(0, 0, 0, &phongDefaultMat);
+    phongCubeMat = phong_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"), &phongDefaultMat);
     viewer_make_current(viewer2);
     solidCubeMat = solid_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"));
     cube.material = (struct Material*)solidCubeMat;
@@ -90,8 +85,7 @@ int main() {
         dt = viewer_next_frame(viewer);
         t += 50.0 * dt;
         hsv2rgb(fmod(t, 360.0), 1.0, 1.0, sphereMat->color);
-        mul3sv(scene.lights.point[0].ambient, 0.1, sphereMat->color);
-        mul3sv(scene.lights.point[0].diffuse, 1.0, sphereMat->color);
+        memcpy(scene.lights.point[0].color, sphereMat->color, sizeof(Vec3));
         scene_render(&scene, &viewer->camera);
 
         viewer_make_current(viewer2);

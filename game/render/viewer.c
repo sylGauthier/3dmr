@@ -63,6 +63,7 @@ static void window_close_callback(GLFWwindow* window) {
 struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* title) {
     struct ViewerImpl* viewer;
     GLenum error;
+    unsigned int i;
 
     if (!(viewer = malloc(sizeof(struct ViewerImpl)))) {
         fprintf(stderr, "Error: memory allocation failed\n");
@@ -88,8 +89,6 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 fprintf(stderr, "Error: GL context setup failed\n");
             } else if ((error = glewInit()) != GLEW_OK) {
                 fprintf(stderr, "Error: GLEW initialization failed\n");
-            } else if (!game_load_shaders(viewer->shaders)) {
-                fprintf(stderr, "Error: failed to load internal shaders\n");
             } else {
                 Vec3 pos = {0, 0, 10};
                 camera_load_default(&viewer->user.camera, pos, ((float)width) / ((float)height));
@@ -111,6 +110,9 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 glEnable(GL_MULTISAMPLE);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                for (i = 0; i < NUM_SHADERS; i++) {
+                    ((struct ViewerImpl*)viewer)->shaders[i] = 0;
+                }
                 viewer_make_current(&viewer->user);
                 return &viewer->user;
             }
@@ -122,8 +124,14 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
 }
 
 void viewer_free(struct Viewer* viewer) {
+    unsigned int i;
+
     if (viewer) {
-        game_free_shaders(((struct ViewerImpl*)viewer)->shaders);
+        for (i = 0; i < NUM_SHADERS; i++) {
+            if (((struct ViewerImpl*)viewer)->shaders[i]) {
+                glDeleteProgram(((struct ViewerImpl*)viewer)->shaders[i]);
+            }
+        }
         if (((struct ViewerImpl*)viewer)->window) {
             glfwDestroyWindow(((struct ViewerImpl*)viewer)->window);
             glfwTerminate();

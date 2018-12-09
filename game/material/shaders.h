@@ -14,7 +14,4 @@ enum Shader {
 
 extern GLuint* game_shaders;
 
-int game_load_shaders(GLuint* shaders);
-void game_free_shaders(GLuint* shaders);
-
 #endif
