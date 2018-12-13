@@ -1,5 +1,7 @@
 *.o
 *.a
+*.obj
+*.jpg
 *.png
 *.ttf
 *.zip

@@ -49,30 +49,6 @@ struct BitmapFont* simple_bitmap_font(const int size) {
     return font;
 }
 
-static int imgcpy(uint8_t* image, const size_t width, const size_t height, const size_t origin_x, const size_t origin_y, const FT_Bitmap* glyph) {
-    uint8_t* src = glyph->buffer;
-    int offset_image, offset_glyph;
-    int i;
-
-    if (!image) {
-        return 1;
-    }
-
-    if (origin_x + glyph->width >= width || origin_y + glyph->rows >= height) {
-        /* illegal, glyph outside of buffer bounds */
-        printf("ILLEGAL\n");
-        return 1;
-    }
-
-    for (i = 0; i < glyph->rows; i++) {
-        offset_image = (origin_y + i) * width + origin_x;
-        offset_glyph = i * glyph->width;
-        memcpy(image + offset_image, src + offset_glyph, glyph->width);
-    }
-    return 0;
-}
-
-
 static FT_Library ft = 0;
 
 struct BitmapFont* ttf_bitmap_font(const char* path, const int font_height) {
@@ -125,7 +101,7 @@ struct BitmapFont* ttf_bitmap_font(const char* path, const int font_height) {
     return font;
 }
 
-static void append_glyph(const struct BitmapGlyph* glyph, Vec2 origin, float* vertices, float* textures) {
+static void append_glyph(const struct BitmapGlyph* glyph, Vec2 origin, float* vertices) {
     const float left   = origin[0] + glyph->bitmap_left;
     const float top    = origin[1] + glyph->bitmap_top;
     const float right  = left + glyph->bitmap_width;
@@ -147,43 +123,43 @@ static void append_glyph(const struct BitmapGlyph* glyph, Vec2 origin, float* ve
     vertices[0] = left;
     vertices[1] = bottom;
     vertices[2] = 0.0;
-    textures[0] = glyph->texture[0];
-    textures[1] = glyph->texture[3];
+    vertices[3] = glyph->texture[0];
+    vertices[4] = glyph->texture[3];
 
     /* (1,0) */
-    vertices[3] = right;
-    vertices[4] = bottom;
-    vertices[5] = 0.0;
-    textures[2] = glyph->texture[2];
-    textures[3] = glyph->texture[3];
+    vertices[5] = right;
+    vertices[6] = bottom;
+    vertices[7] = 0.0;
+    vertices[8] = glyph->texture[2];
+    vertices[9] = glyph->texture[3];
 
     /* (1,1) */
-    vertices[6] = right;
-    vertices[7] = top;
-    vertices[8] = 0.0;
-    textures[4] = glyph->texture[2];
-    textures[5] = glyph->texture[1];
+    vertices[10] = right;
+    vertices[11] = top;
+    vertices[12] = 0.0;
+    vertices[13] = glyph->texture[2];
+    vertices[14] = glyph->texture[1];
 
     /* (0,0) */
-    vertices[9]  = left;
-    vertices[10] = bottom;
-    vertices[11] = 0.0;
-    textures[6]  = glyph->texture[0];
-    textures[7]  = glyph->texture[3];
+    vertices[15]  = left;
+    vertices[16] = bottom;
+    vertices[17] = 0.0;
+    vertices[18]  = glyph->texture[0];
+    vertices[19]  = glyph->texture[3];
 
     /* (1,1) */
-    vertices[12] = right;
-    vertices[13] = top;
-    vertices[14] = 0.0;
-    textures[8] = glyph->texture[2];
-    textures[9] = glyph->texture[1];
+    vertices[20] = right;
+    vertices[21] = top;
+    vertices[22] = 0.0;
+    vertices[23] = glyph->texture[2];
+    vertices[24] = glyph->texture[1];
 
     /* (0,1) */
-    vertices[15] = left;
-    vertices[16] = top;
-    vertices[17] = 0.0;
-    textures[10] = glyph->texture[0];
-    textures[11] = glyph->texture[1];
+    vertices[25] = left;
+    vertices[26] = top;
+    vertices[27] = 0.0;
+    vertices[28] = glyph->texture[0];
+    vertices[29] = glyph->texture[1];
 
     origin[0] += glyph->advance_x;
     origin[1] += glyph->advance_y;
@@ -299,7 +275,6 @@ static uint32_t utf8_to_utf32(const char* s, int* len) {
 int new_text(struct BitmapFont* font, const char* text, struct Mesh* mesh) {
     const struct BitmapGlyph* glyph;
     float* vertices;
-    float* textures;
     Vec2 origin = {-1,0};
     uint32_t char_code;
     int length, i, index;
@@ -314,16 +289,14 @@ int new_text(struct BitmapFont* font, const char* text, struct Mesh* mesh) {
     length = strlen(text);
 
     /* use two triangles per character */
-    vertices = malloc(2 * 3 * length * 3 * sizeof(float));
-
-    textures = malloc(2 * 3 * length * 2 * sizeof(float));
+    vertices = malloc(2 * 3 * length * 5 * sizeof(float));
 
     for (index = i = 0; i < length; i++) {
         char_code = utf8_to_utf32(&text[i], &i);
 
         glyph = load_glyph(font, char_code);
         if (glyph) {
-            append_glyph(glyph, origin, vertices+index*18, textures+index*12);
+            append_glyph(glyph, origin, vertices + index * 30);
             index++;
         } else {
             printf("Error: font '%s' do not support glyph TODO\n", font->name);
@@ -331,13 +304,10 @@ int new_text(struct BitmapFont* font, const char* text, struct Mesh* mesh) {
     }
 
     mesh->vertices = vertices;
-    mesh->normals = NULL;
-    mesh->texCoords = textures;
-    mesh->indices = NULL;
     mesh->numVertices = index * 2 * 3;
-    mesh->hasNormals = 0;
-    mesh->hasTexCoords = 1;
+    mesh->indices = NULL;
     mesh->numIndices = 0;
+    mesh->flags = MESH_TEXCOORDS;
 
     return 0;
 }

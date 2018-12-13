@@ -5,8 +5,8 @@
 #define VERTEX_ARRAY_H
 
 struct VertexArray {
-    GLuint vbo[4], vao;
-    unsigned int numVertices, numIndices, numVBOs;
+    GLuint vbo, ibo, vao;
+    unsigned int numVertices, numIndices;
 };
 
 void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va);

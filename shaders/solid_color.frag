@@ -1,8 +1,9 @@
 #version 130
 
-in vec4 color;
 out vec4 out_Color;
 
+uniform vec3 solidColor;
+
 void main() {
-    out_Color = color;
+    out_Color = vec4(solidColor, 1.0);
 }

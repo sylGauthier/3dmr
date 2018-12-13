@@ -56,9 +56,9 @@ int main() {
 
     viewer_make_current(viewer);
     sphereMat = phong_color_material_new(0, 0, 0, &phongDefaultMat);
-    phongCubeMat = phong_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"), &phongDefaultMat);
+    phongCubeMat = phong_texture_material_new(asset_manager_load_texture("textures/rgb_tux.png"), &phongDefaultMat);
     viewer_make_current(viewer2);
-    solidCubeMat = solid_texture_material_new(asset_manager_load_texture("png/rgb_tux.png"));
+    solidCubeMat = solid_texture_material_new(asset_manager_load_texture("textures/rgb_tux.png"));
     cube.material = (struct Material*)solidCubeMat;
 
     viewer_make_current(viewer);

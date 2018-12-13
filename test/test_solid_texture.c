@@ -24,7 +24,7 @@ int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else {
         cube.vertexArray = vertex_array_new(&cubeMesh);
-        if (!(cube.material = (struct Material*)solid_texture_material_new(asset_manager_load_texture("png/rgb_tux.png")))) {
+        if (!(cube.material = (struct Material*)solid_texture_material_new(asset_manager_load_texture("textures/rgb_tux.png")))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
             scene->root.object = &cube;

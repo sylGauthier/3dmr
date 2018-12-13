@@ -26,7 +26,7 @@ vec3 phong_compute_point_light(PointLight light, vec3 surfelToCamera, vec3 surfe
     vec3 reflectDirection = reflect(surfelToLight, surfelNormal);
     float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), material.shininess);
 
-    float attenuation = 1.0 / (1.0 + (2.0 / light.radius) * distance + (1.0 / (light.radius * light.radius)) * distance);
+    float attenuation = 1.0 / (1.0 + (2.0 / light.radius) * distance + (1.0 / (light.radius * light.radius)) * distance * distance);
     return attenuation * (diffuseFactor * material.diffuse + specularFactor * material.specular) * light.color;
 }
 

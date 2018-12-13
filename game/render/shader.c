@@ -221,6 +221,8 @@ GLuint shader_link(GLuint* shaders, size_t numShaders) {
     glBindAttribLocation(prog, LOCATION_VERTEX, "in_Vertex");
     glBindAttribLocation(prog, LOCATION_NORMAL, "in_Normal");
     glBindAttribLocation(prog, LOCATION_TEXCOORD, "in_TexCoord");
+    glBindAttribLocation(prog, LOCATION_TANGENT, "in_Tangent");
+    glBindAttribLocation(prog, LOCATION_BITANGENT, "in_Bitangent");
     glLinkProgram(prog);
 
     glGetProgramiv(prog, GL_LINK_STATUS, &error);

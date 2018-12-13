@@ -19,10 +19,10 @@ static const struct EarthTexture {
     const char* path;
     double width, height, ratio;
 } texture[NUM_SPHERE_MAP] = {
-    {"png/earth_central_cylindric.png", 702.0 / 1024.0, 702.0 / 1024.0, 1.0},
-    {"png/earth_mercator.png", 2044.0 / 2048.0, 1730.0 / 2048.0, 1.0},
-    {"png/earth_miller.png", 2044.0 / 2048.0, 1498.0 / 2048.0, 1.0},
-    {"png/earth_equirectangular.png", 2042.0 / 2048.0, 1020.0 / 1024.0, 2.0}
+    {"textures/earth_central_cylindric.png", 702.0 / 1024.0, 702.0 / 1024.0, 1.0},
+    {"textures/earth_mercator.png", 2044.0 / 2048.0, 1730.0 / 2048.0, 1.0},
+    {"textures/earth_miller.png", 2044.0 / 2048.0, 1498.0 / 2048.0, 1.0},
+    {"textures/earth_equirectangular.png", 2042.0 / 2048.0, 1020.0 / 1024.0, 2.0}
 };
 
 static struct GLObject sphere = {0};

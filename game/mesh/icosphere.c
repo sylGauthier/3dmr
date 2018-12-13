@@ -26,11 +26,11 @@ static unsigned int middle_point(unsigned int v1, unsigned int v2, float radius,
     if (i == 6) {
         return UINT_MAX;
     } else if (*mapCur != v2) {
-        float x = (vertices[3 * v1    ] + vertices[3 * v2    ]) / 2.0f;
-        float y = (vertices[3 * v1 + 1] + vertices[3 * v2 + 1]) / 2.0f;
-        float z = (vertices[3 * v1 + 2] + vertices[3 * v2 + 2]) / 2.0f;
+        float x = (vertices[6 * v1    ] + vertices[6 * v2    ]) / 2.0f;
+        float y = (vertices[6 * v1 + 1] + vertices[6 * v2 + 1]) / 2.0f;
+        float z = (vertices[6 * v1 + 2] + vertices[6 * v2 + 2]) / 2.0f;
         float factor = radius / sqrt(x * x + y * y + z * z);
-        vertices += 3 * (*numVertices);
+        vertices += 6 * (*numVertices);
         vertices[0] = x * factor;
         vertices[1] = y * factor;
         vertices[2] = z * factor;
@@ -50,17 +50,13 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
 
     /* Allocate vertices, normals, indices arrays */
     dest->numVertices = 12 + 10 * (q - 1);
-    dest->hasNormals = 1;
-    dest->hasTexCoords = 0;
+    dest->flags = MESH_NORMALS;
     dest->numIndices = 60 * q;
-    dest->vertices = malloc(dest->numVertices * 3 * sizeof(float));
-    dest->normals = malloc(dest->numVertices * 3 * sizeof(float));
-    dest->texCoords = NULL;
+    dest->vertices = malloc(dest->numVertices * 6 * sizeof(float));
     dest->indices = malloc(dest->numIndices * sizeof(unsigned int));
     map = malloc(dest->numVertices * 12 * sizeof(unsigned int));
-    if (!dest->vertices || !dest->normals || !dest->indices || !map) {
+    if (!dest->vertices || !dest->indices || !map) {
         free(dest->vertices);
-        free(dest->normals);
         free(dest->indices);
         free(map);
         return 0;
@@ -71,19 +67,19 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
     numFaces = 20;
 
     dest->vertices[ 0] = -A; dest->vertices[ 1] =  B; dest->vertices[ 2] = 0.0f;
-    dest->vertices[ 3] =  A; dest->vertices[ 4] =  B; dest->vertices[ 5] = 0.0f;
-    dest->vertices[ 6] = -A; dest->vertices[ 7] = -B; dest->vertices[ 8] = 0.0f;
-    dest->vertices[ 9] =  A; dest->vertices[10] = -B; dest->vertices[11] = 0.0f;
+    dest->vertices[ 6] =  A; dest->vertices[ 7] =  B; dest->vertices[ 8] = 0.0f;
+    dest->vertices[12] = -A; dest->vertices[13] = -B; dest->vertices[14] = 0.0f;
+    dest->vertices[18] =  A; dest->vertices[19] = -B; dest->vertices[20] = 0.0f;
 
-    dest->vertices[12] = 0.0f; dest->vertices[13] = -A; dest->vertices[14] =  B;
-    dest->vertices[15] = 0.0f; dest->vertices[16] =  A; dest->vertices[17] =  B;
-    dest->vertices[18] = 0.0f; dest->vertices[19] = -A; dest->vertices[20] = -B;
-    dest->vertices[21] = 0.0f; dest->vertices[22] =  A; dest->vertices[23] = -B;
+    dest->vertices[24] = 0.0f; dest->vertices[25] = -A; dest->vertices[26] =  B;
+    dest->vertices[30] = 0.0f; dest->vertices[31] =  A; dest->vertices[32] =  B;
+    dest->vertices[36] = 0.0f; dest->vertices[37] = -A; dest->vertices[38] = -B;
+    dest->vertices[42] = 0.0f; dest->vertices[43] =  A; dest->vertices[44] = -B;
 
-    dest->vertices[24] =  B; dest->vertices[25] = 0.0f; dest->vertices[26] = -A;
-    dest->vertices[27] =  B; dest->vertices[28] = 0.0f; dest->vertices[29] =  A;
-    dest->vertices[30] = -B; dest->vertices[31] = 0.0f; dest->vertices[32] = -A;
-    dest->vertices[33] = -B; dest->vertices[34] = 0.0f; dest->vertices[35] =  A;
+    dest->vertices[48] =  B; dest->vertices[49] = 0.0f; dest->vertices[50] = -A;
+    dest->vertices[54] =  B; dest->vertices[55] = 0.0f; dest->vertices[56] =  A;
+    dest->vertices[60] = -B; dest->vertices[61] = 0.0f; dest->vertices[62] = -A;
+    dest->vertices[66] = -B; dest->vertices[67] = 0.0f; dest->vertices[68] =  A;
 
     memcpy(dest->indices, initialIndices, sizeof(initialIndices));
     indicesEnd = dest->indices + 60;
@@ -114,10 +110,10 @@ int make_icosphere(struct Mesh* dest, float radius, unsigned int numSplits) {
     /* Normals */
     for (q = i = 0; i < numVertices; i++) {
         factor = 1.0f / sqrt(dest->vertices[q] * dest->vertices[q] + dest->vertices[q + 1] * dest->vertices[q + 1] + dest->vertices[q + 2] * dest->vertices[q + 2]);
-        dest->normals[q] = dest->vertices[q] * factor;
-        dest->normals[q + 1] = dest->vertices[q + 1] * factor;
-        dest->normals[q + 2] = dest->vertices[q + 2] * factor;
-        q += 3;
+        dest->vertices[q + 3] = dest->vertices[q] * factor;
+        dest->vertices[q + 4] = dest->vertices[q + 1] * factor;
+        dest->vertices[q + 5] = dest->vertices[q + 2] * factor;
+        q += 6;
     }
 
     free(map);

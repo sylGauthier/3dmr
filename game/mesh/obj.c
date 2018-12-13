@@ -140,7 +140,7 @@ int obj_triangulate(struct OBJ* obj) {
 int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withNormals, int withTexCoords) {
     FILE* objFile = NULL;
     struct OBJ obj;
-    unsigned int i, j, k, l;
+    unsigned int i, j, k, n;
     int objOk = 0, ret = 0;
 
     if (!(objFile = fopen(filename, "r"))) {
@@ -152,27 +152,31 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
     } else {
         if (!withIndices) {
             dest->numVertices = 3 * obj.numFaces;
-            dest->hasNormals = (withNormals && obj.numNormals);
-            dest->hasTexCoords = (withTexCoords && obj.numTexCoords);
+            dest->flags = 0;
+            if (withNormals && obj.numNormals) {
+                dest->flags |= MESH_NORMALS;
+            }
+            if (withTexCoords && obj.numTexCoords) {
+                dest->flags |= MESH_TEXCOORDS;
+            }
             dest->numIndices = 0;
             dest->indices = NULL;
-            dest->normals = NULL;
-            dest->texCoords = NULL;
-            if (!(dest->vertices = malloc(3 * dest->numVertices * sizeof(float)))
-             || (dest->hasNormals && !(dest->normals = malloc(3 * dest->numVertices * sizeof(float))))
-             || (dest->hasTexCoords && !(dest->texCoords = malloc(2 * dest->numVertices * sizeof(float))))) {
+            n = MESH_FLOATS_PER_VERTEX(dest);
+            if (!(dest->vertices = malloc(n * dest->numVertices * sizeof(float)))) {
                 fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
-                free(dest->vertices);
-                free(dest->normals);
-                free(dest->texCoords);
             } else {
-                for (i = k = l = 0; i < obj.numFaces; i++) {
+                for (i = k = 0; i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {
                         memcpy(dest->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
-                        if (dest->hasNormals) memcpy(dest->normals + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
-                        if (dest->hasTexCoords) memcpy(dest->texCoords + l, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
                         k += 3;
-                        l += 2;
+                        if (MESH_HAS_NORMALS(dest)) {
+                            memcpy(dest->vertices + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
+                            k += 3;
+                        }
+                        if (MESH_HAS_TEXCOORDS(dest)) {
+                            memcpy(dest->vertices + k, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
+                            k += 2;
+                        }
                     }
                 }
                 ret = 1;
@@ -185,10 +189,7 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
                 dest->numVertices = obj.numVertices;
                 dest->vertices = obj.vertices;
                 obj.vertices = NULL;
-                dest->hasNormals = 0;
-                dest->normals = NULL;
-                dest->hasTexCoords = 0;
-                dest->texCoords = NULL;
+                dest->flags = 0;
                 for (i = k = 0; i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {
                         dest->indices[k++] = obj.faces[i].elems[j].v;
@@ -221,32 +222,39 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
         ret &= fprintf(dest, "f %u %u %u\n", i1, i2, i3) >= 0; \
     }
 #define save_tri(n, i1, i2, i3) \
-    if (mesh->hasNormals && mesh->hasTexCoords) { \
+    if (MESH_HAS_NORMALS(mesh) && MESH_HAS_TEXCOORDS(mesh)) { \
         save_tri_vnt(n, i1, i2, i3); \
-    } else if (mesh->hasNormals) { \
+    } else if (MESH_HAS_NORMALS(mesh)) { \
         save_tri_vn(n, i1, i2, i3); \
-    } else if (mesh->hasTexCoords) { \
+    } else if (MESH_HAS_TEXCOORDS(mesh)) { \
         save_tri_vt(n, i1, i2, i3); \
     } else { \
         save_tri_v(n, i1, i2, i3); \
     }
 int mesh_save_obj(const struct Mesh* mesh, FILE* dest) {
-    unsigned int i;
+    unsigned int i = 0, n = MESH_FLOATS_PER_VERTEX(mesh) * mesh->numVertices;
     int ret = 1;
 
-    for (i = 0; ret && i < 3 * mesh->numVertices; i += 3) {
+    while (ret && i < n) {
         ret &= fprintf(dest, "v %f %f %f\n", mesh->vertices[i], mesh->vertices[i + 1], mesh->vertices[i + 2]) >= 0;
-    }
-    for (i = 0; ret && i < 3 * mesh->numVertices; i += 3) {
-        ret &= fprintf(dest, "vn %f %f %f\n", mesh->normals[i], mesh->normals[i + 1], mesh->normals[i + 2]) >= 0;
-    }
-    for (i = 0; ret && i < 2 * mesh->numVertices; i += 2) {
-        ret &= fprintf(dest, "vt %f %f\n", mesh->texCoords[i], mesh->texCoords[i + 1]) >= 0;
+        i += 3;
+        if (MESH_HAS_NORMALS(mesh)) {
+            ret &= fprintf(dest, "vn %f %f %f\n", mesh->vertices[i], mesh->vertices[i + 1], mesh->vertices[i + 2]) >= 0;
+            i += 3;
+        }
+        if (MESH_HAS_TEXCOORDS(mesh)) {
+            ret &= fprintf(dest, "vt %f %f\n", mesh->vertices[i], mesh->vertices[i + 1]) >= 0;
+            i += 2;
+        }
     }
     if (mesh->numIndices) {
-        save_tri(mesh->numIndices, mesh->indices[i] + 1, mesh->indices[i + 1] + 1, mesh->indices[i + 2] + 1);
+        for (i = 0; i < mesh->numIndices; i += 3) {
+            save_tri(mesh->numIndices, mesh->indices[i] + 1, mesh->indices[i + 1] + 1, mesh->indices[i + 2] + 1);
+        }
     } else {
-        save_tri(mesh->numVertices, i + 1, i + 2, i + 3);
+        for (i = 0; i < mesh->numVertices; i += 3) {
+            save_tri(mesh->numVertices, i + 1, i + 2, i + 3);
+        }
     }
     return ret;
 }

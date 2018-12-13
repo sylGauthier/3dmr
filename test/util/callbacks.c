@@ -31,7 +31,7 @@ void wheel_callback(struct Viewer* viewer, double xoffset, double yoffset, void*
     Vec3 axis;
 
     camera_get_backward(&viewer->camera, axis);
-    scale3v(axis, -yoffset);
+    scale3v(axis, -yoffset / 10.0);
     camera_move(&viewer->camera, axis);
 }
 

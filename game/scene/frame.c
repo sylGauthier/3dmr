@@ -12,7 +12,7 @@ static const float arrowVertices[] = {
     0.0,  0.0, -0.1,   1.0, 0.0, 0.0,   0.0,  0.1,  0.0
 };
 
-static const struct Mesh arrow = {(float*)arrowVertices, NULL, NULL, NULL, 12, 0, 0, 0};
+static const struct Mesh arrow = {(float*)arrowVertices, NULL, 12, 0, 0};
 
 struct Node* make_frame(void) {
     struct GLObject* gl;

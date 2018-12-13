@@ -7,6 +7,8 @@
 #define LOCATION_VERTEX 0
 #define LOCATION_NORMAL 1
 #define LOCATION_TEXCOORD 2
+#define LOCATION_TANGENT 3
+#define LOCATION_BITANGENT 4
 
 GLuint shader_compile(const char* path, GLenum type);
 GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type);

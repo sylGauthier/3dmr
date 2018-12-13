@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "sphere_uv.h"
 
@@ -29,19 +30,31 @@ static void get_longitude_latidude(double p0, double p1, double p2, double* long
     *latitude = (M_PI / 2.0) - acos(p2 / r);
 }
 
-#define GET_FACE_VERTEX(mesh, nFace, nVertex) (mesh->vertices + 3 * (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex)))
-#define GET_FACE_UV(mesh, nFace, nVertex) (mesh->texCoords + 2 * (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex)))
+#define VINDEX(mesh, nFace, nVertex) (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex))
+#define GET_FACE_VERTEX(mesh, nFace, nVertex) (mesh->vertices + MESH_FLOATS_PER_VERTEX(mesh) * VINDEX(mesh, nFace, nVertex))
+#define GET_FACE_UV(mesh, nFace, nVertex) (mesh->vertices + MESH_FLOATS_PER_VERTEX(mesh) * VINDEX(mesh, nFace, nVertex) + (MESH_HAS_NORMALS(mesh) ? 6 : 3))
 
 int compute_sphere_uv(struct Mesh* sphere, double texWidth, double texHeight, double texRatio, enum SphereMapType type) {
     double y, yMax = M_PI * (texHeight / texWidth) / texRatio;
     double longitude, latitude;
-    unsigned int i, j, k, w, o, n, a, b, numFaces = (sphere->numIndices ? sphere->numIndices : sphere->numVertices) / 3;
+    unsigned int i, j, k, w, o, n, N, M, a, b, numFaces = (sphere->numIndices ? sphere->numIndices : sphere->numVertices) / 3;
     float *vertex, *uv[3], u[3], v[3];
 
-    if (!(sphere->texCoords = malloc(2 * sphere->numVertices * sizeof(float)))) {
+    if (MESH_HAS_TEXCOORDS(sphere) || MESH_HAS_TANGENTS(sphere)) {
         return 0;
     }
-    sphere->hasTexCoords = 1;
+    M = MESH_FLOATS_PER_VERTEX(sphere);
+    sphere->flags |= MESH_TEXCOORDS;
+    N = MESH_FLOATS_PER_VERTEX(sphere);
+    if (!(vertex = malloc(N * sphere->numVertices * sizeof(float)))) {
+        return 0;
+    }
+    for (i = 0; i < sphere->numVertices; i++) {
+        memcpy(vertex + N * i, sphere->vertices + M * i, M * sizeof(float));
+    }
+    free(sphere->vertices);
+    sphere->vertices = vertex;
+    sphere->flags |= MESH_TEXCOORDS;
 
     for (i = 0; i < numFaces; i++) {
         o = 0;
@@ -83,7 +96,7 @@ int compute_sphere_uv(struct Mesh* sphere, double texWidth, double texHeight, do
             if (sphere->numIndices && ((w == (1 << j)) | (o == (1 << j)))) {
                 if ((n = mesh_duplicate_index(sphere, sphere->indices[k = (3 * i + j)]))) {
                     sphere->indices[k] = n;
-                    uv[j] = sphere->texCoords + 2 * n;
+                    uv[j] = sphere->vertices + N * n + (MESH_HAS_NORMALS(sphere) ? 6 : 3);
                 }
             }
             uv[j][0] = u[j];

@@ -12,7 +12,7 @@
 
 int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv);
 
-int usage(const char* testname, const char* args) {
+void usage(const char* testname, const char* args) {
     printf("Usage: %s [-d width height] [-t timeout] [-s screenshotPath] [other args] %s\n", testname, args);
     printf(
             "Light arguments:\n"
@@ -164,11 +164,11 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: cannot start viewer\n");
         return 1;
     }
+    viewer->key_callback = key_callback;
+    viewer->close_callback = close_callback;
     if (run(viewer, &scene, argc, argv)) {
         ret = 1;
     } else {
-        viewer->key_callback = key_callback;
-        viewer->close_callback = close_callback;
         running = 1;
         for (start = t = time(NULL); running && (timeout < 0 || t < start + timeout); t = time(NULL)) {
             usleep(10 * 1000);
