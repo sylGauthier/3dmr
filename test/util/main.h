@@ -16,7 +16,7 @@ void usage(const char* testname, const char* args) {
     printf("Usage: %s [-d width height] [-t timeout] [-s screenshotPath] [other args] %s\n", testname, args);
     printf(
             "Light arguments:\n"
-            " -La <color>: define the ambiant light\n"
+            " -La <color>: define the ambient light\n"
             " -Lp <position;color;radius>: define a point light\n"
             " -Ld <direction;color>: define a directional light\n"
           );
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
                 case 'L':
                     switch (*++ptr) {
                         case 'a':
-                            if (!argc || !test_parse_vec3(*++argv, &arg, scene.lights.ambiantLight.color) || *arg) {
+                            if (!argc || !test_parse_vec3(*++argv, &arg, scene.lights.ambientLight.color) || *arg) {
                                 fprintf(stderr, "Error: wrong -La parameter, see usage\n");
                                 return 1;
                             }

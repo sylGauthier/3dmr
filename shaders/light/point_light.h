@@ -9,4 +9,10 @@ struct PointLight {
     float radius;
 };
 
+#ifdef GLSL
+float point_light_attenuation(PointLight light, float distance) {
+    return 1.0 / (1.0 + (2.0 / light.radius) * distance + (1.0 / (light.radius * light.radius)) * distance * distance);
+}
+#endif
+
 #endif

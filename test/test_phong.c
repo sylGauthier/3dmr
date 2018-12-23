@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include <game/asset_manager.h>
-#include <game/material/phong_color.h>
+#include <game/material/phong.h>
 #include <game/mesh/icosphere.h>
 #include <game/render/globject.h>
 #include <game/render/viewer.h>
@@ -22,7 +22,7 @@ int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
         fprintf(stderr, "Error: failed to create mesh\n");
     } else {
         obj.vertexArray = vertex_array_new(&mesh);
-        if (!(obj.material = (struct Material*)phong_color_material_new(1.0, 0.0, 1.0, &phongDefaultMat))) {
+        if (!(obj.material = (struct Material*)phong_color_material_new(1.0, 0.0, 1.0, &phongNoSpecularMat))) {
             fprintf(stderr, "Error: failed to create geometry\n");
         } else {
             scene->root.object = &obj;

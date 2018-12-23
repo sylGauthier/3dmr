@@ -26,6 +26,6 @@ void light_load_uniforms(GLuint shader, const struct Lights* lights) {
         glUniform1fv(glGetUniformLocation(shader, locName), 1, &l->radius);
     }
 
-    glUniform3fv(glGetUniformLocation(shader, "ambiantLight.color"), 1, (float*)lights->ambiantLight.color);
+    glUniform3fv(glGetUniformLocation(shader, "ambientLight.color"), 1, (float*)lights->ambientLight.color);
 }
 

@@ -7,10 +7,8 @@
 #include <unistd.h>
 
 #include <game/asset_manager.h>
-#include <game/material/phong_color.h>
-#include <game/material/phong_texture.h>
-#include <game/material/solid_color.h>
-#include <game/material/solid_texture.h>
+#include <game/material/phong.h>
+#include <game/material/solid.h>
 #include <game/mesh/box.h>
 #include <game/render/texture.h>
 #include <game/render/viewer.h>

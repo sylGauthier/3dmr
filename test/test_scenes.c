@@ -7,8 +7,7 @@
 #include <unistd.h>
 
 #include <game/asset_manager.h>
-#include <game/material/phong_color.h>
-#include <game/material/phong_texture.h>
+#include <game/material/phong.h>
 #include <game/render/camera.h>
 #include <game/render/globject.h>
 #include <game/render/texture.h>

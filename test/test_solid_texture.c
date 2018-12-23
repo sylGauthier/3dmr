@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include <game/asset_manager.h>
-#include <game/material/solid_texture.h>
+#include <game/material/solid.h>
 #include <game/mesh/box.h>
 #include <game/render/globject.h>
 #include <game/render/viewer.h>

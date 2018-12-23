@@ -33,8 +33,8 @@ int run(struct Viewer* viewer, struct Scene* scene, int argc, char** argv) {
     viewer->wheel_callback = wheel_callback;
     viewer->callbackData = &scene->root;
 
-    if (!(ttf = asset_manager_find_file("font/FreeSans.ttf"))) {
-        fprintf(stderr, "Failed to find font: %s\n", "font/FreeSans.ttf");
+    if (!(ttf = asset_manager_find_file("fonts/FreeSans.ttf"))) {
+        fprintf(stderr, "Failed to find font: %s\n", "fonts/FreeSans.ttf");
         return 1;
     }
     if (!(font = ttf_bitmap_font(ttf, 32))) {

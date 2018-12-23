@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <game/material/solid_color.h>
+#include <game/material/solid.h>
 #include <game/mesh/mesh.h>
 #include <game/render/globject.h>
 #include <game/scene/node.h>

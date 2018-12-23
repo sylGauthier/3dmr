@@ -1,26 +1,44 @@
 #!/bin/bash
-for arg in "$@"
-do
-case $arg in
-    -h|-?|-help|--help)
-	echo "Usage: $0 <image> <image>"
-	echo "return 0 if both images are the same, else 1."
-	exit 64
-    ;;
-esac
+
+usage() {
+    printf 'Usage: %s [-h] [-p] [-t threshold] <image> <image>\n' "$0"
+    printf 'return 0 if both images are the same, else 1.\n\n'
+    printf ' -t threshold: set the error threshold under which\n    the images are considered to be the same\n'
+    printf ' -p: print error\n'
+}
+
+threshold=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -h|-help|--help)
+            usage; exit 0
+            ;;
+        -t|-threshold|--threshold)
+            shift
+            if [ "$#" -eq 0 ]; then
+                usage >&2; exit 1
+            fi
+            threshold="$1"
+            ;;
+        -p|-print|--print)
+            print="yes"
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
 done
-if [[ ! "$#" -eq "2" ]]; then
-    echo "Usage: $0 [--help] <image> <image>" 1>&2
-    exit 64
+if [ "$#" -ne "2" ]; then
+    usage >&2; exit 1
 fi
-if [[ ! -f "$1" ]]; then
-    echo "File not found: $1" 1>&2
-    exit 2
-fi
-if [ ! -f "$2" ]; then
-    echo "File not found: $2" 1>&2
+[ -f "$1" ] || notfound="$notfound $1"
+[ -f "$2" ] || notfound="$notfound $2"
+if [ -n "$notfound" ]; then
+    printf 'Error: file not found:%s\n' "$notfound" >&2
     exit 2
 fi
 
-diff=`compare -metric AE "$1" "$2" -compose difference /dev/null 2>&1`
-[ "$diff" = "0" ]
+error="$(dc -e "20k $(compare -colorspace RGB -depth 8 -metric MAE "$1" "$2" null: 2>&1 | cut -d' ' -f1 | sed 's/e\([0-9-]*\)/ 10 \1 ^*/;s/-/_/g') 0k1/p")"
+[ -n "$print" ] && printf 'Error: %s\n' "$error"
+[ "$error" -le "$threshold" ]

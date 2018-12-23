@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 #include <game/asset_manager.h>
-#include <game/material/solid_texture.h>
+#include <game/material/solid.h>
 #include <game/math/linear_algebra.h>
 #include <game/mesh/icosphere.h>
 #include <game/mesh/sphere_uv.h>
