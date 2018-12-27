@@ -51,7 +51,7 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
         glVertexAttribPointer(LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
         offset += 3;
         glEnableVertexAttribArray(LOCATION_BITANGENT);
-        glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, 0, (void*)offset);
+        glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
         offset += 3;
     }
     /* - Indices */

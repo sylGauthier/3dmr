@@ -44,10 +44,10 @@ unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index) {
 }
 
 int mesh_compute_tangents(struct Mesh* mesh) {
-    Mat2 dTC, inv;
-    Vec3 d1, d2;
-    float *tmp;
-    unsigned int i, i0, i1, i2, n, m, numVertices;
+    Mat2 dTC;
+    Vec3 d1, d2, T, B;
+    float oneOverDet, *tmp;
+    unsigned int i, j, ind[3], n, m, numVertices;
 
     if (MESH_HAS_TANGENTS(mesh)) {
         return 1;
@@ -74,36 +74,35 @@ int mesh_compute_tangents(struct Mesh* mesh) {
     }
     for (i = 0; i < numVertices; i += 3) {
         if (mesh->numIndices) {
-            i0 = mesh->indices[i];
-            i1 = mesh->indices[i + 1];
-            i2 = mesh->indices[i + 2];
+            ind[0] = mesh->indices[i];
+            ind[1] = mesh->indices[i + 1];
+            ind[2] = mesh->indices[i + 2];
         } else {
-            i0 = i;
-            i1 = i + 1;
-            i2 = i + 2;
+            ind[0] = i;
+            ind[1] = i + 1;
+            ind[2] = i + 2;
         }
-        sub2v(dTC[0], mesh->vertices + n * i1 + 6, mesh->vertices + n * i0 + 6);
-        sub2v(dTC[1], mesh->vertices + n * i2 + 6, mesh->vertices + n * i0 + 6);
-        invert2m(inv, dTC);
-        sub3v(d1, mesh->vertices + n * i1, mesh->vertices + n * i0);
-        sub3v(d2, mesh->vertices + n * i2, mesh->vertices + n * i0);
-        mesh->vertices[n * i0 +  8 + 0] = d1[0] * inv[0][0] + d2[0] * inv[0][1];
-        mesh->vertices[n * i0 +  8 + 1] = d1[1] * inv[0][0] + d2[1] * inv[0][1];
-        mesh->vertices[n * i0 +  8 + 2] = d1[2] * inv[0][0] + d2[2] * inv[0][1];
-        mesh->vertices[n * i0 + 11 + 0] = d1[0] * inv[1][0] + d2[0] * inv[1][1];
-        mesh->vertices[n * i0 + 11 + 1] = d1[1] * inv[1][0] + d2[1] * inv[1][1];
-        mesh->vertices[n * i0 + 11 + 2] = d1[2] * inv[1][0] + d2[2] * inv[1][1];
-        mul3sv(d1, dot3(mesh->vertices + n * i0 + 3, mesh->vertices + n * i0 + 8), mesh->vertices + n * i0 + 3); /* (N dot T) N */
-        decr3v(mesh->vertices + n * i0 + 8, d1); /* T <- T - (N dot T) N */
-        normalize3(mesh->vertices + n * i0 + 8);
-        cross3(d1, mesh->vertices + n * i0 + 3, mesh->vertices + n * i0 + 8);
-        if (dot3(d1, mesh->vertices + n * i0 + 11) < 0.0f) {
-            neg3v(d1);
+        sub2v(dTC[0], mesh->vertices + n * ind[1] + 6, mesh->vertices + n * ind[0] + 6);
+        sub2v(dTC[1], mesh->vertices + n * ind[2] + 6, mesh->vertices + n * ind[0] + 6);
+        sub3v(d1, mesh->vertices + n * ind[1], mesh->vertices + n * ind[0]);
+        sub3v(d2, mesh->vertices + n * ind[2], mesh->vertices + n * ind[0]);
+        oneOverDet = 1.0f / det2(dTC);
+        T[0] = oneOverDet * (d1[0] * dTC[1][1] - d2[0] * dTC[0][1]);
+        T[1] = oneOverDet * (d1[1] * dTC[1][1] - d2[1] * dTC[0][1]);
+        T[2] = oneOverDet * (d1[2] * dTC[1][1] - d2[2] * dTC[0][1]);
+        B[0] = oneOverDet * (d1[0] * dTC[1][0] - d2[0] * dTC[0][0]);
+        B[1] = oneOverDet * (d1[1] * dTC[1][0] - d2[1] * dTC[0][0]);
+        B[2] = oneOverDet * (d1[2] * dTC[1][0] - d2[2] * dTC[0][0]);
+        for (j = 0; j < 3; j++) {
+            mul3sv(d1, dot3(mesh->vertices + n * ind[j] + 3, T), mesh->vertices + n * ind[j] + 3); /* (N dot T) N */
+            sub3v(mesh->vertices + n * ind[j] + 8, T, d1); /* T' <- T - (N dot T) N */
+            mul3sv(d1, dot3(mesh->vertices + n * ind[j] + 3, B), mesh->vertices + n * ind[j] + 3); /* (N dot B) N */
+            sub3v(mesh->vertices + n * ind[j] + 11, B, d1); /* B' <- B - (N dot B) N */
+            mul3sv(d1, dot3(mesh->vertices + n * ind[j] + 8, B) / norm3sq(mesh->vertices + n * ind[j] + 8), mesh->vertices + n * ind[j] + 8); /* (T' dot B) T' / (T')² */
+            decr3v(mesh->vertices + n * ind[j] + 11, d1); /* B' <- B' - (T' dot B) T' / (T')² */
+            normalize3(mesh->vertices + n * ind[j] + 8);
+            normalize3(mesh->vertices + n * ind[j] + 11);
         }
-        memcpy(mesh->vertices + n * i0 + 11, d1, sizeof(d1));
-        normalize3(mesh->vertices + n * i0 + 11);
-        memcpy(mesh->vertices + n * i1 + 8, mesh->vertices + n * i0 + 8, 6 * sizeof(float));
-        memcpy(mesh->vertices + n * i2 + 8, mesh->vertices + n * i0 + 8, 6 * sizeof(float));
     }
     return 1;
 }
