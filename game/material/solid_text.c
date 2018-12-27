@@ -17,7 +17,7 @@ struct SolidTextMaterial* solid_text_material_new(float r, float g, float b, con
     struct SolidTextMaterial* solidText;
 
     if (!game_shaders[SHADER_SOLID_TEXT]) {
-        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/text.vert", "shaders/text.frag"))) {
+        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/solid_texture.vert", "shaders/text.frag"))) {
             return NULL;
         }
     }
