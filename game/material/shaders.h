@@ -12,6 +12,7 @@ enum Shader {
     SHADER_PBR,
     SHADER_PBR_UNI,
     SHADER_SOLID_TEXT,
+    SHADER_SKYBOX,
     NUM_SHADERS
 };
 
