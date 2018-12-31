@@ -112,3 +112,9 @@ void skybox_free(struct GLObject* skybox) {
         free(skybox);
     }
 }
+
+void skybox_render(struct GLObject* skybox, const struct Camera* camera) {
+    Mat4 model;
+    Mat3 inv;
+    globject_render(skybox, camera, NULL, model, inv);
+}

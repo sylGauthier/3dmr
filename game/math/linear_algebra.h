@@ -38,6 +38,10 @@ extern const Vec3 VEC3_AXIS_X;
 extern const Vec3 VEC3_AXIS_Y;
 extern const Vec3 VEC3_AXIS_Z;
 
+#ifndef M_PI
+#define M_PI 3.14159265358979 
+#endif
+
 /* Vec2 */
 void zero2v(Vec2 v);
 void print2v(Vec2 v);

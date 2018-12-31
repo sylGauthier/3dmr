@@ -34,6 +34,14 @@ void asset_manager_remove_path(const char* path) {
     }
 }
 
+size_t asset_manager_get_num_paths(void) {
+    return numPaths;
+}
+
+const char* asset_manager_get_path(size_t i) {
+    return paths[i];
+}
+
 char* asset_manager_find_file(const char* filename) {
     unsigned int i;
     size_t filenameSize = strlen(filename);

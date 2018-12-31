@@ -11,4 +11,6 @@ void skybox_destroy(struct GLObject* skybox);
 struct GLObject* skybox_new(GLuint texture, float size);
 void skybox_free(struct GLObject* skybox);
 
+void skybox_render(struct GLObject* skybox, const struct Camera* camera);
+
 #endif

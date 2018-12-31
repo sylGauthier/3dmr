@@ -154,7 +154,10 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
 #endif
 
     while (curFile) {
-        fclose(files[curFile--].fd);
+        if (files[curFile].fd) {
+            fclose(files[curFile].fd);
+        }
+        curFile--;
     }
 
     if (ok) {

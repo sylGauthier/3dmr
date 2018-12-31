@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+#include <game/math/linear_algebra.h>
 
 #ifndef CHECKERBOARD_H
 #define CHECKERBOARD_H
