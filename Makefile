@@ -34,7 +34,7 @@ test: all
 	@+$(MAKE) -k $(TESTS)
 $(TESTS): test_%: ./test/scripts/test_%.sh
 	@$<
-test-assets clean-assets:
+test-assets test-assets-extra clean-assets:
 	@+$(MAKE) --no-print-directory -C test/assets $@
 
 test/demo: test/demo.o $(DEMO_UTIL)

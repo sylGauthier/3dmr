@@ -1,4 +1,4 @@
-.PHONY: test-assets clean-assets
+.PHONY: test-assets test-assets-extra clean-assets
 
 .DELETE_ON_ERROR:
 DIRS := downloads meshes textures fonts
@@ -52,19 +52,19 @@ downloads/brickwall.jpg downloads/brickwall_normal.jpg:
 	wget -O $@ https://learnopengl.com/img/textures/$(notdir $@)
 
 
-#ASSETS += $(foreach t,albedo ao metalness normal roughness, textures/chest_$(t).png) meshes/chest.obj
+ASSETS_EXTRA += $(foreach t,albedo ao metalness normal roughness, textures/chest_$(t).png) meshes/chest.obj
 textures/chest_%.png:
 	wget -O $@ https://github.com/emackey/testing-pbr/raw/6afba39ddf5631b6cbf08dd031b0edd541b1e7eb/models/Chest/$(notdir $@)
 meshes/chest.obj:
 	wget -O $@ https://github.com/emackey/testing-pbr/raw/6afba39ddf5631b6cbf08dd031b0edd541b1e7eb/models/Chest/Chest.obj
 
-mats := $(foreach mat,gold grass plastic rusted_iron wall,$(foreach t,albedo ao metalness normal roughness,textures/$(mat)_$(t).png))
-#ASSETS += $(mats)
+mats := $(foreach mat,gold plastic,$(foreach t,albedo ao metalness normal roughness,textures/$(mat)_$(t).png))
+ASSETS_EXTRA += $(mats)
 $(mats):
 	wget -O $@ https://github.com/JoeyDeVries/LearnOpenGL/raw/239c456ae9416fdfd294a58e0ff127897810ab60/resources/textures/pbr/$(shell echo $(notdir $@) | sed 's,\(.*\)_\(.*\),\1/\2,;s,metalness,metallic,')
 
 
-ASSETS += $(foreach t,albedo metalness normal roughness, textures/cerberus_$(t).png) meshes/cerberus.obj
+ASSETS_EXTRA += $(foreach t,albedo metalness normal roughness, textures/cerberus_$(t).png) meshes/cerberus.obj
 downloads/Cerberus_by_Andrew_Maximov.zip:
 	wget -O $@ http://artisaverb.info/Cerberus/$(notdir $@)
 textures/cerberus_albedo.png: downloads/Cerberus_A.tga
@@ -100,5 +100,6 @@ fonts/FreeSans.ttf: downloads/freefont-20120503.zip
 
 
 test-assets: $(ASSETS)
+test-assets-extra: $(ASSETS_EXTRA)
 clean-assets:
 	rm -f $(wildcard $(foreach d,$(DIRS),$(d)/*))
