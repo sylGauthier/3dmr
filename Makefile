@@ -37,6 +37,5 @@ $(TESTS): test_%: ./test/scripts/test_%.sh
 test-assets clean-assets:
 	@+$(MAKE) --no-print-directory -C test/assets $@
 
-$(TEST_EXECS): | $(LIB)
-$(TEST_EXECS): LDLIBS+=$(LIB)
 test/demo: test/demo.o $(DEMO_UTIL)
+$(TEST_EXECS): $(LIB)

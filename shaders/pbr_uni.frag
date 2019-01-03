@@ -1,6 +1,6 @@
 #version 130
 
-#include "pbr.glsl"
+#include "pbr/pbr.glsl"
 #include "hdr.glsl"
 
 in vec3 surfelPosition;
@@ -13,7 +13,7 @@ uniform float roughness;
 uniform vec3 cameraPosition;
 
 void main() {
-    vec3 color = pbr(color, metalness, roughness, surfelNormal, surfelPosition, cameraPosition);
+    vec3 color = pbr(color, metalness, roughness, normalize(surfelNormal), surfelPosition, cameraPosition);
     color = reinhard_tonemapping(color, GAMMA, EXPOSURE, PURE_WHITE);
     out_Color = vec4(color, 1.0);
 }

@@ -125,19 +125,20 @@ static int parse_phong(const char* s, char** end, struct PhongMaterial* mat) {
 
 static Vec3 multiColor;
 static double hue = 0.0;
-static void solid_multicolor_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void solid_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "solidColor"), 1, multiColor);
 }
-static void phong_multicolor_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, multiColor);
-    light_load_uniforms(material->shader, lights);
+    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongColorMaterial*)material)->phong);
 }
-static void pbr_multicolor_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void pbr_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, multiColor);
     glUniform1fv(glGetUniformLocation(material->shader, "metalness"), 1, &((const struct PBRUniMaterial*)material)->metalness);
     glUniform1fv(glGetUniformLocation(material->shader, "roughness"), 1, &((const struct PBRUniMaterial*)material)->roughness);
-    light_load_uniforms(material->shader, lights);
+    light_load_direct_uniforms(material->shader, lights);
+    light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2);
 }
 void update_materials(double dt) {
     hue = fmod(hue + 50.0 * dt, 360.0);
@@ -155,7 +156,7 @@ int parse_material(const char* s, char** end, struct Material** m, unsigned int*
         if (!(res = parse_color(s, (char**)&s, color, &isMulti))) {
             *m = (struct Material*)solid_color_material_new(color[0], color[1], color[2]);
             if (isMulti && *m) {
-                (*m)->prerender = solid_multicolor_prerender;
+                (*m)->load = solid_multicolor_load;
             }
             if (requiredMeshFlags) {
                 *requiredMeshFlags = 0;
@@ -183,7 +184,7 @@ int parse_material(const char* s, char** end, struct Material** m, unsigned int*
             }
             *m = (struct Material*)phong_color_material_new(color[0], color[1], color[2], &phongMat);
             if (isMulti && *m) {
-                (*m)->prerender = phong_multicolor_prerender;
+                (*m)->load = phong_multicolor_load;
             }
             if (requiredMeshFlags) {
                 *requiredMeshFlags = MESH_NORMALS;
@@ -228,7 +229,7 @@ int parse_material(const char* s, char** end, struct Material** m, unsigned int*
             }
             *m = (struct Material*)pbr_uni_material_new(color[0], color[1], color[2], params[0], params[1]);
             if (isMulti && *m) {
-                (*m)->prerender = pbr_multicolor_prerender;
+                (*m)->load = pbr_multicolor_load;
             }
             if (requiredMeshFlags) {
                 *requiredMeshFlags = MESH_NORMALS;

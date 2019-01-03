@@ -1,6 +1,6 @@
 #version 130
 
-#include "pbr.glsl"
+#include "pbr/pbr.glsl"
 #include "hdr.glsl"
 
 in vec3 surfelPosition;

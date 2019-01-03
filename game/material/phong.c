@@ -3,9 +3,9 @@
 #include "phong.h"
 #include "shaders.h"
 
-static void phong_color_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_color_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, ((const struct PhongColorMaterial*)material)->color);
-    light_load_uniforms(material->shader, lights);
+    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongColorMaterial*)material)->phong);
 }
 
@@ -20,8 +20,7 @@ struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, c
     if (!(phongColor = malloc(sizeof(*phongColor)))) {
         return NULL;
     }
-    phongColor->material.prerender = phong_color_prerender;
-    phongColor->material.postrender = NULL;
+    phongColor->material.load = phong_color_load;
     phongColor->material.shader = game_shaders[SHADER_PHONG_COLOR];
     phongColor->material.polygonMode = GL_FILL;
     phongColor->phong = *phong;
@@ -32,14 +31,12 @@ struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, c
     return phongColor;
 }
 
-static void phong_texture_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_texture_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureMaterial*)material)->texture);
-    light_load_uniforms(material->shader, lights);
+    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
+    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongTextureMaterial*)material)->phong);
-}
-
-static void phong_texture_postrender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const struct PhongMaterial* phong) {
@@ -53,8 +50,7 @@ struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const st
     if (!(phongTexture = malloc(sizeof(*phongTexture)))) {
         return NULL;
     }
-    phongTexture->material.prerender = phong_texture_prerender;
-    phongTexture->material.postrender = phong_texture_postrender;
+    phongTexture->material.load = phong_texture_load;
     phongTexture->material.shader = game_shaders[SHADER_PHONG_TEXTURE];
     phongTexture->material.polygonMode = GL_FILL;
     phongTexture->phong = *phong;
@@ -63,22 +59,15 @@ struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const st
     return phongTexture;
 }
 
-static void phong_texture_normalmap_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_texture_normalmap_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform1i(glGetUniformLocation(material->shader, "normalMap"), 1);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureNormalmapMaterial*)material)->normalMap);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureNormalmapMaterial*)material)->texture);
-    light_load_uniforms(material->shader, lights);
+    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongTextureNormalmapMaterial*)material)->phong);
-}
-
-static void phong_texture_normalmap_postrender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuint texture, GLuint normalMap, const struct PhongMaterial* phong) {
@@ -92,8 +81,7 @@ struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuin
     if (!(phongTexture = malloc(sizeof(*phongTexture)))) {
         return NULL;
     }
-    phongTexture->material.prerender = phong_texture_normalmap_prerender;
-    phongTexture->material.postrender = phong_texture_normalmap_postrender;
+    phongTexture->material.load = phong_texture_normalmap_load;
     phongTexture->material.shader = game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP];
     phongTexture->material.polygonMode = GL_FILL;
     phongTexture->phong = *phong;

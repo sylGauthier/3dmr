@@ -1,37 +1,10 @@
 // Adapted from https://github.com/Nadrin/PBR/blob/7a31ffa103542c1e635b6df956c32f8f86273c55/data/shaders/glsl/pbr_fs.glsl
 
-#include "lights.glsl"
+#include "../light/direct.glsl"
+#include "../light/ibl.glsl"
+#include "util.glsl"
 
 #define Fdielectric vec3(0.04)
-#define PI 3.141592
-#define EPSILON 0.00001
-
-// GGX/Towbridge-Reitz normal distribution function.
-// Uses Disney's reparametrization of alpha = roughness^2.
-float ndfGGX(float cosLh, float roughness) {
-    float alpha   = roughness * roughness;
-    float alphaSq = alpha * alpha;
-
-    float denom = (cosLh * cosLh) * (alphaSq - 1.0) + 1.0;
-    return alphaSq / (PI * denom * denom);
-}
-
-// Single term for separable Schlick-GGX below.
-float gaSchlickG1(float cosTheta, float k) {
-    return cosTheta / (cosTheta * (1.0 - k) + k);
-}
-
-// Schlick-GGX approximation of geometric attenuation function using Smith's method.
-float gaSchlickGGX(float cosLi, float cosLo, float roughness) {
-    float r = roughness + 1.0;
-    float k = (r * r) / 8.0; // Epic suggests using this roughness remapping for analytic lights.
-    return gaSchlickG1(cosLi, k) * gaSchlickG1(cosLo, k);
-}
-
-// Shlick's approximation of the Fresnel factor.
-vec3 fresnelSchlick(vec3 F0, float cosTheta) {
-    return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
-}
 
 vec3 pbr_direct_lighting(vec3 Li, vec3 Lo, float cosLo, vec3 N, vec3 albedo, float metalness, float roughness, vec3 F0, vec3 Lradiance) {
     vec3 Lh = normalize(Li + Lo); // Half-vector between Li and Lo
@@ -48,8 +21,41 @@ vec3 pbr_direct_lighting(vec3 Li, vec3 Lo, float cosLo, vec3 N, vec3 albedo, flo
     vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
 
     vec3 diffuseBRDF = kd * albedo; // Lambert diffuse BRDF
-    vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * cosLo); // Cook-Torrance specular microfacet BRDF
+    vec3 specularBRDF = (F * D * G) / max(0.00001, 4.0 * cosLi * cosLo); // Cook-Torrance specular microfacet BRDF
     return (diffuseBRDF + specularBRDF) * Lradiance * cosLi; 
+}
+
+vec3 pbr_ambient_lighting(vec3 Lr, float cosLo, vec3 N, vec3 albedo, float metalness, float roughness, vec3 F0) {
+    if (hasIBL == 0) {
+        return vec3(0);
+    }
+
+    // Sample diffuse irradiance at normal direction.
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+
+    // Calculate Fresnel term for ambient lighting.
+    // Since we use pre-filtered cubemap(s) and irradiance is coming from many directions
+    // use cosLo instead of angle with light's half-vector (cosLh above).
+    // See: https://seblagarde.wordpress.com/2011/08/17/hello-world/
+    vec3 F = fresnelSchlick(F0, cosLo);
+
+    // Get diffuse contribution factor (as with direct lighting).
+    vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
+
+    // Irradiance map contains exitant radiance assuming Lambertian BRDF, no need to scale by 1/PI here either.
+    vec3 diffuseIBL = kd * albedo * irradiance;
+
+    // Sample pre-filtered specular reflection environment at correct mipmap level.
+    vec3 specularIrradiance = textureLod(specularMap, Lr, roughness * float(specularMapNumMipmaps - 1)).rgb;
+
+    // Split-sum approximation factors for Cook-Torrance specular BRDF.
+    vec2 specularBRDF = texture(specularBrdf, vec2(cosLo, roughness)).rg;
+
+    // Total specular IBL contribution.
+    vec3 specularIBL = (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
+
+    // Total ambient lighting contribution.
+    return diffuseIBL + specularIBL;
 }
 
 vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 surfelPosition, vec3 cameraPosition) {
@@ -79,7 +85,7 @@ vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 
     }
 
     // Ambient lighting
-    vec3 ambientLighting = vec3(0.0);
+    vec3 ambientLighting = pbr_ambient_lighting(Lr, cosLo, surfelNormal, albedo, metalness, roughness, F0);
 
     return ambientLighting + directLighting;
 }

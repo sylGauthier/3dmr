@@ -1,3 +1,5 @@
+#include <game/render/material.h>
+
 #ifndef DEMO_UTIL_MATERIALS_H
 #define DEMO_UTIL_MATERIALS_H
 

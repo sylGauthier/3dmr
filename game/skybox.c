@@ -49,12 +49,10 @@ GLuint skybox_load_texture(const char* left, const char* right, const char* bott
     return 0;
 }
 
-static void skybox_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void skybox_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct SkyboxMaterial*)material)->texture);
-}
-
-static void skybox_postrender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
 }
 
 int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
@@ -80,8 +78,7 @@ int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
         return 0;
     }
     skybox->material = (struct Material*)mat;
-    mat->material.prerender = skybox_prerender;
-    mat->material.postrender = skybox_postrender;
+    mat->material.load = skybox_load;
     mat->material.shader = game_shaders[SHADER_SKYBOX];
     mat->material.polygonMode = GL_FILL;
     mat->texture = texture;

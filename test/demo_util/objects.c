@@ -84,6 +84,22 @@ static int parse_skybox(const char* s, struct Config* config) {
         fprintf(stderr, "Error: failed to create the skybox\n");
         return 0;
     }
+    {
+        GLint size;
+        glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP, 0, GL_TEXTURE_WIDTH, &size);
+        if (size < 256) {
+            size = 256;
+        } else if (size > 1024) {
+            size = 1024;
+        }
+        printf("Info: pre-computing IBL textures... ");
+        fflush(stdout);
+        if (compute_ibl(texture, 32, size, 5, 256, &config->scene.lights.ibl)) {
+            printf("done\n");
+        } else {
+            printf("fail\n");
+        }
+    }
     return 1;
 }
 

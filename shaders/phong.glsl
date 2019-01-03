@@ -1,4 +1,4 @@
-#include "lights.glsl"
+#include "light/direct.glsl"
 #include "material/phong.h"
 
 uniform PhongMaterial material;

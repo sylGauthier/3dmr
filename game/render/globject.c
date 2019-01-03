@@ -12,16 +12,11 @@ void globject_render(const struct GLObject* glObject, const struct Camera* camer
     glUniformMatrix3fv(glGetUniformLocation(material->shader, "inverseNormal"), 1, GL_FALSE, (float*)inverseNormal);
     glUniform3fv(glGetUniformLocation(material->shader, "cameraPosition"), 1, camera->position);
     glPolygonMode(GL_FRONT_AND_BACK, material->polygonMode);
-    if (material->prerender) {
-        material->prerender(glObject->material, camera, lights);
-    }
+    material->load(glObject->material, camera, lights);
     if (glObject->vertexArray->numIndices) {
         glDrawElements(GL_TRIANGLES, glObject->vertexArray->numIndices, GL_UNSIGNED_INT, 0);
     } else {
         glDrawArrays(GL_TRIANGLES, 0, glObject->vertexArray->numVertices);
-    }
-    if (material->postrender) {
-        material->postrender(glObject->material, camera, lights);
     }
     glBindVertexArray(0);
     glUseProgram(0);

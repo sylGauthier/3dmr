@@ -3,31 +3,21 @@
 #include "pbr.h"
 #include "shaders.h"
 
-static void pbr_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glUniform1i(glGetUniformLocation(material->shader, "roughnessTex"), 3);
-    glUniform1i(glGetUniformLocation(material->shader, "metalnessTex"), 2);
-    glUniform1i(glGetUniformLocation(material->shader, "normalMap"), 1);
-    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->roughnessTex);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->metalnessTex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->normalMap);
+static void pbr_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->albedoTex);
-    light_load_uniforms(material->shader, lights);
-}
-
-static void pbr_postrender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->normalMap);
+    glUniform1i(glGetUniformLocation(material->shader, "normalMap"), 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->metalnessTex);
+    glUniform1i(glGetUniformLocation(material->shader, "metalnessTex"), 2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->roughnessTex);
+    glUniform1i(glGetUniformLocation(material->shader, "roughnessTex"), 3);
+    light_load_direct_uniforms(material->shader, lights);
+    light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6);
 }
 
 struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint metalnessTex, GLuint roughnessTex) {
@@ -41,8 +31,7 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
     if (!(pbrMat = malloc(sizeof(*pbrMat)))) {
         return NULL;
     }
-    pbrMat->material.prerender = pbr_prerender;
-    pbrMat->material.postrender = pbr_postrender;
+    pbrMat->material.load = pbr_load;
     pbrMat->material.shader = game_shaders[SHADER_PBR];
     pbrMat->material.polygonMode = GL_FILL;
     pbrMat->albedoTex = albedoTex;
@@ -53,11 +42,12 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
     return pbrMat;
 }
 
-static void pbr_uni_prerender(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void pbr_uni_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, ((const struct PBRUniMaterial*)material)->color);
     glUniform1fv(glGetUniformLocation(material->shader, "metalness"), 1, &((const struct PBRUniMaterial*)material)->metalness);
     glUniform1fv(glGetUniformLocation(material->shader, "roughness"), 1, &((const struct PBRUniMaterial*)material)->roughness);
-    light_load_uniforms(material->shader, lights);
+    light_load_direct_uniforms(material->shader, lights);
+    light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2);
 }
 
 struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float metalness, float roughness) {
@@ -71,8 +61,7 @@ struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float met
     if (!(pbrMat = malloc(sizeof(*pbrMat)))) {
         return NULL;
     }
-    pbrMat->material.prerender = pbr_uni_prerender;
-    pbrMat->material.postrender = NULL;
+    pbrMat->material.load = pbr_uni_load;
     pbrMat->material.shader = game_shaders[SHADER_PBR_UNI];
     pbrMat->material.polygonMode = GL_FILL;
     pbrMat->color[0] = r;

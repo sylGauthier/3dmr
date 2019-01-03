@@ -1,8 +1,8 @@
 #define GLSL
 
-#include "light/ambient_light.h"
-#include "light/directional_light.h"
-#include "light/point_light.h"
+#include "ambient_light.h"
+#include "directional_light.h"
+#include "point_light.h"
 
 uniform int numDirectionalLights;
 uniform int numPointLights;
