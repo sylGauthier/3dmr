@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
-#include <unistd.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include <game/asset_manager.h>
 #include <game/skybox.h>
@@ -43,9 +44,9 @@ int main(int argc, char** argv) {
         viewer->cursor_callback = cursor_rotate_camera;
         viewer->wheel_callback = wheel_callback;
         viewer->close_callback = close_callback;
+        glfwSwapInterval(1);
         running = 1;
         for (start = t = time(NULL); running && (config.timeout < 0 || t < start + config.timeout); t = time(NULL)) {
-            usleep(10 * 1000);
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (config.skybox) {
