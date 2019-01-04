@@ -2,7 +2,7 @@ DEPS := glfw3 glew libpng freetype2
 APP := game
 LIB := libgame.a
 
-CFLAGS ?= -std=c89 -pedantic -march=native -Wall -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -O3
+CFLAGS ?= -std=c89 -pedantic -march=native -Wall -O3
 CFLAGS += $(shell pkg-config --cflags $(DEPS)) -I.
 LDLIBS += -lm $(shell pkg-config --libs $(DEPS))
 
