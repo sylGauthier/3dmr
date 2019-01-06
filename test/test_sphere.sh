@@ -11,4 +11,4 @@ case "$(($1))" in
     3) texture="earth_equirectangular"; uv="equirect,$(div 2042 2048),$(div 1020 1024),2";;
 esac
 
-"$(dirname "$0")/demo" "icosphere:5,4,$uv;solid:texture($texture);r(1,0,0,-1.57)"
+"$(dirname "$0")/demo" "icosphere:5,4,$uv;solid:texture($texture)"

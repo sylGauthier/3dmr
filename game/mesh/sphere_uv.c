@@ -26,8 +26,8 @@ static double (*latitude_to_y[NUM_SPHERE_MAP])(double latitude) = {
 
 static void get_longitude_latidude(double p0, double p1, double p2, double* longitude, double* latitude) {
     double r = sqrt(p0 * p0 + p1 * p1 + p2 * p2);
-    *longitude = atan2(p1, p0);
-    *latitude = (M_PI / 2.0) - acos(p2 / r);
+    *longitude = atan2(p0, p2);
+    *latitude = (M_PI / 2.0) - acos(p1 / r);
 }
 
 #define VINDEX(mesh, nFace, nVertex) (mesh->numIndices ? mesh->indices[3 * nFace + nVertex] : (3 * nFace + nVertex))
