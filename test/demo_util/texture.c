@@ -6,14 +6,14 @@
 #include "args.h"
 #include "checkerboard.h"
 
-char* test_texture_path(const char* name) {
+char* test_texture_path(const char* name, const char* extension) {
     char *path, *realpath;
 
-    if (!(path = malloc(14 + strlen(name)))) {
+    if (!(path = malloc(11 + strlen(name) + strlen(extension)))) {
         fprintf(stderr, "Error: failed to allocate memory for texture path '%s'\n", name);
         return NULL;
     }
-    sprintf(path, "textures/%s.png", name);
+    sprintf(path, "textures/%s.%s", name, extension);
     realpath = asset_manager_find_file(path);
     free(path);
     if (!realpath) {
@@ -56,7 +56,7 @@ GLuint test_texture(const char* name) {
         return default_checkerboard();
     }
 
-    if (!(path = test_texture_path(name))) {
+    if (!(path = test_texture_path(name, "png"))) {
         return 0;
     }
     res = texture_load_from_file(path);

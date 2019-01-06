@@ -33,7 +33,7 @@ static int parse_skybox(const char* s, struct Config* config) {
     float size;
     GLuint texture = 0;
     unsigned int i;
-    int ok;
+    int ok, hdr;
 
     if (config->skybox) {
         fprintf(stderr, "Warning: skybox already loaded, ignoring\n");
@@ -51,25 +51,33 @@ static int parse_skybox(const char* s, struct Config* config) {
     }
     for (i = 0; i < 6; i++) {
         paths[i] = ++ptr;
-        ptr = strchr(ptr, ',');
-        if ((!ptr) != (i == 5)) {
-            fprintf(stderr, "Error: invalid skybox parameter\n");
-            free(tmp);
-            return 0;
+        if (!(ptr = strchr(ptr, ','))) {
+            if (i == 0) {
+                break;
+            } else if (i != 5) {
+                fprintf(stderr, "Error: invalid skybox parameter\n");
+                free(tmp);
+                return 0;
+            }
         }
         if (ptr) {
             *ptr = 0;
         }
     }
+    hdr = (i == 0);
     ok = 1;
-    for (i = 0; i < 6; i++) {
-        ok &= (paths[i] = test_texture_path(paths[i])) != NULL;
+    for (i = 0; i < (hdr ? 1 : 6); i++) {
+        ok &= (paths[i] = test_texture_path(paths[i], hdr ? "hdr" : "png")) != NULL;
     }
     free(tmp);
     if (ok) {
-        texture = skybox_load_texture(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
+        if (hdr) {
+            texture = skybox_load_texture_hdr_equirect(paths[0], 1024);
+        } else {
+            texture = skybox_load_texture_png_6faces(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
+        }
     }
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < (hdr ? 1 : 6); i++) {
         free(paths[i]);
     }
     if (!ok || !texture) {

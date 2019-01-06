@@ -91,6 +91,13 @@ downloads/devils-tooth_%.tga: downloads/mp_deviltooth.zip
 	unzip -p $< mp_deviltooth/$(notdir $@) > $@
 
 
+ASSETS_EXTRA += textures/tropical_beach.hdr
+textures/tropical_beach.hdr: downloads/Tropical_Beach.zip
+	unzip -p $< Tropical_Beach/Tropical_Beach_3k.hdr > $@
+downloads/Tropical_Beach.zip:
+	wget -O $@ http://www.hdrlabs.com/sibl/archive/downloads/$(notdir $@)
+
+
 ASSETS += fonts/FreeSans.ttf
 downloads/freefont-20120503.zip:
 	wget -O $@ "https://ftp.gnu.org/gnu/freefont/freefont-ttf-20120503.zip"

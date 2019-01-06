@@ -1,8 +1,10 @@
 *.o
 *.a
 *.obj
+*.mtl
 *.jpg
 *.png
+*.hdr
 *.ttf
 *.zip
 *.swp
