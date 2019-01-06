@@ -5,7 +5,7 @@
 
 #include <game/render/viewer.h>
 #include <game/img/png.h>
-#include <game/material/shaders.h>
+#include "../material/shaders.h"
 
 struct ViewerImpl {
     struct Viewer user;
@@ -138,6 +138,10 @@ void viewer_free(struct Viewer* viewer) {
         }
         free(viewer);
     }
+}
+
+void viewer_set_title(struct Viewer* viewer, const char* title) {
+    glfwSetWindowTitle(((struct ViewerImpl*)viewer)->window, title);
 }
 
 void viewer_make_current(struct Viewer* viewer) {

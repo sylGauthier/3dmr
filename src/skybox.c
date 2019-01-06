@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <game/asset_manager.h>
-#include <game/material/shaders.h>
 #include <game/mesh/box.h>
 #include <game/render/globject.h>
 #include <game/render/texture.h>
 #include <game/img/hdr.h>
 #include <game/img/png.h>
+#include "material/shaders.h"
 
 struct SkyboxMaterial {
     struct Material material;

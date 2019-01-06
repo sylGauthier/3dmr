@@ -3,7 +3,7 @@
 #include <game/mesh/mesh.h>
 #include <game/render/globject.h>
 #include <game/scene/node.h>
-#include "frame.h"
+#include <game/scene/frame.h>
 
 static const float arrowVertices[] = {
     0.0,  0.1,  0.0,   1.0, 0.0, 0.0,   0.0,  0.0,  0.1,

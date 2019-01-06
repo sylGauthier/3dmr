@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 #include <game/asset_manager.h>
-#include "ibl.h"
+#include <game/light/ibl.h>
 
 static void params_cubemap_texture(int mip) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

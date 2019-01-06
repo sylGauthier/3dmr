@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <game/asset_manager.h>
-#include "solid_text.h"
+#include <game/material/solid_text.h>
 #include "shaders.h"
 
 static void text_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {

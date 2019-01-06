@@ -3,7 +3,7 @@
 #include <string.h>
 #include <float.h>
 
-#include "node.h"
+#include <game/scene/node.h>
 
 void node_init(struct Node* node, struct GLObject* obj) {
     node->object = obj;

@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <GL/glew.h>
 #include <game/asset_manager.h>
-#include "shader.h"
+#include <game/render/shader.h>
 
 #define MAX_INCLUDE_DEPTH 32
 #define MAX_SHADER_PATHS 32

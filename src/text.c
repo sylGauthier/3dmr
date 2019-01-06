@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 #include <game/math/linear_algebra.h>
 
-#include "text.h"
+#include <game/text.h>
 
 #define NB_GLYPHS_PER_ROW 32
 #define NB_GLYPHS_PER_LINE NB_GLYPHS_PER_ROW

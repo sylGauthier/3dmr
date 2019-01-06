@@ -2,7 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-#include "icosphere.h"
+#include <game/mesh/icosphere.h>
 
 static const unsigned int initialIndices[] = {
     0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,

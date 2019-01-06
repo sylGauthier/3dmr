@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "sphere_uv.h"
+#include <game/mesh/sphere_uv.h>
 
 #define central_cylindrical tan
 

@@ -16,6 +16,7 @@ struct Viewer {
 struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* title);
 void viewer_free(struct Viewer* viewer);
 
+void viewer_set_title(struct Viewer* viewer, const char* title);
 void viewer_make_current(struct Viewer* viewer);
 void viewer_process_events(struct Viewer* viewer);
 double viewer_next_frame(struct Viewer* viewer);

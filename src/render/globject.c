@@ -1,5 +1,5 @@
+#include <game/render/globject.h>
 #include <game/render/material.h>
-#include "globject.h"
 
 void globject_render(const struct GLObject* glObject, const struct Camera* camera, const struct Lights* lights, Mat4 model, Mat3 inverseNormal) {
     struct Material* material = glObject->material;

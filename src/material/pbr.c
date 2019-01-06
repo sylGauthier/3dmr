@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <game/asset_manager.h>
-#include "pbr.h"
+#include <game/material/pbr.h>
 #include "shaders.h"
 
 static void pbr_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {

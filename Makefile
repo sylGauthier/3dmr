@@ -1,12 +1,11 @@
 DEPS := glfw3 glew libpng freetype2
-APP := game
 LIB := libgame.a
 
 CFLAGS ?= -std=c89 -pedantic -march=native -Wall -O3
 CFLAGS += $(shell pkg-config --cflags $(DEPS)) -I.
 LDLIBS += -lm $(shell pkg-config --libs $(DEPS))
 
-LIB_OBJECTS := $(patsubst %.c,%.o,$(wildcard game/*.c game/*/*.c))
+LIB_OBJECTS := $(patsubst %.c,%.o,$(wildcard src/*.c src/*/*.c))
 TEST_EXECS := $(patsubst %.c,%,$(wildcard test/*.c))
 TESTS := $(patsubst %.sh,%,$(notdir $(wildcard test/scripts/test_*.sh)))
 DEMO_UTIL := $(patsubst %.c,%.o,$(wildcard test/demo_util/*.c))
@@ -24,9 +23,9 @@ $(LIB): $(LIB_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -f $(wildcard $(LIB) game/*.o game/*/*.o test/*.o test/*/*.o $(TEST_EXECS) tags test/out/*)
+	rm -f $(wildcard $(LIB) src/*.o src/*/*.o test/*.o test/*/*.o $(TEST_EXECS) tags test/out/*)
 
-tags: $(wildcard game/*.c game/*/*.c test/demo_util/*.c)
+tags: $(wildcard src/*.c src/*/*.c test/demo_util/*.c)
 	ctags $^
 
 .PHONY: test test-assets clean-assets $(TESTS)

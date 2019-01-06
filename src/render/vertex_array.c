@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "vertex_array.h"
-#include "shader.h"
+#include <game/render/shader.h>
+#include <game/render/vertex_array.h>
 
 void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
     GLsizei stride = MESH_SIZEOF_VERTEX(mesh);

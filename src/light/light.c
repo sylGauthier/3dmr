@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "light.h"
+#include <game/light/light.h>
 
 void light_init(struct Lights* lights) {
     lights->numDirectionalLights = 0;

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <game/asset_manager.h>
-#include "solid.h"
+#include <game/material/solid.h>
 #include "shaders.h"
 
 static void solid_color_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {

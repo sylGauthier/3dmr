@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <game/asset_manager.h>
-#include "phong.h"
+#include <game/material/phong.h>
 #include "shaders.h"
 
 static void phong_color_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
