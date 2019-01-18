@@ -27,7 +27,7 @@ vec3 pbr_direct_lighting(vec3 Li, vec3 Lo, float cosLo, vec3 N, vec3 albedo, flo
 
 vec3 pbr_ambient_lighting(vec3 Lr, float cosLo, vec3 N, vec3 albedo, float metalness, float roughness, vec3 F0) {
     if (hasIBL == 0) {
-        return vec3(0);
+        return vec3(0.006) * ambientLight.color * albedo;
     }
 
     // Sample diffuse irradiance at normal direction.
