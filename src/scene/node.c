@@ -1,9 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <float.h>
 
 #include <game/scene/node.h>
+#include <game/bounding_box/bounding_box.h>
+
+static void update_bounding_box(struct Node* node, struct Node* child) {
+    Vec3 bbPoints[8];
+    int changed = 0, i;
+
+    bb_compute_points(&(child->bb), bbPoints);
+    for (i = 0; i < 8; i++) {
+        Vec3 tmp;
+        mul4m3v(tmp, child->transform, bbPoints[i]);
+
+        changed |= bb_adapt(&(node->bb), tmp);
+    }
+    if (changed && node->father) {
+        update_bounding_box(node->father, node);
+    }
+}
+
+/* Absolutely necessary to keep transform up-to-date at all time
+ * for bounding box computation.
+ */
+static void node_update_transform(struct Node* node) {
+    quaternion_to_mat4(node->transform, node->orientation);
+    memcpy(node->transform[3], node->position, sizeof(Vec3));
+    if (node->father) {
+        update_bounding_box(node->father, node);
+    }
+}
 
 void node_init(struct Node* node, struct GLObject* obj) {
     node->object = obj;
@@ -17,6 +44,16 @@ void node_init(struct Node* node, struct GLObject* obj) {
     node->position[2] = 0;
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
+
+    if (obj && obj->vertexArray) {
+        memcpy(node->bb.center, obj->vertexArray->bbCenter, sizeof(Vec3));
+        memcpy(node->bb.dims, obj->vertexArray->bbDims, sizeof(Vec3));
+    } else {
+        memset(node->bb.center, 0, sizeof(Vec3));
+        memset(node->bb.dims, 0, sizeof(Vec3));
+    }
+
+    node_update_transform(node);
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
@@ -32,6 +69,7 @@ int node_add_child(struct Node* node, struct Node* child) {
     node->children[node->nbChildren - 1] = child;
     child->father = node;
     node->changedFlags |= PARENT_MODEL_CHANGED;
+    update_bounding_box(node, child);
     return 1;
 }
 
@@ -96,12 +134,14 @@ void graph_free(struct Node* root) {
 void node_translate(struct Node* node, Vec3 t) {
     incr3v(node->position, t);
     node->changedFlags |= POSITION_CHANGED;
+    node_update_transform(node);
 }
 
 void node_rotate(struct Node* node, Vec3 axis, float angle) {
     Quaternion q;
     quaternion_set_axis_angle(q, axis, angle);
     node_rotate_q(node, q);
+    node_update_transform(node);
 }
 
 void node_rotate_q(struct Node* node, Quaternion q) {
@@ -109,4 +149,5 @@ void node_rotate_q(struct Node* node, Quaternion q) {
     memcpy(old, node->orientation, sizeof(Quaternion));
     quaternion_mul(node->orientation, q, old);
     node->changedFlags |= ORIENTATION_CHANGED;
+    node_update_transform(node);
 }
