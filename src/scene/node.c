@@ -53,6 +53,8 @@ void node_init(struct Node* node, struct GLObject* obj) {
         memset(node->bb.dims, 0, sizeof(Vec3));
     }
 
+    node->nodeLabel = 0;
+    node->alwaysDraw = 0;
     node_update_transform(node);
 }
 
@@ -105,18 +107,48 @@ void node_update_matrices(struct Node* node) {
     node->changedFlags = NOTHING_CHANGED;
 }
 
+static int node_visible(const struct Camera* cam, const struct Node* node) {
+    Vec3 points[8];
+    Vec3 tmp, tmp2;
+    int i;
+    int upCnt = 0, leftCnt = 0, rightCnt = 0, downCnt = 0, backCnt = 0;
+
+    bb_compute_points(&node->bb, points);
+
+    for (i = 0; i < 8; i++) {
+        mul4m3v(tmp2, node->model, points[i]);
+        mul4m3v(tmp, cam->view, tmp2);
+        mul4m3v(tmp2, cam->projection, tmp);
+        if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
+            return 1;
+        if (tmp2[0] < -1)
+            leftCnt++;
+        if (tmp2[0] > 1)
+            rightCnt++;
+        if (tmp2[1] < -1)
+            downCnt++;
+        if (tmp2[1] > 1)
+            upCnt++;
+        if (tmp2[2] < 0)
+            backCnt++;
+    }
+    return !(upCnt >= 8 || downCnt >= 8 || leftCnt >= 8 || rightCnt >= 8);
+}
+
 int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
     unsigned int i;
-    int res = 1;
+    int res = 0;
 
     node_update_matrices(node);
 
-    if (node->object) {
-        globject_render(node->object, cam, lights, node->model, node->inverseNormal);
-    }
-
-    for (i = 0; i < node->nbChildren && res; i++) {
-        res = res && render_graph(node->children[i], cam, lights);
+    if (node->alwaysDraw || node_visible(cam, node)) {
+        if (node->object) {
+            globject_render(node->object, cam, lights, node->model, node->inverseNormal);
+            res++;
+        }
+        for (i = 0; i < node->nbChildren; i++) {
+            res += render_graph(node->children[i], cam, lights);
+        }
     }
 
     return res;

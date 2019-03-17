@@ -29,6 +29,8 @@ struct Node {
     Mat4 model;
     Mat3 inverseNormal;
 
+    int nodeLabel;
+    int alwaysDraw;
     /* Bounding Box */
     struct BoundingBox bb;
 };
