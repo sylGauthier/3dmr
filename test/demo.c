@@ -47,13 +47,15 @@ int main(int argc, char** argv) {
         glfwSwapInterval(1);
         running = 1;
         for (start = t = time(NULL); running && (config.timeout < 0 || t < start + config.timeout); t = time(NULL)) {
+            int nb;
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (config.skybox) {
                 skybox_render(config.skybox, &viewer->camera);
             }
-            scene_render(&config.scene, &viewer->camera);
+            nb = scene_render(&config.scene, &viewer->camera);
             update_materials(dt);
+            printf("Rendered %d objects\n", nb);
         }
         if (config.screenshot) {
             if (!viewer_screenshot(viewer, config.screenshot)) {

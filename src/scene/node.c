@@ -111,28 +111,44 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
     Vec3 points[8];
     Vec3 tmp, tmp2;
     int i;
-    int upCnt = 0, leftCnt = 0, rightCnt = 0, downCnt = 0, backCnt = 0;
+    int upCnt = 0, leftCnt = 0, rightCnt = 0, downCnt = 0;
+    int backUpCnt = 0, backDownCnt = 0, backRightCnt = 0, backLeftCnt = 0;
 
     bb_compute_points(&node->bb, points);
 
     for (i = 0; i < 8; i++) {
         mul4m3v(tmp2, node->model, points[i]);
         mul4m3v(tmp, cam->view, tmp2);
-        mul4m3v(tmp2, cam->projection, tmp);
-        if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
-            return 1;
-        if (tmp2[0] < -1)
-            leftCnt++;
-        if (tmp2[0] > 1)
-            rightCnt++;
-        if (tmp2[1] < -1)
-            downCnt++;
-        if (tmp2[1] > 1)
-            upCnt++;
-        if (tmp2[2] < 0)
-            backCnt++;
+        if (tmp[2] > 0.) {
+            if (tmp[0] <= 0) {
+                backLeftCnt++;
+            } else {
+                backRightCnt++;
+            }
+            if (tmp[1] <= 0) {
+                backDownCnt++;
+            } else {
+                backUpCnt++;
+            }
+        } else {
+            mul4m3v(tmp2, cam->projection, tmp);
+            if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
+                return 1;
+            if (tmp2[0] < -1)
+                leftCnt++;
+            if (tmp2[0] > 1)
+                rightCnt++;
+            if (tmp2[1] < -1)
+                downCnt++;
+            if (tmp2[1] > 1)
+                upCnt++;
+        }
     }
-    return !(upCnt >= 8 || downCnt >= 8 || leftCnt >= 8 || rightCnt >= 8);
+    return !(upCnt >= 8 || downCnt >= 8 || leftCnt >= 8 || rightCnt >= 8 || backRightCnt+backLeftCnt >= 8
+                        || upCnt + backUpCnt >= 8
+                        || leftCnt + backLeftCnt >= 8
+                        || downCnt + backDownCnt >= 8
+                        || rightCnt + backRightCnt >= 8);
 }
 
 int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
