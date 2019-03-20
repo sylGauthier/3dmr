@@ -109,8 +109,8 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
     bb_compute_points(&node->bb, points);
 
     for (i = 0; i < 8; i++) {
-        mul4m3v(tmp2, node->model, points[i]);
-        mul4m3v(tmp, cam->view, tmp2);
+        mul4m3v(tmp2, (void*)node->model, points[i]);
+        mul4m3v(tmp, (void*)cam->view, tmp2);
         if (tmp[2] > 0.) {
             if (tmp[0] <= 0) {
                 backLeftCnt++;
@@ -123,7 +123,7 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
                 backUpCnt++;
             }
         } else {
-            mul4m3v(tmp2, cam->projection, tmp);
+            mul4m3v(tmp2, (void*)cam->projection, tmp);
             if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
                 return 1;
             if (tmp2[0] < -1)
