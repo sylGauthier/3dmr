@@ -21,17 +21,6 @@ static void update_bounding_box(struct Node* node, struct Node* child) {
     }
 }
 
-/* Absolutely necessary to keep transform up-to-date at all time
- * for bounding box computation.
- */
-static void node_update_transform(struct Node* node) {
-    quaternion_to_mat4(node->transform, node->orientation);
-    memcpy(node->transform[3], node->position, sizeof(Vec3));
-    if (node->father) {
-        update_bounding_box(node->father, node);
-    }
-}
-
 void node_init(struct Node* node, struct GLObject* obj) {
     node->object = obj;
 
@@ -55,7 +44,6 @@ void node_init(struct Node* node, struct GLObject* obj) {
 
     node->nodeLabel = 0;
     node->alwaysDraw = 0;
-    node_update_transform(node);
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
@@ -102,6 +90,10 @@ void node_update_matrices(struct Node* node) {
 
     for (i = 0; i < node->nbChildren; i++) {
         node->children[i]->changedFlags |= modelChanged;
+    }
+
+    if (node->changedFlags && node->father) {
+        update_bounding_box(node->father, node);
     }
 
     node->changedFlags = NOTHING_CHANGED;
@@ -182,14 +174,12 @@ void graph_free(struct Node* root) {
 void node_translate(struct Node* node, Vec3 t) {
     incr3v(node->position, t);
     node->changedFlags |= POSITION_CHANGED;
-    node_update_transform(node);
 }
 
 void node_rotate(struct Node* node, Vec3 axis, float angle) {
     Quaternion q;
     quaternion_set_axis_angle(q, axis, angle);
     node_rotate_q(node, q);
-    node_update_transform(node);
 }
 
 void node_rotate_q(struct Node* node, Quaternion q) {
@@ -197,5 +187,4 @@ void node_rotate_q(struct Node* node, Quaternion q) {
     memcpy(old, node->orientation, sizeof(Quaternion));
     quaternion_mul(node->orientation, q, old);
     node->changedFlags |= ORIENTATION_CHANGED;
-    node_update_transform(node);
 }
