@@ -1,9 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <float.h>
 
 #include <game/scene/node.h>
+#include <game/bounding_box/bounding_box.h>
+
+static void update_bounding_box(struct Node* node, struct Node* child) {
+    Vec3 bbPoints[8];
+    int changed = 0, i;
+
+    bb_compute_points(&(child->bb), bbPoints);
+    for (i = 0; i < 8; i++) {
+        Vec3 tmp;
+        mul4m3v(tmp, child->transform, bbPoints[i]);
+
+        changed |= bb_adapt(&(node->bb), tmp);
+    }
+    if (changed && node->father) {
+        update_bounding_box(node->father, node);
+    }
+}
 
 void node_init(struct Node* node, struct GLObject* obj) {
     node->object = obj;
@@ -17,6 +33,17 @@ void node_init(struct Node* node, struct GLObject* obj) {
     node->position[2] = 0;
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
+
+    if (obj && obj->vertexArray) {
+        memcpy(node->bb.center, obj->vertexArray->bbCenter, sizeof(Vec3));
+        memcpy(node->bb.dims, obj->vertexArray->bbDims, sizeof(Vec3));
+    } else {
+        memset(node->bb.center, 0, sizeof(Vec3));
+        memset(node->bb.dims, 0, sizeof(Vec3));
+    }
+
+    node->nodeLabel = 0;
+    node->alwaysDraw = 0;
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
@@ -32,6 +59,7 @@ int node_add_child(struct Node* node, struct Node* child) {
     node->children[node->nbChildren - 1] = child;
     child->father = node;
     node->changedFlags |= PARENT_MODEL_CHANGED;
+    update_bounding_box(node, child);
     return 1;
 }
 
@@ -64,21 +92,71 @@ void node_update_matrices(struct Node* node) {
         node->children[i]->changedFlags |= modelChanged;
     }
 
+    if (node->changedFlags && node->father) {
+        update_bounding_box(node->father, node);
+    }
+
     node->changedFlags = NOTHING_CHANGED;
+}
+
+static int node_visible(const struct Camera* cam, const struct Node* node) {
+    Vec3 points[8];
+    Vec3 tmp, tmp2;
+    int i;
+    int upCnt = 0, leftCnt = 0, rightCnt = 0, downCnt = 0;
+    int backUpCnt = 0, backDownCnt = 0, backRightCnt = 0, backLeftCnt = 0;
+
+    bb_compute_points(&node->bb, points);
+
+    for (i = 0; i < 8; i++) {
+        mul4m3v(tmp2, (void*)node->model, points[i]);
+        mul4m3v(tmp, (void*)cam->view, tmp2);
+        if (tmp[2] > 0.) {
+            if (tmp[0] <= 0) {
+                backLeftCnt++;
+            } else {
+                backRightCnt++;
+            }
+            if (tmp[1] <= 0) {
+                backDownCnt++;
+            } else {
+                backUpCnt++;
+            }
+        } else {
+            mul4m3v(tmp2, (void*)cam->projection, tmp);
+            if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
+                return 1;
+            if (tmp2[0] < -1)
+                leftCnt++;
+            if (tmp2[0] > 1)
+                rightCnt++;
+            if (tmp2[1] < -1)
+                downCnt++;
+            if (tmp2[1] > 1)
+                upCnt++;
+        }
+    }
+    return !(upCnt >= 8 || downCnt >= 8 || leftCnt >= 8 || rightCnt >= 8 || backRightCnt+backLeftCnt >= 8
+                        || upCnt + backUpCnt >= 8
+                        || leftCnt + backLeftCnt >= 8
+                        || downCnt + backDownCnt >= 8
+                        || rightCnt + backRightCnt >= 8);
 }
 
 int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
     unsigned int i;
-    int res = 1;
+    int res = 0;
 
     node_update_matrices(node);
 
-    if (node->object) {
-        globject_render(node->object, cam, lights, node->model, node->inverseNormal);
-    }
-
-    for (i = 0; i < node->nbChildren && res; i++) {
-        res = res && render_graph(node->children[i], cam, lights);
+    if (node->alwaysDraw || node_visible(cam, node)) {
+        if (node->object) {
+            globject_render(node->object, cam, lights, node->model, node->inverseNormal);
+            res++;
+        }
+        for (i = 0; i < node->nbChildren; i++) {
+            res += render_graph(node->children[i], cam, lights);
+        }
     }
 
     return res;

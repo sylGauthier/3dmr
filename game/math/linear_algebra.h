@@ -117,6 +117,7 @@ void print4m(Mat4 m);
 void mul4sm(RESTRICT_MAT4(dest), float s, RESTRICT_MAT4(m));
 void mul4mv(RESTRICT_VEC4(res), RESTRICT_MAT4(m), RESTRICT_VEC4(v));
 void mul4mm(RESTRICT_MAT4(res), RESTRICT_MAT4(a), RESTRICT_MAT4(b));
+void mul4m3v(RESTRICT_VEC3(res), RESTRICT_MAT4(m), RESTRICT_VEC3(v));
 void neg4m(Mat4 m);
 void transpose4m(Mat4 m);
 

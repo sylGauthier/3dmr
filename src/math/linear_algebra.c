@@ -467,6 +467,18 @@ void mul4mm(RESTRICT_MAT4(res), RESTRICT_MAT4(a), RESTRICT_MAT4(b)) {
     res[3][3] = a[0][3] * b[3][0] + a[1][3] * b[3][1] + a[2][3] * b[3][2] + a[3][3] * b[3][3];
 }
 
+void mul4m3v(RESTRICT_VEC3(res), RESTRICT_MAT4(m), RESTRICT_VEC3(v)) {
+    Vec4 v4;
+    Vec4 resv4;
+
+    memcpy(v4, v, sizeof(Vec3));
+    v4[3] = 1.;
+    mul4mv(resv4, m, v4);
+    res[0] = resv4[0]/resv4[3];
+    res[1] = resv4[1]/resv4[3];
+    res[2] = resv4[2]/resv4[3];
+}
+
 void neg4m(Mat4 m) {
     m[0][0] = -m[0][0];
     m[0][1] = -m[0][1];

@@ -4,6 +4,7 @@
 #include <game/render/globject.h>
 #include <game/math/linear_algebra.h>
 #include <game/math/quaternion.h>
+#include <game/bounding_box/bounding_box.h>
 
 struct Node {
     struct GLObject* object;
@@ -27,6 +28,11 @@ struct Node {
     /* Absolute (world) transform */
     Mat4 model;
     Mat3 inverseNormal;
+
+    int nodeLabel;
+    int alwaysDraw;
+    /* Bounding Box */
+    struct BoundingBox bb;
 };
 
 void node_init(struct Node* node, struct GLObject* obj);
