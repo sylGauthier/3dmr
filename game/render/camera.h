@@ -12,14 +12,14 @@ struct Camera {
     Mat4 projection, view;
 };
 
-void camera_load_default(struct Camera* camera, Vec3 pos, float ratio);
+void camera_load_default(struct Camera* camera, const Vec3 pos, float ratio);
 
-void camera_get_right(struct Camera* camera, Vec3 right);
-void camera_get_up(struct Camera* camera, Vec3 up);
-void camera_get_backward(struct Camera* camera, Vec3 backward);
+void camera_get_right(const struct Camera* camera, Vec3 right);
+void camera_get_up(const struct Camera* camera, Vec3 up);
+void camera_get_backward(const struct Camera* camera, Vec3 backward);
 
-void camera_move(struct Camera* camera, Vec3 translation);
-void camera_rotate(struct Camera* camera, Vec3 axis, float angle);
+void camera_move(struct Camera* camera, const Vec3 translation);
+void camera_rotate(struct Camera* camera, const Vec3 axis, float angle);
 
 void camera_update_view(struct Camera* camera);
 void camera_update_projection(struct Camera* camera);

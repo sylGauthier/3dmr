@@ -14,10 +14,10 @@ static void camera_update_orientation(struct Camera* camera) {
     Mat3 rot;
     quaternion_to_mat3(rot, camera->orientation);
     transpose3m(rot);
-    mat3to4(camera->view, rot);
+    mat3to4(camera->view, MAT_CONST_CAST(rot));
 }
 
-void camera_load_default(struct Camera* camera, Vec3 pos, float ratio) {
+void camera_load_default(struct Camera* camera, const Vec3 pos, float ratio) {
     memcpy(camera->position, pos, sizeof(Vec3));
     quaternion_load_id(camera->orientation);
     load_id4(camera->view);
@@ -32,25 +32,25 @@ void camera_load_default(struct Camera* camera, Vec3 pos, float ratio) {
     camera_update_projection(camera);
 }
 
-void camera_get_right(struct Camera* camera, Vec3 right) {
+void camera_get_right(const struct Camera* camera, Vec3 right) {
     row3m4(right, camera->view, 0);
 }
 
-void camera_get_up(struct Camera* camera, Vec3 up) {
+void camera_get_up(const struct Camera* camera, Vec3 up) {
     row3m4(up, camera->view, 1);
 }
 
-void camera_get_backward(struct Camera* camera, Vec3 backward) {
+void camera_get_backward(const struct Camera* camera, Vec3 backward) {
     row3m4(backward, camera->view, 2);
 }
 
-void camera_move(struct Camera* camera, Vec3 translation) {
+void camera_move(struct Camera* camera, const Vec3 translation) {
     incr3v(camera->position, translation);
     camera_update_orientation(camera);
     camera_update_position(camera);
 }
 
-void camera_rotate(struct Camera* camera, Vec3 axis, float angle) {
+void camera_rotate(struct Camera* camera, const Vec3 axis, float angle) {
     Quaternion q, old;
     quaternion_set_axis_angle(q, axis, angle);
     memcpy(old, camera->orientation, sizeof(Quaternion));

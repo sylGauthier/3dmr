@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     char* stage = NULL;
     char* path = NULL;
     FILE* in = NULL;
-    GLenum type;
+    GLenum type = 0;
     int i, ret = 0;
     unsigned int j;
 

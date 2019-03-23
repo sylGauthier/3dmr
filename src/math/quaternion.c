@@ -11,7 +11,7 @@ void quaternion_load_id(Quaternion q) {
     q[3] = 0;
 }
 
-void quaternion_set_axis_angle(Quaternion q, Vec3 axis, float angle) {
+void quaternion_set_axis_angle(Quaternion q, const Vec3 axis, float angle) {
     q[0] = cos(angle / 2.0);
     if (norm3(axis) > 0.0) {
         mul3sv(&q[1], sin(angle / 2.0) / norm3(axis), axis);
@@ -20,12 +20,12 @@ void quaternion_set_axis_angle(Quaternion q, Vec3 axis, float angle) {
     }
 }
 
-void quaternion_get_axis(Quaternion q, Vec3 axis) {
+void quaternion_get_axis(const Quaternion q, Vec3 axis) {
     memcpy(axis, &q[1], sizeof(Vec3));
     normalize3(axis);
 }
 
-float quaternion_get_angle(Quaternion q) {
+float quaternion_get_angle(const Quaternion q) {
     return 2 * acos(q[0]);
 }
 
@@ -36,7 +36,7 @@ void quaternion_set_angle(Quaternion q, float angle) {
     }
 }
 
-void quaternion_mul(Quaternion dest, Quaternion a, Quaternion b) {
+void quaternion_mul(Quaternion dest, const Quaternion a, const Quaternion b) {
     dest[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
     dest[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
     dest[2] = a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1];
@@ -53,7 +53,7 @@ void quaternion_inv(Quaternion q) {
     scale3v(&q[1], -1.0 / nSq);
 }
 
-void quaternion_compose(Vec3 dest, Quaternion q, Vec3 v) {
+void quaternion_compose(Vec3 dest, const Quaternion q, const Vec3 v) {
     Quaternion tmp, vec, qInv;
     memcpy(qInv, q, sizeof(Quaternion));
     quaternion_inv(qInv);
@@ -64,7 +64,7 @@ void quaternion_compose(Vec3 dest, Quaternion q, Vec3 v) {
     memcpy(dest, &vec[1], sizeof(Vec3));
 }
 
-void quaternion_to_mat3(Mat3 dest, Quaternion q) {
+void quaternion_to_mat3(Mat3 dest, const Quaternion q) {
     float mag = norm3(&q[1]);
     float angle = atan2(mag, q[0]);
     if (angle > M_PI / 2.0) {
@@ -79,7 +79,7 @@ void quaternion_to_mat3(Mat3 dest, Quaternion q) {
     }
 }
 
-void quaternion_to_mat4(Mat4 dest, Quaternion q) {
+void quaternion_to_mat4(Mat4 dest, const Quaternion q) {
     float mag = norm3(&q[1]);
     float angle = atan2(mag, q[0]);
     if (angle > M_PI / 2.0) {
@@ -94,7 +94,7 @@ void quaternion_to_mat4(Mat4 dest, Quaternion q) {
     }
 }
 
-void quaternion_from_mat3(Quaternion dest, Mat3 src) {
+void quaternion_from_mat3(Quaternion dest, const Mat3 src) {
     Vec3 axis;
     axis[0] = src[1][2] - src[2][1];
     axis[1] = src[2][0] - src[0][2];
@@ -102,7 +102,7 @@ void quaternion_from_mat3(Quaternion dest, Mat3 src) {
     quaternion_set_axis_angle(dest, axis, atan2(norm3(axis) / 2.0, (src[0][0] + src[1][1] + src[2][2] - 1.0) / 2.0));
 }
 
-void quaternion_from_mat4(Quaternion dest, Mat4 src) {
+void quaternion_from_mat4(Quaternion dest, const Mat4 src) {
     Vec3 axis;
     axis[0] = src[1][2] - src[2][1];
     axis[1] = src[2][0] - src[0][2];
@@ -110,7 +110,7 @@ void quaternion_from_mat4(Quaternion dest, Mat4 src) {
     quaternion_set_axis_angle(dest, axis, atan2(norm3(axis) / 2.0, (src[0][0] + src[1][1] + src[2][2] - 1.0) / 2.0));
 }
 
-void quaternion_decompose_swing_twist(Quaternion src, Vec3 direction, Quaternion swing, Quaternion twist) {
+void quaternion_decompose_swing_twist(const Quaternion src, const Vec3 direction, Quaternion swing, Quaternion twist) {
     Quaternion tmp;
     Vec3 d;
     float norm;
@@ -132,7 +132,7 @@ void quaternion_decompose_swing_twist(Quaternion src, Vec3 direction, Quaternion
     }
 }
 
-void quaternion_print(Quaternion q) {
+void quaternion_print(const Quaternion q) {
     Vec3 tmp;
     memcpy(tmp, &q[1], sizeof(Vec3));
     normalize3(tmp);

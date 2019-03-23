@@ -41,8 +41,8 @@ void node_update_matrices(struct Node* node);
 int render_graph(struct Node* root, const struct Camera* cam, const struct Lights* lights);
 void graph_free(struct Node* root);
 
-void node_translate(struct Node* node, Vec3 t);
-void node_rotate(struct Node* node, Vec3 axis, float angle);
-void node_rotate_q(struct Node* node, Quaternion q);
+void node_translate(struct Node* node, const Vec3 t);
+void node_rotate(struct Node* node, const Vec3 axis, float angle);
+void node_rotate_q(struct Node* node, const Quaternion q);
 
 #endif

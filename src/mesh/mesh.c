@@ -86,7 +86,7 @@ int mesh_compute_tangents(struct Mesh* mesh) {
         sub2v(dTC[1], mesh->vertices + n * ind[2] + 6, mesh->vertices + n * ind[0] + 6);
         sub3v(d1, mesh->vertices + n * ind[1], mesh->vertices + n * ind[0]);
         sub3v(d2, mesh->vertices + n * ind[2], mesh->vertices + n * ind[0]);
-        oneOverDet = 1.0f / det2(dTC);
+        oneOverDet = 1.0f / det2(MAT_CONST_CAST(dTC));
         T[0] = oneOverDet * (d1[0] * dTC[1][1] - d2[0] * dTC[0][1]);
         T[1] = oneOverDet * (d1[1] * dTC[1][1] - d2[1] * dTC[0][1]);
         T[2] = oneOverDet * (d1[2] * dTC[1][1] - d2[2] * dTC[0][1]);

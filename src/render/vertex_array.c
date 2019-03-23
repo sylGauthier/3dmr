@@ -66,27 +66,27 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
     /* - Vertices */
     glBindBuffer(GL_ARRAY_BUFFER, va->vbo);
     glEnableVertexAttribArray(LOCATION_VERTEX);
-    glVertexAttribPointer(LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+    glVertexAttribPointer(LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE, stride, offset);
     offset += 3;
     /* - Normals */
     if (MESH_HAS_NORMALS(mesh)) {
         glEnableVertexAttribArray(LOCATION_NORMAL);
-        glVertexAttribPointer(LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+        glVertexAttribPointer(LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE, stride, offset);
         offset += 3;
     }
     /* - TexCoords */
     if (MESH_HAS_TEXCOORDS(mesh)) {
         glEnableVertexAttribArray(LOCATION_TEXCOORD);
-        glVertexAttribPointer(LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+        glVertexAttribPointer(LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride, offset);
         offset += 2;
     }
     /* - Tangents and bitangents */
     if (MESH_HAS_TANGENTS(mesh)) {
         glEnableVertexAttribArray(LOCATION_TANGENT);
-        glVertexAttribPointer(LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+        glVertexAttribPointer(LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE, stride, offset);
         offset += 3;
         glEnableVertexAttribArray(LOCATION_BITANGENT);
-        glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+        glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, stride, offset);
         offset += 3;
     }
     /* - Indices */

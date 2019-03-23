@@ -5,7 +5,7 @@
 #include <game/scene/node.h>
 #include <game/bounding_box/bounding_box.h>
 
-static void update_bounding_box(struct Node* node, struct Node* child) {
+static void update_bounding_box(struct Node* node, const struct Node* child) {
     Vec3 bbPoints[8];
     int changed = 0, i;
 
@@ -75,7 +75,7 @@ void node_update_matrices(struct Node* node) {
     }
     if (node->changedFlags) {
         if (node->father) {
-            mul4mm(node->model, node->father->model, node->transform);
+            mul4mm(node->model, MAT_CONST_CAST(node->father->model), MAT_CONST_CAST(node->transform));
         } else {
             memcpy(node->model, node->transform, sizeof(Mat4));
         }
@@ -83,8 +83,8 @@ void node_update_matrices(struct Node* node) {
     }
     if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
         Mat3 tmp;
-        mat4to3(tmp, node->model);
-        invert3m(node->inverseNormal, tmp);
+        mat4to3(tmp, MAT_CONST_CAST(node->model));
+        invert3m(node->inverseNormal, MAT_CONST_CAST(tmp));
         transpose3m(node->inverseNormal);
     }
 
@@ -109,8 +109,8 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
     bb_compute_points(&node->bb, points);
 
     for (i = 0; i < 8; i++) {
-        mul4m3v(tmp2, (void*)node->model, points[i]);
-        mul4m3v(tmp, (void*)cam->view, tmp2);
+        mul4m3v(tmp2, node->model, points[i]);
+        mul4m3v(tmp, cam->view, tmp2);
         if (tmp[2] > 0.) {
             if (tmp[0] <= 0) {
                 backLeftCnt++;
@@ -123,7 +123,7 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
                 backUpCnt++;
             }
         } else {
-            mul4m3v(tmp2, (void*)cam->projection, tmp);
+            mul4m3v(tmp2, cam->projection, tmp);
             if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
                 return 1;
             if (tmp2[0] < -1)
@@ -171,18 +171,18 @@ void graph_free(struct Node* root) {
     free(root->children);
 }
 
-void node_translate(struct Node* node, Vec3 t) {
+void node_translate(struct Node* node, const Vec3 t) {
     incr3v(node->position, t);
     node->changedFlags |= POSITION_CHANGED;
 }
 
-void node_rotate(struct Node* node, Vec3 axis, float angle) {
+void node_rotate(struct Node* node, const Vec3 axis, float angle) {
     Quaternion q;
     quaternion_set_axis_angle(q, axis, angle);
     node_rotate_q(node, q);
 }
 
-void node_rotate_q(struct Node* node, Quaternion q) {
+void node_rotate_q(struct Node* node, const Quaternion q) {
     Quaternion old;
     memcpy(old, node->orientation, sizeof(Quaternion));
     quaternion_mul(node->orientation, q, old);

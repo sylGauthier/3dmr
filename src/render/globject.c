@@ -6,10 +6,10 @@ void globject_render(const struct GLObject* glObject, const struct Camera* camer
 
     glUseProgram(material->shader);
     glBindVertexArray(glObject->vertexArray->vao);
-    glUniformMatrix4fv(glGetUniformLocation(material->shader, "projection"), 1, GL_FALSE, (float*)camera->projection);
-    glUniformMatrix4fv(glGetUniformLocation(material->shader, "view"), 1, GL_FALSE, (float*)camera->view);
-    glUniformMatrix4fv(glGetUniformLocation(material->shader, "model"), 1, GL_FALSE, (float*)model);
-    glUniformMatrix3fv(glGetUniformLocation(material->shader, "inverseNormal"), 1, GL_FALSE, (float*)inverseNormal);
+    glUniformMatrix4fv(glGetUniformLocation(material->shader, "projection"), 1, GL_FALSE, &camera->projection[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(material->shader, "view"), 1, GL_FALSE, &camera->view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(material->shader, "model"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix3fv(glGetUniformLocation(material->shader, "inverseNormal"), 1, GL_FALSE, &inverseNormal[0][0]);
     glUniform3fv(glGetUniformLocation(material->shader, "cameraPosition"), 1, camera->position);
     glPolygonMode(GL_FRONT_AND_BACK, material->polygonMode);
     material->load(glObject->material, camera, lights);

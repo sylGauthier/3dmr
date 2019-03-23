@@ -39,8 +39,8 @@ struct Node* make_frame(void) {
         node_init(node + i + 1, gl + i);
         node_add_child(node, node + i + 1);
     }
-    node_rotate(node + 2, (float*)VEC3_AXIS_Z, M_PI / 2.0);
-    node_rotate(node + 3, (float*)VEC3_AXIS_Y, -M_PI / 2.0);
+    node_rotate(node + 2, VEC3_AXIS_Z, M_PI / 2.0);
+    node_rotate(node + 3, VEC3_AXIS_Y, -M_PI / 2.0);
 
     return node;
 }

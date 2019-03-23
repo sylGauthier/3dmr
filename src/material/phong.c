@@ -92,8 +92,8 @@ struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuin
 }
 
 void phong_material_load_uniform(GLuint shader, const struct PhongMaterial* material) {
-    glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, (float*)material->ambient);
-    glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, (float*)material->diffuse);
-    glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, (float*)material->specular);
+    glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, material->ambient);
+    glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, material->diffuse);
+    glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, material->specular);
     glUniform1fv(glGetUniformLocation(shader, "material.shininess"), 1, &material->shininess);
 }
