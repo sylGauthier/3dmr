@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <game/asset_manager.h>
 #include <game/material/solid.h>
 #include "shaders.h"
 
@@ -11,7 +10,7 @@ struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
     struct SolidColorMaterial* solidColor;
 
     if (!game_shaders[SHADER_SOLID_COLOR]) {
-        if (!(game_shaders[SHADER_SOLID_COLOR] = asset_manager_load_shader("shaders/standard.vert", "shaders/solid.frag", NULL, 0))) {
+        if (!(game_shaders[SHADER_SOLID_COLOR] = game_load_shader("standard.vert", "solid.frag", NULL, 0))) {
             return NULL;
         }
     }
@@ -39,7 +38,7 @@ struct SolidTextureMaterial* solid_texture_material_new(GLuint texture) {
     struct SolidTextureMaterial* solidTexture;
 
     if (!game_shaders[SHADER_SOLID_TEXTURE]) {
-        if (!(game_shaders[SHADER_SOLID_TEXTURE] = asset_manager_load_shader("shaders/standard.vert", "shaders/solid.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_SOLID_TEXTURE] = game_load_shader("standard.vert", "solid.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

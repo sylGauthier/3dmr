@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <game/asset_manager.h>
 #include <game/render/texture.h>
 #include "args.h"
+#include "asset_manager.h"
 #include "checkerboard.h"
 
 char* test_texture_path(const char* name, const char* extension) {

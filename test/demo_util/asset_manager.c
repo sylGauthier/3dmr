@@ -62,23 +62,6 @@ char* asset_manager_find_file(const char* filename) {
     return NULL;
 }
 
-GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename, const char** defines, size_t numDefines) {
-    GLuint res = 0;
-    char* vertexShaderPath = asset_manager_find_file(vertexShaderFilename);
-    char* fragmentShaderPath = asset_manager_find_file(fragmentShaderFilename);
-
-    if (!vertexShaderPath || !fragmentShaderPath) {
-        if (!vertexShaderPath) fprintf(stderr, "Error: failed to find shader source '%s'\n", vertexShaderFilename);
-        if (!fragmentShaderPath) fprintf(stderr, "Error: failed to find shader source '%s'\n", fragmentShaderFilename);
-    } else {
-        res = shader_compile_link_vert_frag(vertexShaderPath, fragmentShaderPath, defines, numDefines);
-    }
-
-    free(vertexShaderPath);
-    free(fragmentShaderPath);
-    return res;
-}
-
 GLuint asset_manager_load_texture(const char* filename) {
     GLuint res = 0;
     char* path = asset_manager_find_file(filename);

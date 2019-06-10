@@ -4,11 +4,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <game/asset_manager.h>
+#include <game/init.h>
 #include <game/skybox.h>
 #include <game/render/viewer.h>
 
 #include "test/demo_util/args.h"
+#include "test/demo_util/asset_manager.h"
 #include "test/demo_util/callbacks.h"
 #include "test/demo_util/objects.h"
 #include "test/demo_util/materials.h"
@@ -31,6 +32,10 @@ int main(int argc, char** argv) {
     int ret = 0;
 
     if (!register_asset_paths(argv[0])) return 1;
+    if (!game_init(asset_manager_get_path(1))) {
+        asset_manager_free();
+        return 1;
+    }
 
     config_init(&config);
     if (!parse_args(&argc, &argv, &config, usage, 1)) {
@@ -80,5 +85,6 @@ int main(int argc, char** argv) {
     config_free(&config);
     free(title);
     asset_manager_free();
+    game_free();
     return ret;
 }

@@ -4,11 +4,30 @@
 #include <ctype.h>
 #include <limits.h>
 #include <GL/glew.h>
-#include <game/asset_manager.h>
 #include <game/render/shader.h>
 
 #define MAX_INCLUDE_DEPTH 32
 #define MAX_SHADER_PATHS 32
+
+static char* find_file(const char** includePaths, size_t numIncludePaths, const char* filename) {
+    unsigned int i;
+    size_t filenameSize = strlen(filename);
+    char* path;
+    FILE* test;
+
+    for (i = 0; i < numIncludePaths; i++) {
+        if (!(path = malloc(strlen(includePaths[i]) + 1 + filenameSize + 1))) {
+            return 0;
+        }
+        sprintf(path, "%s/%s", includePaths[i], filename);
+        if ((test = fopen(path, "r"))) {
+            fclose(test);
+            return path;
+        }
+        free(path);
+    }
+    return NULL;
+}
 
 static int append_code(const char* string, char** code, GLint* codeSize, unsigned int* allocSize) {
     size_t size = strlen(string), newSize;
@@ -36,21 +55,21 @@ static int append_code(const char* string, char** code, GLint* codeSize, unsigne
     return 1;
 }
 
-GLuint shader_compile(const char* path, GLenum type, const char** defines, size_t numDefines) {
+GLuint shader_compile(const char* path, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
     FILE* fd;
     GLuint shader = 0;
 
     if (!(fd = fopen(path, "r"))) {
         fprintf(stderr, "Error: shader file %s not found\n", path);
     } else {
-        shader = shader_compile_fd(fd, path, type, defines, numDefines);
+        shader = shader_compile_fd(fd, path, type, includePaths, numIncludePaths, defines, numDefines);
         fclose(fd);
     }
 
     return shader;
 }
 
-GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** defines, size_t numDefines) {
+GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
     char buffer[2048], lbuffer[64];
     struct File {
         FILE* fd;
@@ -117,7 +136,7 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
                     cur[n + (end - ptr) - 1] = 0;
                     files[++curFile].pathNum = ++curPath;
                     files[curFile].fd = NULL;
-                    if (*ptr == '<' && (altPath = asset_manager_find_file(cur + n))) {
+                    if (*ptr == '<' && (altPath = find_file(includePaths, numIncludePaths, cur + n))) {
                         paths[curPath] = altPath;
                         free(cur);
                     } else {
@@ -280,11 +299,11 @@ GLuint shader_link(GLuint* shaders, size_t numShaders) {
     return prog;
 }
 
-GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath, const char** defines, size_t numDefines) {
+GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
     GLuint prog = 0, shaders[2];
 
-    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER, defines, numDefines))) {
-        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER, defines, numDefines))) {
+    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER, includePaths, numIncludePaths, defines, numDefines))) {
+        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER, includePaths, numIncludePaths, defines, numDefines))) {
             if (!(prog = shader_link(shaders, 2))) {
                 fprintf(stderr, "The shaders were '%s' and '%s'\n", vertexShaderPath, fragmentShaderPath);
             }

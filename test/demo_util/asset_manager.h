@@ -11,7 +11,6 @@ size_t asset_manager_get_num_paths(void);
 const char* asset_manager_get_path(size_t i);
 
 char* asset_manager_find_file(const char* filename);
-GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename, const char** defines, size_t numDefines);
 GLuint asset_manager_load_texture(const char* filename);
 
 void asset_manager_free(void);

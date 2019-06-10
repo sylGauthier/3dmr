@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <game/asset_manager.h>
 #include <game/material/solid_text.h>
 #include "shaders.h"
 
@@ -15,7 +14,7 @@ struct SolidTextMaterial* solid_text_material_new(float r, float g, float b, con
     struct SolidTextMaterial* solidText;
 
     if (!game_shaders[SHADER_SOLID_TEXT]) {
-        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/standard.vert", "shaders/text.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_SOLID_TEXT] = game_load_shader("standard.vert", "text.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

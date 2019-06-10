@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glew.h>
-#include <game/asset_manager.h>
 #include <game/render/shader.h>
 #include <game/render/viewer.h>
 
@@ -21,6 +20,32 @@ struct Stage {
     {"frag", GL_FRAGMENT_SHADER},
     {"comp", GL_COMPUTE_SHADER}
 };
+
+int add_include(char*** includes, size_t* numIncludes, const char* path) {
+    char** new;
+    size_t n;
+
+    if ((*numIncludes) == ((size_t)-1)
+     || !(new = realloc(*includes, (*numIncludes + 1) * sizeof(**includes)))) {
+        return 0;
+    }
+    *includes = new;
+    new += *numIncludes;
+    n = strlen(path) + 1;
+    if (!n || !(*new = malloc(n))) {
+        return 0;
+    }
+    memcpy(*new, path, n);
+    (*numIncludes)++;
+    return 1;
+}
+
+void free_includes(char** includes, size_t numIncludes) {
+    while (numIncludes) {
+        free(includes[--numIncludes]);
+    }
+    free(includes);
+}
 
 int add_define(char*** defines, size_t* numDefines, const char* macro) {
     char** new;
@@ -62,13 +87,13 @@ void free_defines(char** defines, size_t numDefines) {
 
 int main(int argc, char** argv) {
     struct Viewer* viewer;
-    char** defines = NULL;
+    char **includes = NULL, **defines = NULL;
     const char* stage = NULL;
     const char* path = NULL;
     FILE* in = NULL;
     GLenum type = 0;
     GLuint shader;
-    size_t numDefines = 0;
+    size_t numIncludes = 0, numDefines = 0;
     int i, ret = 0;
     unsigned int j;
 
@@ -77,9 +102,9 @@ int main(int argc, char** argv) {
             switch (argv[i][1]) {
                 case 'I':
                     if (argv[i][2]) {
-                        asset_manager_add_path(argv[i] + 2);
+                        ret = 2 * !add_include(&includes, &numIncludes, argv[i] + 2);
                     } else if (++i < argc) {
-                        asset_manager_add_path(argv[i]);
+                        ret = 2 * !add_include(&includes, &numIncludes, argv[i]);
                     } else {
                         ret = 1;
                     }
@@ -121,6 +146,7 @@ int main(int argc, char** argv) {
 
                 case 'h':
                     usage(argv[0]);
+                    free_includes(includes, numIncludes);
                     free_defines(defines, numDefines);
                     return 0;
 
@@ -176,7 +202,7 @@ int main(int argc, char** argv) {
     }
     if (!ret) {
         if ((viewer = viewer_new(640, 480, ""))) {
-            if ((shader = shader_compile_fd(in, path, type, (const char**)defines, numDefines))) {
+            if ((shader = shader_compile_fd(in, path, type, (const char**)includes, numIncludes, (const char**)defines, numDefines))) {
                 glDeleteShader(shader);
             } else {
                 ret = 1;
@@ -187,6 +213,7 @@ int main(int argc, char** argv) {
     if (i == argc - 1 && in) {
         fclose(in);
     }
+    free_includes(includes, numIncludes);
     free_defines(defines, numDefines);
     return ret;
 }

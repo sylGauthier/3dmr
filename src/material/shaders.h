@@ -17,5 +17,8 @@ enum Shader {
 };
 
 extern GLuint* game_shaders;
+extern char* shaderRootPath;
+
+int game_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename, const char** defines, size_t numDefines);
 
 #endif

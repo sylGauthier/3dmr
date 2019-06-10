@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <game/asset_manager.h>
 #include <game/material/phong.h>
 #include "shaders.h"
 
@@ -14,7 +13,7 @@ struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, c
     struct PhongColorMaterial* phongColor;
 
     if (!game_shaders[SHADER_PHONG_COLOR]) {
-        if (!(game_shaders[SHADER_PHONG_COLOR] = asset_manager_load_shader("shaders/standard.vert", "shaders/phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PHONG_COLOR] = game_load_shader("standard.vert", "phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -45,7 +44,7 @@ struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const st
     struct PhongTextureMaterial* phongTexture;
 
     if (!game_shaders[SHADER_PHONG_TEXTURE]) {
-        if (!(game_shaders[SHADER_PHONG_TEXTURE] = asset_manager_load_shader("shaders/standard.vert", "shaders/phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE] = game_load_shader("standard.vert", "phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -77,7 +76,7 @@ struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuin
     struct PhongTextureNormalmapMaterial* phongTexture;
 
     if (!game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP]) {
-        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = asset_manager_load_shader("shaders/texture_normalmap.vert", "shaders/phong_texture_normalmap.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = game_load_shader("texture_normalmap.vert", "phong_texture_normalmap.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

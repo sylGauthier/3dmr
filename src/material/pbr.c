@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <game/asset_manager.h>
 #include <game/material/pbr.h>
 #include "shaders.h"
 
@@ -25,7 +24,7 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
     struct PBRMaterial* pbrMat;
 
     if (!game_shaders[SHADER_PBR]) {
-        if (!(game_shaders[SHADER_PBR] = asset_manager_load_shader("shaders/standard.vert", "shaders/pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PBR] = game_load_shader("standard.vert", "pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -56,7 +55,7 @@ struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float met
     struct PBRUniMaterial* pbrMat;
 
     if (!game_shaders[SHADER_PBR_UNI]) {
-        if (!(game_shaders[SHADER_PBR_UNI] = asset_manager_load_shader("shaders/standard.vert", "shaders/pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PBR_UNI] = game_load_shader("standard.vert", "pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

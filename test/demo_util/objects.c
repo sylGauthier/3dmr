@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <game/asset_manager.h>
 #include <game/skybox.h>
 #include <game/mesh/box.h>
 #include <game/mesh/icosphere.h>
 #include <game/mesh/obj.h>
 #include <game/mesh/sphere_uv.h>
 #include "args.h"
+#include "asset_manager.h"
 #include "object_args.h"
 #include "texture.h"
 #include "materials.h"

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <game/asset_manager.h>
 #include <game/mesh/box.h>
 #include <game/render/globject.h>
 #include <game/render/texture.h>
@@ -89,7 +88,7 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                     glBindVertexArray(empty);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     if (hdr_read(path, 4, &width, &height, &data)) {
-                        if ((program = asset_manager_load_shader("shaders/cubemap.vert", "shaders/equirect_to_cubemap.frag", NULL, 0))) {
+                        if ((program = game_load_shader("cubemap.vert", "equirect_to_cubemap.frag", NULL, 0))) {
                             glUseProgram(program);
                             glBindTexture(GL_TEXTURE_CUBE_MAP, tex[1]);
                             texture_params_cubemap();
@@ -142,7 +141,7 @@ int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
     struct SkyboxMaterial* mat;
 
     if (!game_shaders[SHADER_SKYBOX]) {
-        if (!(game_shaders[SHADER_SKYBOX] = asset_manager_load_shader("shaders/skybox.vert", "shaders/skybox.frag", NULL, 0))) {
+        if (!(game_shaders[SHADER_SKYBOX] = game_load_shader("skybox.vert", "skybox.frag", NULL, 0))) {
             return 0;
         }
     }
