@@ -10,10 +10,10 @@
 #define LOCATION_TANGENT 3
 #define LOCATION_BITANGENT 4
 
-GLuint shader_compile(const char* path, GLenum type);
-GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type);
+GLuint shader_compile(const char* path, GLenum type, const char** defines, size_t numDefines);
+GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** defines, size_t numDefines);
 GLuint shader_link(GLuint* shaders, size_t numShaders);
     
-GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath);
+GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath, const char** defines, size_t numDefines);
 
 #endif

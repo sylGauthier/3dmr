@@ -71,7 +71,7 @@ GLuint asset_manager_load_shader(const char* vertexShaderFilename, const char* f
         if (!vertexShaderPath) fprintf(stderr, "Error: failed to find shader source '%s'\n", vertexShaderFilename);
         if (!fragmentShaderPath) fprintf(stderr, "Error: failed to find shader source '%s'\n", fragmentShaderFilename);
     } else {
-        res = shader_compile_link_vert_frag(vertexShaderPath, fragmentShaderPath);
+        res = shader_compile_link_vert_frag(vertexShaderPath, fragmentShaderPath, NULL, 0);
     }
 
     free(vertexShaderPath);

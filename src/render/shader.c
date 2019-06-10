@@ -36,22 +36,22 @@ static int append_code(const char* string, char** code, GLint* codeSize, unsigne
     return 1;
 }
 
-GLuint shader_compile(const char* path, GLenum type) {
+GLuint shader_compile(const char* path, GLenum type, const char** defines, size_t numDefines) {
     FILE* fd;
     GLuint shader = 0;
 
     if (!(fd = fopen(path, "r"))) {
         fprintf(stderr, "Error: shader file %s not found\n", path);
     } else {
-        shader = shader_compile_fd(fd, path, type);
+        shader = shader_compile_fd(fd, path, type, defines, numDefines);
         fclose(fd);
     }
 
     return shader;
 }
 
-GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
-    char buffer[2048];
+GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** defines, size_t numDefines) {
+    char buffer[2048], lbuffer[64];
     struct File {
         FILE* fd;
         unsigned long line;
@@ -63,7 +63,7 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
     size_t n;
     unsigned long curFile = 0, curPath = 0, ifLevel = 0;
     unsigned int codeAllocSize = 0;
-    int ok = 1, keepGoing, found;
+    int ok = 1, keepGoing, found, version;
     GLuint shader = 0;
     GLint error, errorSize, codeSize = 0;
     char* errorString;
@@ -86,8 +86,8 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
             }
         }
         if (curFile || files[curFile].line > 1) {
-            sprintf(buffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
-            if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
+            sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+            if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
                 ok = 0; break;
             }
         }
@@ -134,10 +134,39 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type) {
                 } else if (ifLevel && !strncmp(ptr, "#endif", 6) && (ptr[6] == ' ' || ptr[6] == '\t' || ptr[6] == '\n' || !ptr[6])) {
                     ifLevel--;
                 }
-                if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
-                    ok = 0;
+
+                if ((version = !strncmp(ptr, "#version", 8) && (ptr[8] == ' ' || ptr[8] == '\t'))) {
+                    if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
+                        ok = 0;
+                    }
+                    files[curFile].line++;
                 }
-                files[curFile].line++;
+
+                if (ok && numDefines) {
+                    while (numDefines) {
+                        if (!append_code("#define ", &code, &codeSize, &codeAllocSize)
+                         || !append_code(*defines++, &code, &codeSize, &codeAllocSize)
+                         || (*defines && (!append_code(" ", &code, &codeSize, &codeAllocSize) || !append_code(*defines, &code, &codeSize, &codeAllocSize)))
+                         || !append_code("\n", &code, &codeSize, &codeAllocSize)) {
+                            ok = 0; break;
+                        }
+                        defines++;
+                        numDefines--;
+                    }
+                    if (ok) {
+                        sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+                        if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
+                            ok = 0; break;
+                        }
+                    }
+                }
+
+                if (ok && !version) {
+                    if (!append_code(buffer, &code, &codeSize, &codeAllocSize)) {
+                        ok = 0;
+                    }
+                    files[curFile].line++;
+                }
             }
         }
         if (!ok) break;
@@ -251,11 +280,11 @@ GLuint shader_link(GLuint* shaders, size_t numShaders) {
     return prog;
 }
 
-GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath) {
+GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath, const char** defines, size_t numDefines) {
     GLuint prog = 0, shaders[2];
 
-    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER))) {
-        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER))) {
+    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER, defines, numDefines))) {
+        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER, defines, numDefines))) {
             if (!(prog = shader_link(shaders, 2))) {
                 fprintf(stderr, "The shaders were '%s' and '%s'\n", vertexShaderPath, fragmentShaderPath);
             }
