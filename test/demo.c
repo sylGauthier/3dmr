@@ -54,13 +54,13 @@ int main(int argc, char** argv) {
         running = 1;
         title = malloc(strlen(config.title) + 128);
         for (t = 0; running && (config.timeout < 0 || t < config.timeout); t += dt) {
-            int nb;
+            unsigned int nb;
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (config.skybox) {
                 skybox_render(config.skybox, &viewer->camera);
             }
-            nb = scene_render(&config.scene, &viewer->camera);
+            nb = scene_render_count(&config.scene, &viewer->camera);
             update_materials(dt);
             if (title) {
                 ct += dt;

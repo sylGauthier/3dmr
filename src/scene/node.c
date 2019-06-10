@@ -143,9 +143,24 @@ static int node_visible(const struct Camera* cam, const struct Node* node) {
                         || rightCnt + backRightCnt >= 8);
 }
 
-int render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
+void render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
     unsigned int i;
-    int res = 0;
+
+    node_update_matrices(node);
+
+    if (node->alwaysDraw || node_visible(cam, node)) {
+        if (node->object) {
+            globject_render(node->object, cam, lights, node->model, node->inverseNormal);
+        }
+        for (i = 0; i < node->nbChildren; i++) {
+            render_graph(node->children[i], cam, lights);
+        }
+    }
+}
+
+unsigned int render_graph_count(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
+    unsigned int i;
+    unsigned int res = 0;
 
     node_update_matrices(node);
 
@@ -155,7 +170,7 @@ int render_graph(struct Node* node, const struct Camera* cam, const struct Light
             res++;
         }
         for (i = 0; i < node->nbChildren; i++) {
-            res += render_graph(node->children[i], cam, lights);
+            res += render_graph_count(node->children[i], cam, lights);
         }
     }
 

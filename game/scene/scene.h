@@ -14,5 +14,6 @@ void scene_init(struct Scene* scene);
 
 #define scene_add(scene, node) node_add_child(&(scene)->root, (node))
 #define scene_render(scene, camera) render_graph(&(scene)->root, (camera), &(scene)->lights)
+#define scene_render_count(scene, camera) render_graph_count(&(scene)->root, (camera), &(scene)->lights)
 
 #endif
