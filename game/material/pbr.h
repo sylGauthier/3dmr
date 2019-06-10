@@ -13,7 +13,7 @@ struct PBRMaterial {
 
 struct PBRUniMaterial {
     struct Material material;
-    vec3 color;
+    vec3 albedo;
     float metalness;
     float roughness;
 };

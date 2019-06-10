@@ -11,7 +11,7 @@ struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
     struct SolidColorMaterial* solidColor;
 
     if (!game_shaders[SHADER_SOLID_COLOR]) {
-        if (!(game_shaders[SHADER_SOLID_COLOR] = asset_manager_load_shader("shaders/solid_color.vert", "shaders/solid_color.frag"))) {
+        if (!(game_shaders[SHADER_SOLID_COLOR] = asset_manager_load_shader("shaders/standard.vert", "shaders/solid.frag", NULL, 0))) {
             return NULL;
         }
     }
@@ -35,10 +35,11 @@ static void solid_texture_load(const struct Material* material, const struct Cam
 }
 
 struct SolidTextureMaterial* solid_texture_material_new(GLuint texture) {
+    static const char* defines[] = {"HAVE_TEXCOORD", NULL};
     struct SolidTextureMaterial* solidTexture;
 
     if (!game_shaders[SHADER_SOLID_TEXTURE]) {
-        if (!(game_shaders[SHADER_SOLID_TEXTURE] = asset_manager_load_shader("shaders/solid_texture.vert", "shaders/solid_texture.frag"))) {
+        if (!(game_shaders[SHADER_SOLID_TEXTURE] = asset_manager_load_shader("shaders/standard.vert", "shaders/solid.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

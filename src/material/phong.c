@@ -10,10 +10,11 @@ static void phong_color_load(const struct Material* material, const struct Camer
 }
 
 struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, const struct PhongMaterial* phong) {
+    static const char* defines[] = {"HAVE_NORMAL", NULL};
     struct PhongColorMaterial* phongColor;
 
     if (!game_shaders[SHADER_PHONG_COLOR]) {
-        if (!(game_shaders[SHADER_PHONG_COLOR] = asset_manager_load_shader("shaders/color.vert", "shaders/phong_color.frag"))) {
+        if (!(game_shaders[SHADER_PHONG_COLOR] = asset_manager_load_shader("shaders/standard.vert", "shaders/phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -40,10 +41,11 @@ static void phong_texture_load(const struct Material* material, const struct Cam
 }
 
 struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const struct PhongMaterial* phong) {
+    static const char* defines[] = {"HAVE_NORMAL", NULL, "HAVE_TEXCOORD", NULL};
     struct PhongTextureMaterial* phongTexture;
 
     if (!game_shaders[SHADER_PHONG_TEXTURE]) {
-        if (!(game_shaders[SHADER_PHONG_TEXTURE] = asset_manager_load_shader("shaders/texture.vert", "shaders/phong_texture.frag"))) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE] = asset_manager_load_shader("shaders/standard.vert", "shaders/phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -71,10 +73,11 @@ static void phong_texture_normalmap_load(const struct Material* material, const 
 }
 
 struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuint texture, GLuint normalMap, const struct PhongMaterial* phong) {
+    static const char* defines[] = {"HAVE_NORMAL", NULL, "HAVE_TEXCOORD", NULL, "HAVE_TANGENT", NULL};
     struct PhongTextureNormalmapMaterial* phongTexture;
 
     if (!game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP]) {
-        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = asset_manager_load_shader("shaders/texture_normalmap.vert", "shaders/phong_texture_normalmap.frag"))) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = asset_manager_load_shader("shaders/texture_normalmap.vert", "shaders/phong_texture_normalmap.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }

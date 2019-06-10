@@ -21,7 +21,7 @@ static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap
     GLuint program;
     GLint i;
 
-    if ((program = asset_manager_load_shader("shaders/cubemap.vert", "shaders/ibl/irradiance_map.frag"))) {
+    if ((program = asset_manager_load_shader("shaders/cubemap.vert", "shaders/ibl/irradiance_map.frag", NULL, 0))) {
         glUseProgram(program);
         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
         params_cubemap_texture(0);
@@ -51,7 +51,7 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
     GLint i, level;
     float roughness;
 
-    if ((program = asset_manager_load_shader("shaders/cubemap.vert", "shaders/ibl/specular_map.frag"))) {
+    if ((program = asset_manager_load_shader("shaders/cubemap.vert", "shaders/ibl/specular_map.frag", NULL, 0))) {
         glUseProgram(program);
         glBindTexture(GL_TEXTURE_CUBE_MAP, specularMap);
         params_cubemap_texture(1);
@@ -86,7 +86,7 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
 static int specular_brdf(unsigned int size, GLuint specularBrdf) {
     GLuint program;
 
-    if ((program = asset_manager_load_shader("shaders/quad.vert", "shaders/ibl/specular_brdf.frag"))) {
+    if ((program = asset_manager_load_shader("shaders/quad.vert", "shaders/ibl/specular_brdf.frag", NULL, 0))) {
         glUseProgram(program);
         glBindTexture(GL_TEXTURE_2D, specularBrdf);
         params_2d_texture();

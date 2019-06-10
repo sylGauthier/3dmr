@@ -8,7 +8,7 @@ mkdir -p out
 
 for shader in ../shaders/*.{vert,frag}; do
     testing "$(basename "$shader")"; (
-        ./glslcheck "$shader" 2>/dev/null || fail "compilation failed"
+        ./glslcheck -DHAVE_NORMAL "$shader" 2>/dev/null || fail "compilation failed"
     ) && pass || set_failed
 done
 

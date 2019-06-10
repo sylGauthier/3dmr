@@ -21,10 +21,11 @@ static void pbr_load(const struct Material* material, const struct Camera* camer
 }
 
 struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint metalnessTex, GLuint roughnessTex) {
+    static const char* defines[] = {"HAVE_NORMAL", NULL, "HAVE_TEXCOORD", NULL, "HAVE_TANGENT", NULL};
     struct PBRMaterial* pbrMat;
 
     if (!game_shaders[SHADER_PBR]) {
-        if (!(game_shaders[SHADER_PBR] = asset_manager_load_shader("shaders/texture_normalmap.vert", "shaders/pbr.frag"))) {
+        if (!(game_shaders[SHADER_PBR] = asset_manager_load_shader("shaders/standard.vert", "shaders/pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -43,7 +44,7 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
 }
 
 static void pbr_uni_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
-    glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, ((const struct PBRUniMaterial*)material)->color);
+    glUniform3fv(glGetUniformLocation(material->shader, "albedo"), 1, ((const struct PBRUniMaterial*)material)->albedo);
     glUniform1fv(glGetUniformLocation(material->shader, "metalness"), 1, &((const struct PBRUniMaterial*)material)->metalness);
     glUniform1fv(glGetUniformLocation(material->shader, "roughness"), 1, &((const struct PBRUniMaterial*)material)->roughness);
     light_load_direct_uniforms(material->shader, lights);
@@ -51,10 +52,11 @@ static void pbr_uni_load(const struct Material* material, const struct Camera* c
 }
 
 struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float metalness, float roughness) {
+    static const char* defines[] = {"HAVE_NORMAL", NULL};
     struct PBRUniMaterial* pbrMat;
 
     if (!game_shaders[SHADER_PBR_UNI]) {
-        if (!(game_shaders[SHADER_PBR_UNI] = asset_manager_load_shader("shaders/color.vert", "shaders/pbr_uni.frag"))) {
+        if (!(game_shaders[SHADER_PBR_UNI] = asset_manager_load_shader("shaders/standard.vert", "shaders/pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
@@ -64,9 +66,9 @@ struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float met
     pbrMat->material.load = pbr_uni_load;
     pbrMat->material.shader = game_shaders[SHADER_PBR_UNI];
     pbrMat->material.polygonMode = GL_FILL;
-    pbrMat->color[0] = r;
-    pbrMat->color[1] = g;
-    pbrMat->color[2] = b;
+    pbrMat->albedo[0] = r;
+    pbrMat->albedo[1] = g;
+    pbrMat->albedo[2] = b;
     pbrMat->metalness = metalness;
     pbrMat->roughness = roughness;
 

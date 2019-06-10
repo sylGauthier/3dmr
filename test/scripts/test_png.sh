@@ -8,8 +8,8 @@ mkdir -p out
 
 for png in assets/textures/*tux.png; do
     testing "$(basename "$png")"; (
-        ./png_rw "$png" "out/${png##*/}" 2>&- || fail "png_rw"
-        ./scripts/cmp_img.sh "$png" "out/${png##*/}" 2>&- || fail "cmp_img"
+        ./png_rw "$png" "out/${png##*/}" 2>/dev/null || fail "png_rw"
+        ./scripts/cmp_img.sh "$png" "out/${png##*/}" 2>/dev/null || fail "cmp_img"
     ) && pass || set_failed
 done
 

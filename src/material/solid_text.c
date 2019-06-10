@@ -11,10 +11,11 @@ static void text_load(const struct Material* material, const struct Camera* came
 }
 
 struct SolidTextMaterial* solid_text_material_new(float r, float g, float b, const struct BitmapFont* font) {
+    static const char* defines[] = {"HAVE_TEXCOORD", NULL};
     struct SolidTextMaterial* solidText;
 
     if (!game_shaders[SHADER_SOLID_TEXT]) {
-        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/solid_texture.vert", "shaders/text.frag"))) {
+        if (!(game_shaders[SHADER_SOLID_TEXT] = asset_manager_load_shader("shaders/standard.vert", "shaders/text.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
     }
