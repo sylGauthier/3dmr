@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -23,10 +24,10 @@ static void usage(const char* progname) {
 }
 
 int main(int argc, char** argv) {
+    char* title = NULL;
     struct Config config;
     struct Viewer* viewer = NULL;
-    time_t start, t;
-    double dt;
+    double dt, t = 0, ct = 0, cf = 0, fps = 0;
     int ret = 0;
 
     if (!register_asset_paths(argv[0])) return 1;
@@ -46,7 +47,8 @@ int main(int argc, char** argv) {
         viewer->close_callback = close_callback;
         glfwSwapInterval(1);
         running = 1;
-        for (start = t = time(NULL); running && (config.timeout < 0 || t < start + config.timeout); t = time(NULL)) {
+        title = malloc(strlen(config.title) + 128);
+        for (t = 0; running && (config.timeout < 0 || t < config.timeout); t += dt) {
             int nb;
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
@@ -55,7 +57,16 @@ int main(int argc, char** argv) {
             }
             nb = scene_render(&config.scene, &viewer->camera);
             update_materials(dt);
-            printf("Rendered %d objects\n", nb);
+            if (title) {
+                ct += dt;
+                cf++;
+                if (ct > 1.0) {
+                    fps = cf / ct;
+                    ct = cf = 0;
+                    sprintf(title, "%s - %u FPS - %d rendered obj", config.title, (unsigned int)fps, nb);
+                    viewer_set_title(viewer, title);
+                }
+            }
         }
         if (config.screenshot) {
             if (!viewer_screenshot(viewer, config.screenshot)) {
@@ -67,6 +78,7 @@ int main(int argc, char** argv) {
 
     viewer_free(viewer);
     config_free(&config);
+    free(title);
     asset_manager_free();
     return ret;
 }
