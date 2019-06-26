@@ -542,6 +542,9 @@ void mat3to4(RESTRICT_MAT4(dest), const RESTRICT_MAT3(src)) {
     memcpy(dest[0], src[0], sizeof(Vec3));
     memcpy(dest[1], src[1], sizeof(Vec3));
     memcpy(dest[2], src[2], sizeof(Vec3));
+    dest[0][3] = dest[1][3] = dest[2][3] = 0.0;
+    dest[3][0] = dest[3][1] = dest[3][2] = 0.0;
+    dest[3][3] = 1.0;
 }
 
 
