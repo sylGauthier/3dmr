@@ -130,7 +130,7 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
     return ok ? tex[1] : 0;
 }
 
-static void skybox_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void skybox_load(const struct Material* material, const struct Lights* lights) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct SkyboxMaterial*)material)->texture);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
@@ -191,8 +191,8 @@ void skybox_free(struct GLObject* skybox) {
     }
 }
 
-void skybox_render(struct GLObject* skybox, const struct Camera* camera) {
+void skybox_render(struct GLObject* skybox) {
     Mat4 model;
     Mat3 inv;
-    globject_render(skybox, camera, NULL, model, inv);
+    globject_render(skybox, NULL, model, inv);
 }

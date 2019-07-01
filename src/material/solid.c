@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <game/material/solid.h>
+#include <game/render/camera_buffer_object.h>
 #include "shaders.h"
 
-static void solid_color_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void solid_color_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "solidColor"), 1, ((const struct SolidColorMaterial*)material)->color);
 }
 
@@ -13,6 +14,7 @@ struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
         if (!(game_shaders[SHADER_SOLID_COLOR] = game_load_shader("standard.vert", "solid.frag", NULL, 0))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_SOLID_COLOR], glGetUniformBlockIndex(game_shaders[SHADER_SOLID_COLOR], "Camera"), CAMERA_UBO_BINDING);
     }
     if (!(solidColor = malloc(sizeof(*solidColor)))) {
         return NULL;
@@ -27,7 +29,7 @@ struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
     return solidColor;
 }
 
-static void solid_texture_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void solid_texture_load(const struct Material* material, const struct Lights* lights) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct SolidTextureMaterial*)material)->texture);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
@@ -41,6 +43,7 @@ struct SolidTextureMaterial* solid_texture_material_new(GLuint texture) {
         if (!(game_shaders[SHADER_SOLID_TEXTURE] = game_load_shader("standard.vert", "solid.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_SOLID_TEXTURE], glGetUniformBlockIndex(game_shaders[SHADER_SOLID_TEXTURE], "Camera"), CAMERA_UBO_BINDING);
     }
     if (!(solidTexture = malloc(sizeof(*solidTexture)))) {
         return NULL;

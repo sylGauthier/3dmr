@@ -37,4 +37,7 @@ test-assets test-assets-extra clean-assets:
 	@+$(MAKE) --no-print-directory -C test/assets $@
 
 test/demo: test/demo.o $(DEMO_UTIL)
+test/ubo.o: test/ubo.h
+test/ubo.h: src/render/lights_buffer_object.c src/render/camera_buffer_object.c
+	grep -h '^#define' $^ > $@
 $(TEST_EXECS): $(LIB)

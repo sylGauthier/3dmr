@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <game/material/pbr.h>
+#include <game/render/camera_buffer_object.h>
+#include <game/render/lights_buffer_object.h>
 #include "shaders.h"
 
-static void pbr_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void pbr_load(const struct Material* material, const struct Lights* lights) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->albedoTex);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
@@ -15,7 +17,6 @@ static void pbr_load(const struct Material* material, const struct Camera* camer
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, ((const struct PBRMaterial*)material)->roughnessTex);
     glUniform1i(glGetUniformLocation(material->shader, "roughnessTex"), 3);
-    light_load_direct_uniforms(material->shader, lights);
     light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6);
 }
 
@@ -27,6 +28,8 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
         if (!(game_shaders[SHADER_PBR] = game_load_shader("standard.vert", "pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_PBR], glGetUniformBlockIndex(game_shaders[SHADER_PBR], "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(game_shaders[SHADER_PBR], glGetUniformBlockIndex(game_shaders[SHADER_PBR], "Lights"), LIGHTS_UBO_BINDING);
     }
     if (!(pbrMat = malloc(sizeof(*pbrMat)))) {
         return NULL;
@@ -42,11 +45,10 @@ struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint 
     return pbrMat;
 }
 
-static void pbr_uni_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void pbr_uni_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "albedo"), 1, ((const struct PBRUniMaterial*)material)->albedo);
     glUniform1fv(glGetUniformLocation(material->shader, "metalness"), 1, &((const struct PBRUniMaterial*)material)->metalness);
     glUniform1fv(glGetUniformLocation(material->shader, "roughness"), 1, &((const struct PBRUniMaterial*)material)->roughness);
-    light_load_direct_uniforms(material->shader, lights);
     light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2);
 }
 
@@ -58,6 +60,8 @@ struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float met
         if (!(game_shaders[SHADER_PBR_UNI] = game_load_shader("standard.vert", "pbr.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_PBR_UNI], glGetUniformBlockIndex(game_shaders[SHADER_PBR_UNI], "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(game_shaders[SHADER_PBR_UNI], glGetUniformBlockIndex(game_shaders[SHADER_PBR_UNI], "Lights"), LIGHTS_UBO_BINDING);
     }
     if (!(pbrMat = malloc(sizeof(*pbrMat)))) {
         return NULL;

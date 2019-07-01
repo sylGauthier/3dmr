@@ -7,6 +7,7 @@
 #include <game/init.h>
 #include <game/skybox.h>
 #include <game/render/viewer.h>
+#include <game/render/lights_buffer_object.h>
 
 #include "test/demo_util/args.h"
 #include "test/demo_util/asset_manager.h"
@@ -22,6 +23,17 @@ static void usage(const char* progname) {
     usage_objects();
     usage_materials();
     usage_object_args();
+}
+
+int demo_scene_init(struct Config* config, struct Viewer* viewer) {
+    struct Lights lights;
+    lights = config->scene.lights;
+    if (scene_init(&config->scene, &viewer->camera)) {
+        config->scene.lights = lights;
+        lights_buffer_object_update(&lights, config->scene.uboLights);
+        return 1;
+    }
+    return 0;
 }
 
 int main(int argc, char** argv) {
@@ -43,6 +55,9 @@ int main(int argc, char** argv) {
     } else if (!(viewer = viewer_new(config.width, config.height, config.title))) {
         fprintf(stderr, "Error: cannot start viewer\n");
         ret = 1;
+    } else if (!demo_scene_init(&config, viewer)) {
+        fprintf(stderr, "Error: failed to init scene\n");
+        ret = 1;
     } else if (!parse_args_objects(&argc, &argv, &config)) {
         ret = 1;
     } else {
@@ -58,9 +73,9 @@ int main(int argc, char** argv) {
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (config.skybox) {
-                skybox_render(config.skybox, &viewer->camera);
+                skybox_render(config.skybox);
             }
-            nb = scene_render_count(&config.scene, &viewer->camera);
+            nb = scene_render_count(&config.scene);
             update_materials(dt);
             if (title) {
                 ct += dt;

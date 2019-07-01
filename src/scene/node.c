@@ -150,7 +150,7 @@ void render_graph(struct Node* node, const struct Camera* cam, const struct Ligh
 
     if (node->alwaysDraw || node_visible(cam, node)) {
         if (node->object) {
-            globject_render(node->object, cam, lights, node->model, node->inverseNormal);
+            globject_render(node->object, lights, node->model, node->inverseNormal);
         }
         for (i = 0; i < node->nbChildren; i++) {
             render_graph(node->children[i], cam, lights);
@@ -166,7 +166,7 @@ unsigned int render_graph_count(struct Node* node, const struct Camera* cam, con
 
     if (node->alwaysDraw || node_visible(cam, node)) {
         if (node->object) {
-            globject_render(node->object, cam, lights, node->model, node->inverseNormal);
+            globject_render(node->object, lights, node->model, node->inverseNormal);
             res++;
         }
         for (i = 0; i < node->nbChildren; i++) {

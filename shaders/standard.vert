@@ -1,5 +1,7 @@
 #version 140
 
+#include "camera.glsl"
+
 in vec3 in_Vertex;
 #ifdef HAVE_NORMAL
 in vec3 in_Normal;
@@ -24,8 +26,6 @@ out vec3 surfelNormal;
 out vec2 coordTexture;
 #endif
 
-uniform mat4 projection;
-uniform mat4 view;
 uniform mat4 model;
 #ifdef HAVE_NORMAL
 uniform mat3 inverseNormal;

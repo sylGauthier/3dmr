@@ -1,5 +1,6 @@
 #version 140
 
+#include "camera.glsl"
 #include "pbr/pbr.glsl"
 #include "hdr.glsl"
 
@@ -30,7 +31,6 @@ uniform vec3 albedo;
 uniform float metalness;
 uniform float roughness;
 #endif
-uniform vec3 cameraPosition;
 
 void main() {
 #ifdef HAVE_TANGENT

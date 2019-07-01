@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <game/material/phong.h>
+#include <game/render/camera_buffer_object.h>
+#include <game/render/lights_buffer_object.h>
 #include "shaders.h"
 
-static void phong_color_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_color_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, ((const struct PhongColorMaterial*)material)->color);
-    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongColorMaterial*)material)->phong);
 }
 
@@ -16,6 +17,8 @@ struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, c
         if (!(game_shaders[SHADER_PHONG_COLOR] = game_load_shader("standard.vert", "phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_COLOR], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_COLOR], "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_COLOR], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_COLOR], "Lights"), LIGHTS_UBO_BINDING);
     }
     if (!(phongColor = malloc(sizeof(*phongColor)))) {
         return NULL;
@@ -31,11 +34,10 @@ struct PhongColorMaterial* phong_color_material_new(float r, float g, float b, c
     return phongColor;
 }
 
-static void phong_texture_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_texture_load(const struct Material* material, const struct Lights* lights) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureMaterial*)material)->texture);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
-    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongTextureMaterial*)material)->phong);
 }
 
@@ -47,6 +49,8 @@ struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const st
         if (!(game_shaders[SHADER_PHONG_TEXTURE] = game_load_shader("standard.vert", "phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_TEXTURE], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_TEXTURE], "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_TEXTURE], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_TEXTURE], "Lights"), LIGHTS_UBO_BINDING);
     }
     if (!(phongTexture = malloc(sizeof(*phongTexture)))) {
         return NULL;
@@ -60,14 +64,13 @@ struct PhongTextureMaterial* phong_texture_material_new(GLuint texture, const st
     return phongTexture;
 }
 
-static void phong_texture_normalmap_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_texture_normalmap_load(const struct Material* material, const struct Lights* lights) {
     glUniform1i(glGetUniformLocation(material->shader, "normalMap"), 1);
     glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureNormalmapMaterial*)material)->normalMap);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ((const struct PhongTextureNormalmapMaterial*)material)->texture);
-    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongTextureNormalmapMaterial*)material)->phong);
 }
 
@@ -79,6 +82,8 @@ struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuin
         if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = game_load_shader("texture_normalmap.vert", "phong_texture_normalmap.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], "Lights"), LIGHTS_UBO_BINDING);
     }
     if (!(phongTexture = malloc(sizeof(*phongTexture)))) {
         return NULL;

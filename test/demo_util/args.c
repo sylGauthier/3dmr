@@ -22,7 +22,11 @@ void usage_viewer(void) {
 }
 
 void config_init(struct Config* config) {
-    scene_init(&config->scene);
+    light_init(&config->scene.lights);
+    node_init(&config->scene.root, NULL);
+    config->scene.camera = NULL;
+    config->scene.uboCamera = 0;
+    config->scene.uboLights = 0;
     config->skybox = NULL;
     config->objects = NULL;
     config->numObjects = 0;

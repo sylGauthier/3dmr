@@ -31,13 +31,13 @@ vec3 phong_compute_point_light(PointLight light, vec3 surfelToCamera, vec3 surfe
 vec3 phong(vec3 cameraPosition, vec3 surfelPosition, vec3 surfelNormal) {
     vec3 lightFactor = material.ambient * ambientLight.color;
     vec3 surfelToCamera = normalize(cameraPosition - surfelPosition);
-    int i;
+    uint i;
 
-    for (i = 0; i < numDirectionalLights; i++) {
+    for (i = 0U; i < numDirectionalLights; i++) {
         lightFactor += phong_compute_directional_light(directionalLights[i], surfelToCamera, surfelNormal);
     }
 
-    for (i = 0; i < numPointLights; i++) {
+    for (i = 0U; i < numPointLights; i++) {
         lightFactor += phong_compute_point_light(pointLights[i], surfelToCamera, surfelPosition, surfelNormal);
     }
 

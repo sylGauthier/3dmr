@@ -71,12 +71,12 @@ vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 
 
     // Direct lighting
     vec3 directLighting = vec3(0);
-    for (int i = 0; i < numDirectionalLights; i++) {
+    for (uint i = 0U; i < numDirectionalLights; i++) {
         vec3 Li = -directionalLights[i].direction;
         vec3 Lradiance = directionalLights[i].color;
         directLighting += pbr_direct_lighting(Li, Lo, cosLo, surfelNormal, albedo, metalness, roughness, F0, Lradiance);
     }
-    for (int i = 0; i < numPointLights; i++) {
+    for (uint i = 0U; i < numPointLights; i++) {
         vec3 Li = pointLights[i].position - surfelPosition;
         float distance = length(Li);
         Li /= distance;

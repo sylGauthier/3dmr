@@ -125,19 +125,17 @@ static int parse_phong(const char* s, char** end, struct PhongMaterial* mat) {
 
 static Vec3 multiColor;
 static double hue = 0.0;
-static void solid_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void solid_multicolor_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "solidColor"), 1, multiColor);
 }
-static void phong_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void phong_multicolor_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, multiColor);
-    light_load_direct_uniforms(material->shader, lights);
     phong_material_load_uniform(material->shader, &((const struct PhongColorMaterial*)material)->phong);
 }
-static void pbr_multicolor_load(const struct Material* material, const struct Camera* camera, const struct Lights* lights) {
+static void pbr_multicolor_load(const struct Material* material, const struct Lights* lights) {
     glUniform3fv(glGetUniformLocation(material->shader, "color"), 1, multiColor);
     glUniform1fv(glGetUniformLocation(material->shader, "metalness"), 1, &((const struct PBRUniMaterial*)material)->metalness);
     glUniform1fv(glGetUniformLocation(material->shader, "roughness"), 1, &((const struct PBRUniMaterial*)material)->roughness);
-    light_load_direct_uniforms(material->shader, lights);
     light_load_ibl_uniforms(material->shader, lights, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2);
 }
 void update_materials(double dt) {

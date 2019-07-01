@@ -1,5 +1,6 @@
 #version 140
 
+#include "camera.glsl"
 #include "phong.glsl"
 
 #ifndef HAVE_NORMAL
@@ -26,7 +27,6 @@ uniform sampler2D normalMap;
 #else
 uniform vec3 color;
 #endif
-uniform vec3 cameraPosition;
 
 void main() {
 #ifdef HAVE_TANGENT

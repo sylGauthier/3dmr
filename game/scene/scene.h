@@ -7,13 +7,15 @@
 struct Scene {
     struct Lights lights;
     struct Node root;
+    struct Camera* camera;
+    GLuint uboCamera, uboLights;
 };
 
-void scene_init(struct Scene* scene);
-#define scene_free(scene) graph_free(&(scene)->root)
+int scene_init(struct Scene* scene, struct Camera* camera);
+void scene_free(struct Scene* scene);
 
-#define scene_add(scene, node) node_add_child(&(scene)->root, (node))
-#define scene_render(scene, camera) render_graph(&(scene)->root, (camera), &(scene)->lights)
-#define scene_render_count(scene, camera) render_graph_count(&(scene)->root, (camera), &(scene)->lights)
+int scene_add(struct Scene* scene, struct Node* node);
+void scene_render(struct Scene* scene);
+unsigned int scene_render_count(struct Scene* scene);
 
 #endif
