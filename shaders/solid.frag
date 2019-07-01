@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 #ifdef HAVE_TEXCOORD
 in vec2 coordTexture;

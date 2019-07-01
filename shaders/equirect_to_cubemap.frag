@@ -1,4 +1,4 @@
-#version 130
+#version 140
 
 in vec3 direction;
 out vec4 outputValue;
