@@ -1,4 +1,4 @@
-DEPS := glfw3 glew libpng freetype2
+DEPS := glfw3 glew libpng
 LIB := libgame.a
 
 CFLAGS ?= -std=c89 -pedantic -march=native -Wall -O3
