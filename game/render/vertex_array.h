@@ -7,9 +7,7 @@
 struct VertexArray {
     GLuint vbo, ibo, vao;
     unsigned int numVertices, numIndices;
-
-    Vec3 bbCenter;
-    Vec3 bbDims;
+    Vec3 boundingBox[2];
 };
 
 void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va);

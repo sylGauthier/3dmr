@@ -51,6 +51,9 @@ static void window_size_callback(GLFWwindow* window, int width, int height) {
     camera_update_projection(&viewer->user.camera);
     viewer->user.width = width;
     viewer->user.height = height;
+    if (viewer->user.resize_callback) {
+        viewer->user.resize_callback(&viewer->user, viewer->user.callbackData);
+    }
 }
 
 static void window_close_callback(GLFWwindow* window) {
@@ -96,6 +99,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 viewer->user.cursor_callback = NULL;
                 viewer->user.wheel_callback = NULL;
                 viewer->user.key_callback = NULL;
+                viewer->user.resize_callback = NULL;
                 viewer->user.close_callback = NULL;
                 viewer->user.callbackData = NULL;
                 viewer->user.width = width;

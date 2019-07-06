@@ -64,18 +64,23 @@ int main(int argc, char** argv) {
         viewer->key_callback = key_callback;
         viewer->cursor_callback = cursor_rotate_camera;
         viewer->wheel_callback = wheel_callback;
+        viewer->resize_callback = resize_callback;
         viewer->close_callback = close_callback;
+        viewer->callbackData = &config;
         glfwSwapInterval(1);
         running = 1;
         title = malloc(strlen(config.title) + 128);
         for (t = 0; running && (config.timeout < 0 || t < config.timeout); t += dt) {
-            unsigned int nb;
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (config.skybox) {
                 skybox_render(config.skybox);
             }
-            nb = scene_render_count(&config.scene);
+            if (scene_update_nodes(&config.scene) || config.cameraChanged) {
+                scene_update_render_queue(&config.scene);
+                config.cameraChanged = 0;
+            }
+            scene_render(&config.scene);
             update_materials(dt);
             if (title) {
                 ct += dt;
@@ -83,7 +88,7 @@ int main(int argc, char** argv) {
                 if (ct > 1.0) {
                     fps = cf / ct;
                     ct = cf = 0;
-                    sprintf(title, "%s - %u FPS - %d rendered obj", config.title, (unsigned int)fps, nb);
+                    sprintf(title, "%s - %u FPS - %d rendered obj", config.title, (unsigned int)fps, config.scene.nRender);
                     viewer_set_title(viewer, title);
                 }
             }

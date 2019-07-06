@@ -9,13 +9,16 @@ struct Scene {
     struct Node root;
     struct Camera* camera;
     GLuint uboCamera, uboLights;
+    struct Node** renderQueue;
+    unsigned int nRender, aRender;
 };
 
 int scene_init(struct Scene* scene, struct Camera* camera);
-void scene_free(struct Scene* scene);
+void scene_free(struct Scene* scene, void (*free_node)(struct Node*));
 
 int scene_add(struct Scene* scene, struct Node* node);
+int scene_update_nodes(struct Scene* scene);
+int scene_update_render_queue(struct Scene* scene);
 void scene_render(struct Scene* scene);
-unsigned int scene_render_count(struct Scene* scene);
 
 #endif

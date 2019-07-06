@@ -28,7 +28,7 @@ struct Node* make_frame(void) {
         return NULL;
     }
 
-    node_init(node, NULL);
+    node_init(node);
     va = vertex_array_new(&arrow);
     material[0] = (struct Material*)solid_color_material_new(1.0, 0.0, 0.0);
     material[1] = (struct Material*)solid_color_material_new(0.0, 1.0, 0.0);
@@ -36,7 +36,8 @@ struct Node* make_frame(void) {
     for (i = 0; i < 3; i++) {
         gl[i].vertexArray = va;
         gl[i].material = material[i];
-        node_init(node + i + 1, gl + i);
+        node_init(node + i + 1);
+        node_set_geometry(node + i + 1, gl + i);
         node_add_child(node, node + i + 1);
     }
     node_rotate(node + 2, VEC3_AXIS_Z, M_PI / 2.0);
@@ -48,11 +49,11 @@ struct Node* make_frame(void) {
 void free_frame(struct Node* frame) {
     unsigned int i;
 
-    for (i = 0; i < 3; i++) {
-        free(frame[i].object->material);
+    for (i = 1; i < 4; i++) {
+        free(frame[i].data.geometry->material);
     }
-    vertex_array_free(frame[1].object->vertexArray);
-    free(frame[1].object);
-    graph_free(frame);
+    vertex_array_free(frame[1].data.geometry->vertexArray);
+    free(frame[1].data.geometry);
+    nodes_free(frame, NULL);
     free(frame);
 }

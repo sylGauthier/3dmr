@@ -9,6 +9,7 @@ struct Viewer {
     void (*cursor_callback)(struct Viewer*, double, double, double, double, int, int, int, void*);
     void (*wheel_callback)(struct Viewer*, double, double, void*);
     void (*key_callback)(struct Viewer*, int, int, int, int, void*);
+    void (*resize_callback)(struct Viewer*, void*);
     void (*close_callback)(struct Viewer*, void*);
     void* callbackData;
 };

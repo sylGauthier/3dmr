@@ -227,7 +227,8 @@ struct Node* make_single(const struct Mesh* mesh, struct Material* material) {
         if ((object = malloc(sizeof(*object)))) {
             if ((object->vertexArray = vertex_array_new(mesh))) {
                 object->material = material;
-                node_init(node, object);
+                node_init(node);
+                node_set_geometry(node, object);
                 return node;
             }
             free(object);
@@ -247,7 +248,7 @@ struct Node* make_grid(const struct Mesh* mesh, struct Material* material, unsig
         if ((object = malloc(sizeof(*object)))) {
             if ((object->vertexArray = vertex_array_new(mesh))) {
                 object->material = material;
-                node_init(nodes, NULL);
+                node_init(nodes);
                 n = nodes;
                 t[1] = 0;
                 t[2] = -((float)(rows - 1) / 2.0f) * spacing;
@@ -255,7 +256,8 @@ struct Node* make_grid(const struct Mesh* mesh, struct Material* material, unsig
                     t[0] = -((float)(cols - 1) / 2.0f) * spacing;
                     for (c = 0; c < cols; c++) {
                         n++;
-                        node_init(n, object);
+                        node_init(n);
+                        node_set_geometry(n, object);
                         node_translate(n, t);
                         if (!node_add_child(nodes, n)) {
                             break;

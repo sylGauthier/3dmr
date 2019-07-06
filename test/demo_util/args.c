@@ -23,7 +23,7 @@ void usage_viewer(void) {
 
 void config_init(struct Config* config) {
     light_init(&config->scene.lights);
-    node_init(&config->scene.root, NULL);
+    node_init(&config->scene.root);
     config->scene.camera = NULL;
     config->scene.uboCamera = 0;
     config->scene.uboLights = 0;
@@ -35,6 +35,7 @@ void config_init(struct Config* config) {
     config->width = 640;
     config->height = 480;
     config->timeout = -1;
+    config->cameraChanged = 0;
 }
 
 void config_free(struct Config* config) {
@@ -42,7 +43,7 @@ void config_free(struct Config* config) {
         config_object_free(config, config->numObjects - 1);
     }
     skybox_free(config->skybox);
-    scene_free(&config->scene);
+    scene_free(&config->scene, NULL);
     config->scene.root.nbChildren = 0;
     free(config->objects);
 }
@@ -53,9 +54,9 @@ void config_object_free(struct Config* config, unsigned int i) {
 
     if (i < config->numObjects) {
         if (config->objects[i]->nbChildren) { /*grid*/
-            object = config->objects[i]->children[0]->object;
+            object = config->objects[i]->children[0]->data.geometry;
         } else {
-            object = config->objects[i]->object;
+            object = config->objects[i]->data.geometry;
         }
         for (j = 0; j < config->scene.root.nbChildren; j++) {
             if (config->scene.root.children[j] == config->objects[i]) {
@@ -66,7 +67,7 @@ void config_object_free(struct Config* config, unsigned int i) {
         vertex_array_free(object->vertexArray);
         free(object->material);
         free(object);
-        graph_free(config->objects[i]);
+        nodes_free(config->objects[i], NULL);
         free(config->objects[i]);
         config->objects[i] = config->objects[--config->numObjects];
     }

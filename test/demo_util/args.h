@@ -14,6 +14,7 @@ struct Config {
     const char* title;
     unsigned int width, height;
     int timeout;
+    int cameraChanged;
 };
 
 void usage_viewer(void);

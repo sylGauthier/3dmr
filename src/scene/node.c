@@ -3,54 +3,64 @@
 #include <string.h>
 
 #include <game/scene/node.h>
-#include <game/bounding_box/bounding_box.h>
 
-static void update_bounding_box(struct Node* node, const struct Node* child) {
-    Vec3 bbPoints[8];
-    int changed = 0, i;
-
-    bb_compute_points(&(child->bb), bbPoints);
-    for (i = 0; i < 8; i++) {
-        Vec3 tmp;
-        mul4m3v(tmp, child->transform, bbPoints[i]);
-
-        changed |= bb_adapt(&(node->bb), tmp);
-    }
-    if (changed && node->father) {
-        update_bounding_box(node->father, node);
-    }
-}
-
-void node_init(struct Node* node, struct GLObject* obj) {
-    node->object = obj;
-
+void node_init(struct Node* node) {
     node->children = NULL;
     node->nbChildren = 0;
     node->father = NULL;
 
-    node->position[0] = 0;
-    node->position[1] = 0;
-    node->position[2] = 0;
+    zero3v(node->position);
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
 
-    if (obj && obj->vertexArray) {
-        memcpy(node->bb.center, obj->vertexArray->bbCenter, sizeof(Vec3));
-        memcpy(node->bb.dims, obj->vertexArray->bbDims, sizeof(Vec3));
-    } else {
-        memset(node->bb.center, 0, sizeof(Vec3));
-        memset(node->bb.dims, 0, sizeof(Vec3));
-    }
+    zero3v(node->boundingBox[0]);
+    zero3v(node->boundingBox[1]);
 
-    node->nodeLabel = 0;
-    node->alwaysDraw = 0;
+    node->type = NODE_EMPTY;
+}
+
+static void node_reset_bounding_box(struct Node* node, Vec3 bb[2]) {
+    unsigned int i;
+    if (bb) {
+        memcpy(node->boundingBox, bb, sizeof(node->boundingBox));
+    } else {
+        zero3v(node->boundingBox[0]);
+        zero3v(node->boundingBox[1]);
+    }
+    for (i = 0; i < node->nbChildren; i++) {
+        node->children[i]->changedFlags |= UPDATE_PARENT_BB;
+    }
+}
+
+void node_set_geometry(struct Node* node, struct GLObject* geometry) {
+    node->type = NODE_GEOMETRY;
+    node->data.geometry = geometry;
+    node_reset_bounding_box(node, geometry->vertexArray->boundingBox);
+}
+
+void node_set_dlight(struct Node* node, struct DirectionalLight* dlight) {
+    node->type = NODE_DLIGHT;
+    node->data.dlight = dlight;
+    node_reset_bounding_box(node, NULL);
+}
+
+void node_set_plight(struct Node* node, struct PointLight* plight) {
+    node->type = NODE_PLIGHT;
+    node->data.plight = plight;
+    node_reset_bounding_box(node, NULL);
+}
+
+void node_set_camera(struct Node* node, struct Camera* camera) {
+    node->type = NODE_CAMERA;
+    node->data.camera = camera;
+    node_reset_bounding_box(node, NULL);
 }
 
 int node_add_child(struct Node* node, struct Node* child) {
     struct Node** tmp;
 
+    if (child->father) return 0;
     if (!(tmp = realloc(node->children, ++(node->nbChildren) * sizeof(struct Node*)))) {
-        fprintf(stderr, "Error reallocating memory for node children\n");
         node->nbChildren--;
         return 0;
     }
@@ -58,14 +68,30 @@ int node_add_child(struct Node* node, struct Node* child) {
     node->children = tmp;
     node->children[node->nbChildren - 1] = child;
     child->father = node;
-    node->changedFlags |= PARENT_MODEL_CHANGED;
-    update_bounding_box(node, child);
+    child->changedFlags |= PARENT_MODEL_CHANGED | UPDATE_PARENT_BB;
     return 1;
 }
 
-void node_update_matrices(struct Node* node) {
+void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
+    struct Node *cur, *next;
+
+    for (cur = root; cur; cur = next) {
+        if (cur->nbChildren) {
+            next = cur->children[0];
+        } else {
+            next = (cur == root) ? NULL : cur->father;
+            free(cur->children);
+            if (free_node) free_node(cur);
+            if (next) {
+                next->children[0] = next->children[--(next->nbChildren)];
+            }
+        }
+    }
+}
+
+int node_update_matrices(struct Node* node) {
     unsigned int i;
-    enum ChangedFlags modelChanged = NOTHING_CHANGED;
+    int changed;
 
     if (node->changedFlags & ORIENTATION_CHANGED) {
         quaternion_to_mat4(node->transform, node->orientation);
@@ -73,117 +99,114 @@ void node_update_matrices(struct Node* node) {
     if (node->changedFlags & (POSITION_CHANGED | ORIENTATION_CHANGED)) {
         memcpy(node->transform[3], node->position, sizeof(Vec3));
     }
-    if (node->changedFlags) {
+    if ((changed = (node->changedFlags & UPDATE_MODEL_MASK))) {
         if (node->father) {
             mul4mm(node->model, MAT_CONST_CAST(node->father->model), MAT_CONST_CAST(node->transform));
         } else {
             memcpy(node->model, node->transform, sizeof(Mat4));
         }
-        modelChanged = PARENT_MODEL_CHANGED;
+        switch (node->type) {
+            case NODE_GEOMETRY:
+                if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
+                    Mat3 tmp;
+                    mat4to3(tmp, MAT_CONST_CAST(node->model));
+                    invert3m(node->inverseNormal, MAT_CONST_CAST(tmp));
+                    transpose3m(node->inverseNormal);
+                }
+                break;
+            case NODE_DLIGHT:
+                if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
+                    Mat3 tmp;
+                    Vec3 down = {0, -1, 0};
+                    mat4to3(tmp, MAT_CONST_CAST(node->model));
+                    mul3mv(node->data.dlight->direction, MAT_CONST_CAST(tmp), down);
+                }
+                break;
+            case NODE_PLIGHT:
+                if (node->changedFlags & (POSITION_CHANGED | PARENT_MODEL_CHANGED)) {
+                    mul3sv(node->data.plight->position, 1.0f / node->model[3][3], node->model[3]);
+                }
+                break;
+            case NODE_CAMERA:
+                /* we need to invert the model into the camera view matrix
+                 * (model = node->world, view = world->camera node)
+                 * Since its only rotation+translation it's easy */
+                {
+                    Mat3 tmp;
+                    mat4to3(tmp, MAT_CONST_CAST(node->model));
+                    quaternion_from_mat3(node->data.camera->orientation, MAT_CONST_CAST(tmp));
+                    memcpy(node->data.camera->position, node->model[3], sizeof(Vec3));
+                    transpose3m(tmp);
+                    mat3to4(node->data.camera->view, MAT_CONST_CAST(tmp));
+                    mul3mv(node->data.camera->view[3], MAT_CONST_CAST(tmp), node->model[3]);
+                    neg3v(node->data.camera->view[3]);
+                }
+                break;
+            case NODE_EMPTY:;
+        }
+        node->changedFlags = UPDATE_PARENT_BB;
+        for (i = 0; i < node->nbChildren; i++) {
+            node->children[i]->changedFlags |= PARENT_MODEL_CHANGED;
+        }
     }
-    if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
-        Mat3 tmp;
-        mat4to3(tmp, MAT_CONST_CAST(node->model));
-        invert3m(node->inverseNormal, MAT_CONST_CAST(tmp));
-        transpose3m(node->inverseNormal);
-    }
-
-    for (i = 0; i < node->nbChildren; i++) {
-        node->children[i]->changedFlags |= modelChanged;
-    }
-
-    if (node->changedFlags && node->father) {
-        update_bounding_box(node->father, node);
-    }
-
-    node->changedFlags = NOTHING_CHANGED;
+    return changed;
 }
 
-static int node_visible(const struct Camera* cam, const struct Node* node) {
-    Vec3 points[8];
-    Vec3 tmp, tmp2;
-    int i;
-    int upCnt = 0, leftCnt = 0, rightCnt = 0, downCnt = 0;
-    int backUpCnt = 0, backDownCnt = 0, backRightCnt = 0, backLeftCnt = 0;
+void node_update_father_bounding_box(struct Node* node) {
+    Vec4 tmp, tmp2;
+    unsigned int i, j;
 
-    bb_compute_points(&node->bb, points);
+    if (node->changedFlags & UPDATE_PARENT_BB) {
+        if (node->father) {
+            tmp[3] = 1;
+            for (i = 0; i < 8; i++) {
+                tmp[0] = node->boundingBox[(i >> 0) & 1][0];
+                tmp[1] = node->boundingBox[(i >> 1) & 1][1];
+                tmp[2] = node->boundingBox[(i >> 2) & 1][2];
+                mul4mv(tmp2, MAT_CONST_CAST(node->transform), tmp);
+                for (j = 0; j < 3; j++) {
+                    if (node->father->boundingBox[0][j] > tmp2[j]) {
+                        node->father->boundingBox[0][j] = tmp2[j];
+                        node->father->changedFlags |= UPDATE_PARENT_BB;
+                    }
+                    if (node->father->boundingBox[1][j] < tmp2[j]) {
+                        node->father->boundingBox[1][j] = tmp2[j];
+                        node->father->changedFlags |= UPDATE_PARENT_BB;
+                    }
+                }
+            }
+        }
+        node->changedFlags &= ~UPDATE_PARENT_BB;
+    }
+}
 
+int node_visible(const struct Node* node, const struct Camera* camera) {
+    Vec4 tmp, tmp2;
+    unsigned int i, left = 0, right = 0, down = 0, up = 0, back = 0;
+
+    tmp[3] = 1;
     for (i = 0; i < 8; i++) {
-        mul4m3v(tmp2, node->model, points[i]);
-        mul4m3v(tmp, cam->view, tmp2);
-        if (tmp[2] > 0.) {
-            if (tmp[0] <= 0) {
-                backLeftCnt++;
-            } else {
-                backRightCnt++;
-            }
-            if (tmp[1] <= 0) {
-                backDownCnt++;
-            } else {
-                backUpCnt++;
-            }
+        tmp[0] = node->boundingBox[(i >> 0) & 1][0];
+        tmp[1] = node->boundingBox[(i >> 1) & 1][1];
+        tmp[2] = node->boundingBox[(i >> 2) & 1][2];
+        mul4mv(tmp2, node->model, tmp);
+        mul4mv(tmp, camera->view, tmp2);
+        if (tmp[2] > 0) {
+            back++;
+            left += (tmp[0] <= 0);
+            right += (tmp[0] > 0);
+            down += (tmp[1] <= 0);
+            up += (tmp[1] > 0);
         } else {
-            mul4m3v(tmp2, cam->projection, tmp);
-            if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0)
-                return 1;
-            if (tmp2[0] < -1)
-                leftCnt++;
-            if (tmp2[0] > 1)
-                rightCnt++;
-            if (tmp2[1] < -1)
-                downCnt++;
-            if (tmp2[1] > 1)
-                upCnt++;
+            mul4m3v(tmp2, camera->projection, tmp);
+            if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0) return 1;
+            left += (tmp2[0] < -1);
+            right += (tmp2[0] > 1);
+            down += (tmp2[1] < -1);
+            up += (tmp2[1] > 1);
         }
     }
-    return !(upCnt >= 8 || downCnt >= 8 || leftCnt >= 8 || rightCnt >= 8 || backRightCnt+backLeftCnt >= 8
-                        || upCnt + backUpCnt >= 8
-                        || leftCnt + backLeftCnt >= 8
-                        || downCnt + backDownCnt >= 8
-                        || rightCnt + backRightCnt >= 8);
-}
-
-void render_graph(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
-    unsigned int i;
-
-    node_update_matrices(node);
-
-    if (node->alwaysDraw || node_visible(cam, node)) {
-        if (node->object) {
-            globject_render(node->object, lights, node->model, node->inverseNormal);
-        }
-        for (i = 0; i < node->nbChildren; i++) {
-            render_graph(node->children[i], cam, lights);
-        }
-    }
-}
-
-unsigned int render_graph_count(struct Node* node, const struct Camera* cam, const struct Lights* lights) {
-    unsigned int i;
-    unsigned int res = 0;
-
-    node_update_matrices(node);
-
-    if (node->alwaysDraw || node_visible(cam, node)) {
-        if (node->object) {
-            globject_render(node->object, lights, node->model, node->inverseNormal);
-            res++;
-        }
-        for (i = 0; i < node->nbChildren; i++) {
-            res += render_graph_count(node->children[i], cam, lights);
-        }
-    }
-
-    return res;
-}
-
-void graph_free(struct Node* root) {
-    int i;
-
-    for (i = 0; i < root->nbChildren; i++) {
-        graph_free(root->children[i]);
-    }
-    free(root->children);
+    return !(up >= 8 || down >= 8 || left >= 8 || right >= 8 || back >= 8);
 }
 
 void node_translate(struct Node* node, const Vec3 t) {
