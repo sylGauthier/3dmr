@@ -1,6 +1,7 @@
 #include <game/math/linear_algebra.h>
 #include <game/render/material.h>
 #include <game/render/shader.h>
+#include <game/math/glsl.h>
 #include <shaders/material/phong.h>
 
 #ifndef PHONG_H_

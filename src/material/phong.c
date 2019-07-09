@@ -79,7 +79,7 @@ struct PhongTextureNormalmapMaterial* phong_texture_normalmap_material_new(GLuin
     struct PhongTextureNormalmapMaterial* phongTexture;
 
     if (!game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP]) {
-        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = game_load_shader("texture_normalmap.vert", "phong_texture_normalmap.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+        if (!(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP] = game_load_shader("standard.vert", "phong.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
             return NULL;
         }
         glUniformBlockBinding(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], glGetUniformBlockIndex(game_shaders[SHADER_PHONG_TEXTURE_NORMALMAP], "Camera"), CAMERA_UBO_BINDING);
