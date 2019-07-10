@@ -21,3 +21,7 @@ pass() {
 set_failed() {
     code=1
 }
+
+assets() {
+    mkdir -p assets && make --no-print-directory -s -C assets -f ../assets.mk "$@"
+}

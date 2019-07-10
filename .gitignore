@@ -14,3 +14,4 @@ test/*
 !test/*/
 !test/*.c
 !test/*.sh
+!test/assets.mk
