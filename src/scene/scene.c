@@ -33,7 +33,7 @@ int scene_add(struct Scene* scene, struct Node* node) {
     return node_add_child(&scene->root, node);
 }
 
-int scene_update_nodes(struct Scene* scene) {
+int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Node*)) {
     struct Node *cur, *next;
     int down = 1;
     unsigned int changed = 0;
@@ -42,22 +42,7 @@ int scene_update_nodes(struct Scene* scene) {
         if (down) {
             changed |= cur->changedFlags;
             if (node_update_matrices(cur)) {
-                switch (cur->type) {
-                    /* we can't handle geometries there: camera might not be updated yet so node_visible cannot be called yet */
-                    case NODE_DLIGHT:
-                        lights_buffer_object_update_dlight(cur->data.dlight, cur->data.dlight - scene->lights.directional, scene->uboLights);
-                        break;
-                    case NODE_PLIGHT:
-                        lights_buffer_object_update_plight(cur->data.plight, cur->data.plight - scene->lights.point, scene->uboLights);
-                        break;
-                    case NODE_CAMERA:
-                        if (cur->data.camera == scene->camera) {
-                            camera_buffer_object_update_view(MAT_CONST_CAST(scene->camera->view), scene->uboCamera);
-                            camera_buffer_object_update_position(scene->camera->position, scene->uboCamera);
-                        }
-                        break;
-                    default:;
-                }
+                if (changedCallback) changedCallback(cur);
             }
             if (cur->nbChildren) {
                 next = cur->children[0];
