@@ -5,7 +5,6 @@
 
 #include <game/render/viewer.h>
 #include <game/img/png.h>
-#include "../material/shaders.h"
 
 struct ViewerImpl {
     struct Viewer user;
@@ -13,8 +12,12 @@ struct ViewerImpl {
     int hasLast;
     double lastX, lastY;
     double lastTime;
-    GLuint shaders[NUM_SHADERS];
+    GLuint* programs;
+    unsigned int numPrograms;
 };
+
+static struct Viewer* currentViewer = NULL;
+static unsigned int numPrograms = 0;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
@@ -66,7 +69,6 @@ static void window_close_callback(GLFWwindow* window) {
 struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* title) {
     struct ViewerImpl* viewer;
     GLenum error;
-    unsigned int i;
 
     if (!(viewer = malloc(sizeof(struct ViewerImpl)))) {
         fprintf(stderr, "Error: memory allocation failed\n");
@@ -114,9 +116,8 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 glEnable(GL_MULTISAMPLE);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                for (i = 0; i < NUM_SHADERS; i++) {
-                    ((struct ViewerImpl*)viewer)->shaders[i] = 0;
-                }
+                viewer->programs = NULL;
+                viewer->numPrograms = 0;
                 viewer_make_current(&viewer->user);
                 return &viewer->user;
             }
@@ -131,11 +132,12 @@ void viewer_free(struct Viewer* viewer) {
     unsigned int i;
 
     if (viewer) {
-        for (i = 0; i < NUM_SHADERS; i++) {
-            if (((struct ViewerImpl*)viewer)->shaders[i]) {
-                glDeleteProgram(((struct ViewerImpl*)viewer)->shaders[i]);
+        for (i = 0; i < ((struct ViewerImpl*)viewer)->numPrograms; i++) {
+            if (((struct ViewerImpl*)viewer)->programs[i]) {
+                glDeleteProgram(((struct ViewerImpl*)viewer)->programs[i]);
             }
         }
+        free(((struct ViewerImpl*)viewer)->programs);
         if (((struct ViewerImpl*)viewer)->window) {
             glfwDestroyWindow(((struct ViewerImpl*)viewer)->window);
             glfwTerminate();
@@ -144,13 +146,47 @@ void viewer_free(struct Viewer* viewer) {
     }
 }
 
+unsigned int viewer_register_program_id(void) {
+    if (numPrograms == ((unsigned int)-1)) {
+        return -1;
+    }
+    return numPrograms++;
+}
+
+GLuint viewer_get_program(struct Viewer* viewer, unsigned int id) {
+    if (((struct ViewerImpl*)viewer)->numPrograms <= id) return 0;
+    return ((struct ViewerImpl*)viewer)->programs[id];
+}
+
+int viewer_set_program(struct Viewer* viewer, unsigned int id, GLuint program) {
+    if (id >= numPrograms) return 0;
+    if (((struct ViewerImpl*)viewer)->numPrograms <= id) {
+        GLuint* tmp;
+        unsigned int i;
+        if (!(tmp = realloc(((struct ViewerImpl*)viewer)->programs, numPrograms * sizeof(*tmp)))) {
+            return 0;
+        }
+        ((struct ViewerImpl*)viewer)->programs = tmp;
+        for (i = ((struct ViewerImpl*)viewer)->numPrograms; i < numPrograms; i++) {
+            ((struct ViewerImpl*)viewer)->programs[i] = 0;
+        }
+        ((struct ViewerImpl*)viewer)->numPrograms = numPrograms;
+    }
+    ((struct ViewerImpl*)viewer)->programs[id] = program;
+    return 1;
+}
+
 void viewer_set_title(struct Viewer* viewer, const char* title) {
     glfwSetWindowTitle(((struct ViewerImpl*)viewer)->window, title);
 }
 
 void viewer_make_current(struct Viewer* viewer) {
     glfwMakeContextCurrent(((struct ViewerImpl*)viewer)->window);
-    game_shaders = ((struct ViewerImpl*)viewer)->shaders;
+    currentViewer = viewer;
+}
+
+struct Viewer* viewer_get_current(void) {
+    return currentViewer;
 }
 
 void viewer_process_events(struct Viewer* viewer) {

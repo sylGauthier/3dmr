@@ -5,8 +5,8 @@
 #define MATERIAL_H
 
 struct Material {
-    void (*load)(const struct Material*, const struct Lights*);
-    GLuint shader;
+    void (*load)(const struct Material*);
+    GLuint program;
     GLuint polygonMode;
 };
 

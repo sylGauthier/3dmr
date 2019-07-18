@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
 #include <game/render/texture.h>
@@ -7,8 +8,9 @@
 #define SIZE 2.0165
 
 int solid_texture_setup(struct Scene* scene) {
-    struct Node* n;
+    struct Node* n = NULL;
     struct Mesh mesh;
+    struct SolidMaterial* mat = NULL;
     GLuint tex;
     int ok;
 
@@ -17,14 +19,21 @@ int solid_texture_setup(struct Scene* scene) {
         mesh_free(&mesh);
         return 0;
     }
-    ok = (n = create_node(&mesh, solid_texture_material_new(tex))) != NULL;
+    ok = (mat = solid_material_new(MAT_PARAM_TEXTURED)) && (n = create_node(&mesh, mat));
     mesh_free(&mesh);
+    if (ok) material_param_set_vec3_texture(&mat->color, tex);
     ok = ok && scene_add(scene, n);
-    if (!ok && n) free_node(n);
-    if (!ok) glDeleteTextures(1, &tex);
+    if (!ok) {
+        if (n) {
+            free_node(n);
+        } else {
+            free(mat);
+        }
+        glDeleteTextures(1, &tex);
+    }
     return ok;
 }
 
 void solid_texture_teardown(struct Scene* scene) {
-    glDeleteTextures(1, &((struct SolidTextureMaterial*)scene->root.children[0]->data.geometry->material)->texture);
+    glDeleteTextures(1, &((struct SolidMaterial*)scene->root.children[0]->data.geometry->material)->color.value.texture);
 }

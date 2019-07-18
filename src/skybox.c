@@ -2,14 +2,17 @@
 #include <game/mesh/box.h>
 #include <game/render/globject.h>
 #include <game/render/texture.h>
+#include <game/render/viewer.h>
 #include <game/img/hdr.h>
 #include <game/img/png.h>
-#include "material/shaders.h"
+#include "material/programs.h"
 
 struct SkyboxMaterial {
     struct Material material;
     GLuint texture;
 };
+
+static unsigned int progid = -1;
 
 static void texture_params_cubemap(void) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -130,18 +133,32 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
     return ok ? tex[1] : 0;
 }
 
-static void skybox_load(const struct Material* material, const struct Lights* lights) {
+static void skybox_load(const struct Material* material) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct SkyboxMaterial*)material)->texture);
-    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
+    glUniform1i(glGetUniformLocation(material->program, "tex"), 0);
 }
 
 int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
     struct Mesh box;
+    struct Viewer* currentViewer;
     struct SkyboxMaterial* mat;
+    GLuint prog;
 
-    if (!game_shaders[SHADER_SKYBOX]) {
-        if (!(game_shaders[SHADER_SKYBOX] = game_load_shader("skybox.vert", "skybox.frag", NULL, 0))) {
+    if (progid == ((unsigned int)-1)) {
+        if ((progid = viewer_register_program_id()) == ((unsigned int)-1)) {
+            return 0;
+        }
+    }
+    if (!(currentViewer = viewer_get_current())) {
+        return 0;
+    }
+    if (!(prog = viewer_get_program(currentViewer, progid))) {
+        if (!(prog = game_load_shader("skybox.vert", "skybox.frag", NULL, 0))) {
+            return 0;
+        }
+        if (!viewer_set_program(currentViewer, progid, prog)) {
+            glDeleteProgram(prog);
             return 0;
         }
     }
@@ -160,7 +177,7 @@ int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
     }
     skybox->material = (struct Material*)mat;
     mat->material.load = skybox_load;
-    mat->material.shader = game_shaders[SHADER_SKYBOX];
+    mat->material.program = prog;
     mat->material.polygonMode = GL_FILL;
     mat->texture = texture;
 
@@ -194,5 +211,5 @@ void skybox_free(struct GLObject* skybox) {
 void skybox_render(struct GLObject* skybox) {
     Mat4 model;
     Mat3 inv;
-    globject_render(skybox, NULL, model, inv);
+    globject_render(skybox, model, inv);
 }

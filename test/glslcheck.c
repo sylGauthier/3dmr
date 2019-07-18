@@ -208,6 +208,8 @@ int main(int argc, char** argv) {
                 ret = 1;
             }
             viewer_free(viewer);
+        } else {
+            ret = 1;
         }
     }
     if (i == argc - 1 && in) {

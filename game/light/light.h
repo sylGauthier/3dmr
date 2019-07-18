@@ -18,6 +18,6 @@ struct Lights {
 };
 
 void light_init(struct Lights* lights);
-void light_load_ibl_uniforms(GLuint shader, const struct Lights* lights, GLenum tex1, GLenum tex2, GLenum tex3);
+void light_load_ibl_uniforms(GLuint shader, const struct IBL* ibl, unsigned int tex1, unsigned int tex2, unsigned int tex3);
 
 #endif

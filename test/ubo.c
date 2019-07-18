@@ -6,7 +6,7 @@
 #include <game/render/viewer.h>
 #include <game/render/camera_buffer_object.h>
 #include <game/render/lights_buffer_object.h>
-#include "src/material/shaders.h"
+#include "src/material/programs.h"
 #include "ubo.h"
 
 int test_ubo(GLuint prog, GLuint ubo, const char* uboName, unsigned long (*get_offset)(const char*)) {

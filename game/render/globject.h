@@ -12,6 +12,6 @@ struct GLObject {
     struct Material* material;
 };
 
-void globject_render(const struct GLObject* glObject, const struct Lights* lights, Mat4 model, Mat3 inverseNormal);
+void globject_render(const struct GLObject* glObject, Mat4 model, Mat3 inverseNormal);
 
 #endif

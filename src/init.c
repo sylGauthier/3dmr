@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "material/shaders.h"
+#include "material/programs.h"
 
 int game_init(const char* gameShaderRootPath) {
     size_t n = strlen(gameShaderRootPath);

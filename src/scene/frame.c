@@ -18,7 +18,8 @@ struct Node* make_frame(void) {
     struct GLObject* gl = NULL;
     struct Node* node;
     struct VertexArray* va;
-    struct Material* material[3];
+    struct SolidMaterial* material[3];
+    Vec3 color;
     unsigned int i;
 
     if (!(node = malloc(4 * sizeof(struct Node)))
@@ -30,12 +31,24 @@ struct Node* make_frame(void) {
 
     node_init(node);
     va = vertex_array_new(&arrow);
-    material[0] = (struct Material*)solid_color_material_new(1.0, 0.0, 0.0);
-    material[1] = (struct Material*)solid_color_material_new(0.0, 1.0, 0.0);
-    material[2] = (struct Material*)solid_color_material_new(0.0, 0.0, 1.0);
+    material[0] = solid_material_new(MAT_PARAM_CONSTANT);
+    material[1] = solid_material_new(MAT_PARAM_CONSTANT);
+    material[2] = solid_material_new(MAT_PARAM_CONSTANT);
+
+    if (!material[0] || !material[1] || !material[2]) {
+        free(node);
+        free(gl);
+        vertex_array_free(va);
+        for (i = 0; i < 3; i++) free(material[i]);
+        return NULL;
+    }
     for (i = 0; i < 3; i++) {
         gl[i].vertexArray = va;
-        gl[i].material = material[i];
+        gl[i].material = (struct Material*)material[i];
+        color[0] = (i == 0);
+        color[1] = (i == 1);
+        color[2] = (i == 2);
+        material_param_set_vec3_constant(&material[i]->color, color);
         node_init(node + i + 1);
         node_set_geometry(node + i + 1, gl + i);
         node_add_child(node, node + i + 1);

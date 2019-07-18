@@ -4,10 +4,9 @@
 #include <GL/glew.h>
 #include <game/render/shader.h>
 
-GLuint* game_shaders;
 char* shaderRootPath;
 
-int game_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename, const char** defines, size_t numDefines) {
+GLuint game_load_shader(const char* vertexShaderFilename, const char* fragmentShaderFilename, const char** defines, size_t numDefines) {
     GLuint res = 0;
     char *vertexShaderPath, *fragmentShaderPath;
 

@@ -1,57 +1,48 @@
 #include <stdlib.h>
 #include <game/material/solid.h>
 #include <game/render/camera_buffer_object.h>
-#include "shaders.h"
+#include <game/render/viewer.h>
+#include "programs.h"
 
-static void solid_color_load(const struct Material* material, const struct Lights* lights) {
-    glUniform3fv(glGetUniformLocation(material->shader, "solidColor"), 1, ((const struct SolidColorMaterial*)material)->color);
+static unsigned int progid[2] = {-1, -1};
+
+static void solid_load(const struct Material* material) {
+    unsigned int texSlot = 0;
+    material_param_send_vec3(material->program, &((const struct SolidMaterial*)material)->color, "solidColor", &texSlot);
 }
 
-struct SolidColorMaterial* solid_color_material_new(float r, float g, float b) {
-    struct SolidColorMaterial* solidColor;
-
-    if (!game_shaders[SHADER_SOLID_COLOR]) {
-        if (!(game_shaders[SHADER_SOLID_COLOR] = game_load_shader("standard.vert", "solid.frag", NULL, 0))) {
-            return NULL;
-        }
-        glUniformBlockBinding(game_shaders[SHADER_SOLID_COLOR], glGetUniformBlockIndex(game_shaders[SHADER_SOLID_COLOR], "Camera"), CAMERA_UBO_BINDING);
-    }
-    if (!(solidColor = malloc(sizeof(*solidColor)))) {
-        return NULL;
-    }
-    solidColor->material.load = solid_color_load;
-    solidColor->material.shader = game_shaders[SHADER_SOLID_COLOR];
-    solidColor->material.polygonMode = GL_FILL;
-    solidColor->color[0] = r;
-    solidColor->color[1] = g;
-    solidColor->color[2] = b;
-
-    return solidColor;
-}
-
-static void solid_texture_load(const struct Material* material, const struct Lights* lights) {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ((const struct SolidTextureMaterial*)material)->texture);
-    glUniform1i(glGetUniformLocation(material->shader, "tex"), 0);
-}
-
-struct SolidTextureMaterial* solid_texture_material_new(GLuint texture) {
+struct SolidMaterial* solid_material_new(enum MatParamMode modeColor) {
     static const char* defines[] = {"HAVE_TEXCOORD", NULL};
-    struct SolidTextureMaterial* solidTexture;
+    struct Viewer* currentViewer;
+    struct SolidMaterial* solid;
+    GLuint prog;
+    unsigned int variant = (modeColor == MAT_PARAM_TEXTURED);
 
-    if (!game_shaders[SHADER_SOLID_TEXTURE]) {
-        if (!(game_shaders[SHADER_SOLID_TEXTURE] = game_load_shader("standard.vert", "solid.frag", defines, sizeof(defines) / (2 * sizeof(*defines))))) {
+    if (progid[variant] == ((unsigned int)-1)) {
+        if ((progid[variant] = viewer_register_program_id()) == ((unsigned int)-1)) {
             return NULL;
         }
-        glUniformBlockBinding(game_shaders[SHADER_SOLID_TEXTURE], glGetUniformBlockIndex(game_shaders[SHADER_SOLID_TEXTURE], "Camera"), CAMERA_UBO_BINDING);
     }
-    if (!(solidTexture = malloc(sizeof(*solidTexture)))) {
+    if (!(currentViewer = viewer_get_current())) {
         return NULL;
     }
-    solidTexture->material.load = solid_texture_load;
-    solidTexture->material.shader = game_shaders[SHADER_SOLID_TEXTURE];
-    solidTexture->material.polygonMode = GL_FILL;
-    solidTexture->texture = texture;
+    if (!(prog = viewer_get_program(currentViewer, progid[variant]))) {
+        if (!(prog = game_load_shader("standard.vert", "solid.frag", defines, variant))) {
+            return NULL;
+        }
+        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
+        if (!viewer_set_program(currentViewer, progid[variant], prog)) {
+            glDeleteProgram(prog);
+            return NULL;
+        }
+    }
+    if (!(solid = malloc(sizeof(*solid)))) {
+        return NULL;
+    }
+    solid->material.load = solid_load;
+    solid->material.program = prog;
+    solid->material.polygonMode = GL_FILL;
+    solid->color.mode = modeColor;
 
-    return solidTexture;
+    return solid;
 }

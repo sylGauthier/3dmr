@@ -1,3 +1,4 @@
+#include <game/material/param.h>
 #include <game/render/material.h>
 
 #ifndef PBR_H
@@ -5,20 +6,13 @@
 
 struct PBRMaterial {
     struct Material material;
-    GLuint albedoTex;
+    struct MatParamVec3 albedo;
+    struct MatParamFloat metalness;
+    struct MatParamFloat roughness;
     GLuint normalMap;
-    GLuint metalnessTex;
-    GLuint roughnessTex;
+    struct IBL* ibl;
 };
 
-struct PBRUniMaterial {
-    struct Material material;
-    vec3 albedo;
-    float metalness;
-    float roughness;
-};
-
-struct PBRMaterial* pbr_material_new(GLuint albedoTex, GLuint normalMap, GLuint metalnessTex, GLuint roughnessTex);
-struct PBRUniMaterial* pbr_uni_material_new(float r, float g, float b, float metalness, float roughness);
+struct PBRMaterial* pbr_material_new(enum MatParamMode modeAlbedo, enum MatParamMode modeMetalness, enum MatParamMode modeRoughness, int hasNormalMap);
 
 #endif

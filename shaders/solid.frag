@@ -7,14 +7,16 @@ in vec2 coordTexture;
 out vec4 out_Color;
 
 #ifdef HAVE_TEXCOORD
-uniform sampler2D tex;
+uniform sampler2D solidColor;
 #else
 uniform vec3 solidColor;
 #endif
 
 void main() {
 #ifdef HAVE_TEXCOORD
-    vec3 solidColor = texture(tex, coordTexture).rgb;
+    vec3 color = texture(solidColor, coordTexture).rgb;
+#else
+    vec3 color = solidColor;
 #endif
-    out_Color = vec4(solidColor, 1.0);
+    out_Color = vec4(color, 1.0);
 }
