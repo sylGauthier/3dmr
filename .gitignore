@@ -9,6 +9,7 @@
 *.zip
 *.swp
 *~
+*.pc
 tags
 test/*
 !test/*/
