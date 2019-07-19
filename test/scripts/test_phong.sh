@@ -16,7 +16,7 @@ testing "ambient only"; (
     ./test_scene phong_ambient_only "out/phong_ambient_only.png" >/dev/null 2>&1 || fail "screenshot"
     convert "out/phong_ambient_only.png" -fill none -stroke white -strokewidth 3 -draw "circle 320,240 320,326" "out/mod_phong_ambient_only.png" 2>/dev/null || fail "gen mod"
     convert -size 640x480 xc:black -depth 8 -fill 'rgb(25,0,25)' -draw "circle 320,240 320,325" -fill none -stroke white -strokewidth 3 -draw "circle 320,240 320,326" "out/expected_phong_ambient_only.png" 2>/dev/null || fail "gen expected"
-    ./scripts/cmp_img.sh "out/mod_phong_ambient_only.png" "out/expected_phong_ambient_only.png" 2>/dev/null || fail "cmp_img"
+    ./scripts/cmp_img.sh -t 20 "out/mod_phong_ambient_only.png" "out/expected_phong_ambient_only.png" 2>/dev/null || fail "cmp_img"
 ) && pass || set_failed
 
 testing "directional back"; (
