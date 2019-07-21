@@ -90,3 +90,7 @@ struct PhongMaterial* phong_material_new(enum MatParamMode modeAmbient, enum Mat
 
     return phong;
 }
+
+int material_is_phong(const struct Material* material) {
+    return material->load == phong_load;
+}

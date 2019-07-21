@@ -14,5 +14,6 @@ struct PhongMaterial {
 };
 
 struct PhongMaterial* phong_material_new(enum MatParamMode modeAmbient, enum MatParamMode modeDiffuse, enum MatParamMode modeSpecular, enum MatParamMode modeShininess, int hasNormalMap);
+int material_is_phong(const struct Material* material);
 
 #endif

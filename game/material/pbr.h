@@ -14,5 +14,6 @@ struct PBRMaterial {
 };
 
 struct PBRMaterial* pbr_material_new(enum MatParamMode modeAlbedo, enum MatParamMode modeMetalness, enum MatParamMode modeRoughness, int hasNormalMap);
+int material_is_pbr(const struct Material* material);
 
 #endif

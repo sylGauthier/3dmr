@@ -46,3 +46,7 @@ struct SolidMaterial* solid_material_new(enum MatParamMode modeColor) {
 
     return solid;
 }
+
+int material_is_solid(const struct Material* material) {
+    return material->load == solid_load;
+}

@@ -85,3 +85,7 @@ struct PBRMaterial* pbr_material_new(enum MatParamMode modeAlbedo, enum MatParam
 
     return pbrMat;
 }
+
+int material_is_pbr(const struct Material* material) {
+    return material->load == pbr_load;
+}
