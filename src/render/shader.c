@@ -82,7 +82,7 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
     size_t n;
     unsigned long curFile = 0, curPath = 0, ifLevel = 0;
     unsigned int codeAllocSize = 0;
-    int ok = 1, keepGoing, found, version;
+    int ok = 1, keepGoing, found, version, hasVersion = 0, pendingLineDirective = 0;
     GLuint shader = 0;
     GLint error, errorSize, codeSize = 0;
     char* errorString;
@@ -105,9 +105,13 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
             }
         }
         if (curFile || files[curFile].line > 1) {
-            sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
-            if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
-                ok = 0; break;
+            if (hasVersion) {
+                sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+                if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
+                    ok = 0; break;
+                }
+            } else {
+                pendingLineDirective = 1;
             }
         }
         keepGoing = 1;
@@ -159,6 +163,13 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
                         ok = 0;
                     }
                     files[curFile].line++;
+                    hasVersion = 1;
+                    if (pendingLineDirective) {
+                        sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+                        if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
+                            ok = 0; break;
+                        }
+                    }
                 }
 
                 if (ok && numDefines) {
@@ -173,9 +184,13 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
                         numDefines--;
                     }
                     if (ok) {
-                        sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
-                        if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
-                            ok = 0; break;
+                        if (hasVersion) {
+                            sprintf(lbuffer, "#line %lu %u\n", files[curFile].line - 1, files[curFile].pathNum);
+                            if (!append_code(lbuffer, &code, &codeSize, &codeAllocSize)) {
+                                ok = 0; break;
+                            }
+                        } else {
+                            pendingLineDirective = 1;
                         }
                     }
                 }
