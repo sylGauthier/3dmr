@@ -11,7 +11,14 @@
 #include "scenes.h"
 
 static void usage(const char* prog) {
-    printf("Usage: %s sceneName [screenshot]\n", prog);
+    printf("Usage: %s [-hl] sceneName [screenshot]\n", prog);
+}
+
+static void list_scenes() {
+	int i;
+
+	for (i = 0; i < NUM_DEMO_SCENES; i++)
+		printf("%s\n", scenes[i].name);
 }
 
 void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* d) {
@@ -68,6 +75,27 @@ int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     unsigned int i;
     int ret = 1, sceneInit = 0;
+    char *arg;
+
+    for (i = 1; i < argc; i++) {
+        arg = argv[i];
+        if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0')
+            break; /* end of options */
+        if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
+            usage(argv[0]); /* long opt */
+        if (arg[0] == '-' && arg[1] != '-')
+            for (arg++; *arg; arg++) {
+                switch (*arg) {
+                default:
+                case 'h':
+                    usage(argv[0]);
+                    return 0;
+                case 'l':
+                    list_scenes();
+                    return 0;
+            }
+        }
+    }
 
     if (argc != 2 && argc != 3) {
         usage(argv[0]);
