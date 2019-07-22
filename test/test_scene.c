@@ -14,11 +14,12 @@ static void usage(const char* prog) {
     printf("Usage: %s [-hl] sceneName [screenshot]\n", prog);
 }
 
-static void list_scenes() {
-	int i;
+static void list_scenes(void) {
+    unsigned int i;
 
-	for (i = 0; i < NUM_DEMO_SCENES; i++)
-		printf("%s\n", scenes[i].name);
+    for (i = 0; i < NUM_DEMO_SCENES; i++) {
+        printf("%s\n", scenes[i].name);
+    }
 }
 
 void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* d) {
@@ -79,20 +80,23 @@ int main(int argc, char** argv) {
 
     for (i = 1; i < argc; i++) {
         arg = argv[i];
-        if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0')
+        if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0') {
             break; /* end of options */
-        if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
+        }
+        if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0') {
             usage(argv[0]); /* long opt */
-        if (arg[0] == '-' && arg[1] != '-')
+        }
+        if (arg[0] == '-' && arg[1] != '-') {
             for (arg++; *arg; arg++) {
                 switch (*arg) {
-                default:
-                case 'h':
-                    usage(argv[0]);
-                    return 0;
-                case 'l':
-                    list_scenes();
-                    return 0;
+                    default:
+                    case 'h':
+                        usage(argv[0]);
+                        return 0;
+                    case 'l':
+                        list_scenes();
+                        return 0;
+                }
             }
         }
     }
