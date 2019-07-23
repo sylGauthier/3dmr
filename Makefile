@@ -54,6 +54,8 @@ test/ubo.h: src/render/lights_buffer_object.c src/render/camera_buffer_object.c
 	grep -h '^#define' $^ > $@
 $(TEST_EXECS): $(LIB)
 
+test/minimal.o: CFLAGS += -DGAME_SHADERS_PATH=\"$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders\"
+
 .PHONY: install
 D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
 install: $(LIB) $(NAME).pc
