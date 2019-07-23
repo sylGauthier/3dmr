@@ -8,7 +8,7 @@
 #include <game/init.h>
 #include <game/render/camera_buffer_object.h>
 #include <game/render/lights_buffer_object.h>
-#include <game/render/globject.h>
+#include <game/render/vertex_array.h>
 #include <game/render/viewer.h>
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
@@ -44,7 +44,6 @@ struct Material* mkmat(void) {
 int main(int argc, char** argv) {
     Mat4 model;
     Mat3 inv;
-    struct GLObject glo;
     struct Viewer* viewer = NULL;
     struct VertexArray* va = NULL;
     struct Material* mat = NULL;
@@ -72,16 +71,11 @@ int main(int argc, char** argv) {
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
         viewer->callbackData = &running;
-        glo.vertexArray = va;
-        glo.material = mat;
         camera_buffer_object_update(&viewer->camera, camera);
-        {
-            struct Lights l = {0};
-            lights_buffer_object_update(&l, lights);
-        }
+        lights_buffer_object_zero_init(lights);
         while (running) {
             viewer_next_frame(viewer);
-            globject_render(&glo, model, inv);
+            vertex_array_render(va, mat, model, inv);
             viewer_process_events(viewer);
         }
     }

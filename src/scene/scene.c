@@ -105,6 +105,7 @@ int scene_update_render_queue(struct Scene* scene) {
 void scene_render(struct Scene* scene) {
     unsigned int i;
     for (i = 0; i < scene->nRender; i++) {
-        globject_render(scene->renderQueue[i]->data.geometry, scene->renderQueue[i]->model, scene->renderQueue[i]->inverseNormal);
+        struct Node* n = scene->renderQueue[i];
+        vertex_array_render(n->data.geometry->vertexArray, n->data.geometry->material, n->model, n->inverseNormal);
     }
 }

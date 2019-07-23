@@ -1,9 +1,15 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <game/render/globject.h>
+#include <game/render/material.h>
+#include <game/render/vertex_array.h>
 #include <game/math/linear_algebra.h>
 #include <game/math/quaternion.h>
+
+struct Geometry {
+    struct VertexArray* vertexArray;
+    struct Material* material;
+};
 
 struct Node {
     struct Node** children;
@@ -37,7 +43,7 @@ struct Node {
         NODE_CAMERA
     } type;
     union NodeData {
-        struct GLObject* geometry;
+        struct Geometry* geometry;
         struct DirectionalLight* dlight;
         struct PointLight* plight;
         struct Camera* camera;
@@ -45,7 +51,7 @@ struct Node {
 };
 
 void node_init(struct Node* node);
-void node_set_geometry(struct Node* node, struct GLObject* geometry);
+void node_set_geometry(struct Node* node, struct Geometry* geometry);
 void node_set_dlight(struct Node* node, struct DirectionalLight* dlight);
 void node_set_plight(struct Node* node, struct PointLight* plight);
 void node_set_camera(struct Node* node, struct Camera* camera);

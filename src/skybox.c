@@ -1,16 +1,11 @@
 #include <stdlib.h>
 #include <game/mesh/box.h>
-#include <game/render/globject.h>
 #include <game/render/texture.h>
 #include <game/render/viewer.h>
 #include <game/img/hdr.h>
 #include <game/img/png.h>
+#include <game/skybox.h>
 #include "material/programs.h"
-
-struct SkyboxMaterial {
-    struct Material material;
-    GLuint texture;
-};
 
 static unsigned int progid = -1;
 
@@ -135,14 +130,13 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
 
 static void skybox_load(const struct Material* material) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct SkyboxMaterial*)material)->texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct Skybox*)material)->texture);
     glUniform1i(glGetUniformLocation(material->program, "tex"), 0);
 }
 
-int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
+int skybox_create(GLuint texture, float size, struct Skybox* skybox) {
     struct Mesh box;
     struct Viewer* currentViewer;
-    struct SkyboxMaterial* mat;
     GLuint prog;
 
     if (progid == ((unsigned int)-1)) {
@@ -163,34 +157,23 @@ int skybox_create(GLuint texture, float size, struct GLObject* skybox) {
         }
     }
     if (make_box(&box, size, size, size)) {
-        skybox->vertexArray = vertex_array_new(&box);
+        vertex_array_gen(&box, &skybox->vertexArray);
         mesh_free(&box);
-    } else {
-        skybox->vertexArray = NULL;
     }
-    if (!skybox->vertexArray) {
-        return 0;
-    }
-    if (!(mat = malloc(sizeof(struct SkyboxMaterial)))) {
-        vertex_array_free(skybox->vertexArray);
-        return 0;
-    }
-    skybox->material = (struct Material*)mat;
-    mat->material.load = skybox_load;
-    mat->material.program = prog;
-    mat->material.polygonMode = GL_FILL;
-    mat->texture = texture;
+    skybox->material.load = skybox_load;
+    skybox->material.program = prog;
+    skybox->material.polygonMode = GL_FILL;
+    skybox->texture = texture;
 
     return 1;
 }
 
-void skybox_destroy(struct GLObject* skybox) {
-    vertex_array_free(skybox->vertexArray);
-    free(skybox->material);
+void skybox_destroy(struct Skybox* skybox) {
+    vertex_array_del(&skybox->vertexArray);
 }
 
-struct GLObject* skybox_new(GLuint texture, float size) {
-    struct GLObject* res;
+struct Skybox* skybox_new(GLuint texture, float size) {
+    struct Skybox* res;
 
     if ((res = malloc(sizeof(*res)))) {
         if (skybox_create(texture, size, res)) {
@@ -201,15 +184,15 @@ struct GLObject* skybox_new(GLuint texture, float size) {
     return NULL;
 }
 
-void skybox_free(struct GLObject* skybox) {
+void skybox_free(struct Skybox* skybox) {
     if (skybox) {
         skybox_destroy(skybox);
         free(skybox);
     }
 }
 
-void skybox_render(struct GLObject* skybox) {
+void skybox_render(struct Skybox* skybox) {
     Mat4 model;
     Mat3 inv;
-    globject_render(skybox, model, inv);
+    vertex_array_render(&skybox->vertexArray, &skybox->material, model, inv);
 }

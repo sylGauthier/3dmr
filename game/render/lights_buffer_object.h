@@ -8,6 +8,7 @@
 
 GLuint lights_buffer_object(void);
 
+void lights_buffer_object_zero_init(GLuint ubo);
 void lights_buffer_object_update_ambient(const struct AmbientLight* l, GLuint ubo);
 void lights_buffer_object_update_dlight(const struct DirectionalLight* l, unsigned int i, GLuint ubo);
 void lights_buffer_object_update_ndlight(unsigned int n, GLuint ubo);

@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <game/mesh/mesh.h>
+#include <game/render/material.h>
 
 #ifndef VERTEX_ARRAY_H
 #define VERTEX_ARRAY_H
@@ -15,5 +16,7 @@ void vertex_array_del(struct VertexArray* va);
 
 struct VertexArray* vertex_array_new(const struct Mesh* mesh);
 void vertex_array_free(struct VertexArray* va);
+
+void vertex_array_render(const struct VertexArray* vertexArray, const struct Material* material, Mat4 model, Mat3 inverseNormal);
 
 #endif

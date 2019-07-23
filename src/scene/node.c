@@ -32,7 +32,7 @@ static void node_reset_bounding_box(struct Node* node, Vec3 bb[2]) {
     }
 }
 
-void node_set_geometry(struct Node* node, struct GLObject* geometry) {
+void node_set_geometry(struct Node* node, struct Geometry* geometry) {
     node->type = NODE_GEOMETRY;
     node->data.geometry = geometry;
     node_reset_bounding_box(node, geometry->vertexArray->boundingBox);

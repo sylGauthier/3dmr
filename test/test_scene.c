@@ -49,17 +49,17 @@ static int cd_test(const char* prog) {
 struct Node* create_node(const struct Mesh* mesh, void* material) {
     struct Node* n;
     struct VertexArray* va;
-    struct GLObject* glo;
+    struct Geometry* geom;
 
     if (!material) return NULL;
-    if (!(n = malloc(sizeof(*n) + sizeof(struct VertexArray) + sizeof(struct GLObject)))) return NULL;
+    if (!(n = malloc(sizeof(*n) + sizeof(*va) + sizeof(*geom)))) return NULL;
     va = (void*)(n + 1);
-    glo = (void*)(va + 1);
+    geom = (void*)(va + 1);
     vertex_array_gen(mesh, va);
-    glo->vertexArray = va;
-    glo->material = material;
+    geom->vertexArray = va;
+    geom->material = material;
     node_init(n);
-    node_set_geometry(n, glo);
+    node_set_geometry(n, geom);
     return n;
 }
 

@@ -34,6 +34,11 @@ GLuint lights_buffer_object(void) {
     return ubo;
 }
 
+void lights_buffer_object_zero_init(GLuint ubo) {
+    struct Lights lights = {0};
+    lights_buffer_object_update(&lights, ubo);
+}
+
 void lights_buffer_object_update_ambient(const struct AmbientLight* l, GLuint ubo) {
     glBindBuffer(GL_UNIFORM_BUFFER, ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_AMBIENT, sizeof(Vec3), l->color);
