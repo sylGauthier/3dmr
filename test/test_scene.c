@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
         while (p.running && (argc < 3 || t < 1)) {
             dt = viewer_next_frame(viewer);
             t += dt;
-            if (scene_update_nodes(&scene, NULL)) {
+            if (scene_update_nodes(&scene, NULL, NULL)) {
                 scene_update_render_queue(&scene);
             }
             scene_render(&scene);

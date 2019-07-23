@@ -35,7 +35,7 @@ int scene_add(struct Scene* scene, struct Node* node) {
     return node_add_child(&scene->root, node);
 }
 
-int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene*, struct Node*)) {
+int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene*, struct Node*, void*), void* userdata) {
     struct Node *cur, *next;
     int down = 1;
     unsigned int changed = 0;
@@ -44,7 +44,7 @@ int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene
         if (down) {
             changed |= cur->changedFlags;
             if (node_update_matrices(cur)) {
-                if (changedCallback) changedCallback(scene, cur);
+                if (changedCallback) changedCallback(scene, cur, userdata);
             }
             if (cur->nbChildren) {
                 next = cur->children[0];
