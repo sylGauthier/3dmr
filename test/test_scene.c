@@ -6,9 +6,15 @@
 #include <GLFW/glfw3.h>
 
 #include <game/init.h>
+#include <game/render/camera_buffer_object.h>
 #include <game/render/viewer.h>
 #include <game/scene/scene.h>
 #include "scenes.h"
+
+struct CallbackParam {
+    int running;
+    GLuint camera;
+};
 
 static void usage(const char* prog) {
     printf("Usage: %s [-hl] sceneName [screenshot]\n", prog);
@@ -24,12 +30,16 @@ static void list_scenes(void) {
 
 void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* d) {
     if (key == GLFW_KEY_ESCAPE) {
-        *(int*)d = 0;
+        ((struct CallbackParam*)d)->running = 0;
     }
 }
 
 static void close_callback(struct Viewer* viewer, void* d) {
-    *(int*)d = 0;
+    ((struct CallbackParam*)d)->running = 0;
+}
+
+static void resize_callback(struct Viewer* viewer, void* d) {
+    camera_buffer_object_update_projection(MAT_CONST_CAST(viewer->camera.projection), ((struct CallbackParam*)d)->camera);
 }
 
 static int cd_test(const char* prog) {
@@ -119,24 +129,24 @@ int main(int argc, char** argv) {
 
     if (!game_init("../shaders")) {
         fprintf(stderr, "Error: failed to init library\n");
-        return 0;
-    }
-
-    if (!(viewer = viewer_new(640, 480, argv[1]))) {
+    } else if (!(viewer = viewer_new(640, 480, argv[1]))) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(sceneInit = scene_init(&scene, &viewer->camera))) {
         fprintf(stderr, "Error: failed to init scene\n");
     } else if (!scenes[i].setup(&scene)) {
         fprintf(stderr, "Error: failed to init scene %s\n", scenes[i].name);
     } else {
+        struct CallbackParam p;
         double t = 0, dt;
-        int running = 1;
+        p.running = 1;
+        p.camera = scene.uboCamera;
         sceneInit++;
         glfwSwapInterval(1);
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
-        viewer->callbackData = &running;
-        while (running && (argc < 3 || t < 1)) {
+        viewer->resize_callback = resize_callback;
+        viewer->callbackData = &p;
+        while (p.running && (argc < 3 || t < 1)) {
             dt = viewer_next_frame(viewer);
             t += dt;
             if (scene_update_nodes(&scene, NULL)) {

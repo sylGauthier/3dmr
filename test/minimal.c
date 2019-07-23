@@ -13,14 +13,23 @@
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
 
+struct CallbackParam {
+    int running;
+    GLuint camera;
+};
+
 void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* d) {
     if (key == GLFW_KEY_ESCAPE) {
-        *(int*)d = 0;
+        ((struct CallbackParam*)d)->running = 0;
     }
 }
 
 static void close_callback(struct Viewer* viewer, void* d) {
-    *(int*)d = 0;
+    ((struct CallbackParam*)d)->running = 0;
+}
+
+static void resize_callback(struct Viewer* viewer, void* d) {
+    camera_buffer_object_update_projection(MAT_CONST_CAST(viewer->camera.projection), ((struct CallbackParam*)d)->camera);
 }
 
 struct VertexArray* mkcube(void) {
@@ -48,16 +57,13 @@ int main(int argc, char** argv) {
     struct VertexArray* va = NULL;
     struct Material* mat = NULL;
     GLuint camera = 0, lights = 0;
-    int ret = 1;
 
-    if (!game_init(GAME_SHADERS_PATH)) {
-        fprintf(stderr, "Error: failed to init library\n");
-        return 0;
-    }
     load_id4(model);
     load_id3(inv);
 
-    if (!(viewer = viewer_new(640, 480, "test"))) {
+    if (!game_init(GAME_SHADERS_PATH)) {
+        fprintf(stderr, "Error: failed to init library\n");
+    } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(va = mkcube())) {
         fprintf(stderr, "Error: failed to create cube\n");
@@ -66,14 +72,17 @@ int main(int argc, char** argv) {
     } else if (!(camera = camera_buffer_object()) || !(lights = lights_buffer_object())) {
         fprintf(stderr, "Error: failed to create UBOs\n");
     } else {
-        int running = 1;
+        struct CallbackParam p;
+        p.running = 1;
+        p.camera = camera;
         glfwSwapInterval(1);
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
-        viewer->callbackData = &running;
+        viewer->resize_callback = resize_callback;
+        viewer->callbackData = &p;
         camera_buffer_object_update(&viewer->camera, camera);
         lights_buffer_object_zero_init(lights);
-        while (running) {
+        while (p.running) {
             viewer_next_frame(viewer);
             vertex_array_render(va, mat, model, inv);
             viewer_process_events(viewer);
@@ -86,5 +95,5 @@ int main(int argc, char** argv) {
     vertex_array_free(va);
     viewer_free(viewer);
     game_free();
-    return ret;
+    return 0;
 }
