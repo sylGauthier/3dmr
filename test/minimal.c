@@ -15,7 +15,8 @@
 
 struct CallbackParam {
     int running;
-    GLuint camera;
+    struct Camera* camera;
+    GLuint uboCamera;
 };
 
 void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* d) {
@@ -29,7 +30,9 @@ static void close_callback(struct Viewer* viewer, void* d) {
 }
 
 static void resize_callback(struct Viewer* viewer, void* d) {
-    camera_buffer_object_update_projection(MAT_CONST_CAST(viewer->camera.projection), ((struct CallbackParam*)d)->camera);
+    ((struct CallbackParam*)d)->camera->ratio = ((float)viewer->width) / ((float)viewer->height);
+    camera_update_projection(((struct CallbackParam*)d)->camera);
+    camera_buffer_object_update_projection(MAT_CONST_CAST(((struct CallbackParam*)d)->camera->projection), ((struct CallbackParam*)d)->uboCamera);
 }
 
 struct VertexArray* mkcube(void) {
@@ -51,46 +54,44 @@ struct Material* mkmat(void) {
 }
 
 int main(int argc, char** argv) {
+    struct Camera camera;
     Mat4 model;
     Mat3 inv;
     struct Viewer* viewer = NULL;
     struct VertexArray* va = NULL;
     struct Material* mat = NULL;
-    GLuint camera = 0, lights = 0;
+    GLuint ubos[2] = {0, 0};
 
     load_id4(model);
     load_id3(inv);
-
     if (!game_init(GAME_SHADERS_PATH)) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
-    } else if (!(va = mkcube())) {
+    } else if (!(va = mkcube()) || !(mat = mkmat())) {
         fprintf(stderr, "Error: failed to create cube\n");
-    } else if (!(mat = mkmat())) {
-        fprintf(stderr, "Error: failed to create material\n");
-    } else if (!(camera = camera_buffer_object()) || !(lights = lights_buffer_object())) {
+    } else if (!(ubos[0] = camera_buffer_object()) || !(ubos[1] = lights_buffer_object())) {
         fprintf(stderr, "Error: failed to create UBOs\n");
     } else {
         struct CallbackParam p;
         p.running = 1;
-        p.camera = camera;
+        p.camera = &camera;
+        p.uboCamera = ubos[0];
         glfwSwapInterval(1);
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
         viewer->resize_callback = resize_callback;
         viewer->callbackData = &p;
-        camera_buffer_object_update(&viewer->camera, camera);
-        lights_buffer_object_zero_init(lights);
+        camera_load_default(&camera, 640.0 / 480.0);
+        camera_buffer_object_update(&camera, ubos[0]);
+        lights_buffer_object_zero_init(ubos[1]);
         while (p.running) {
             viewer_next_frame(viewer);
             vertex_array_render(va, mat, model, inv);
             viewer_process_events(viewer);
         }
     }
-
-    glDeleteBuffers(1, &camera);
-    glDeleteBuffers(1, &lights);
+    glDeleteBuffers(2, ubos);
     free(mat);
     vertex_array_free(va);
     viewer_free(viewer);

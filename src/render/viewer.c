@@ -50,8 +50,6 @@ static void window_size_callback(GLFWwindow* window, int width, int height) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
     viewer_make_current(&viewer->user);
     glViewport(0, 0, width, height);
-    viewer->user.camera.ratio = ((float)width) / ((float)height);
-    camera_update_projection(&viewer->user.camera);
     viewer->user.width = width;
     viewer->user.height = height;
     if (viewer->user.resize_callback) {
@@ -95,9 +93,6 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
             } else if ((error = glewInit()) != GLEW_OK) {
                 fprintf(stderr, "Error: GLEW initialization failed\n");
             } else {
-                Vec3 pos = {0, 0, 10};
-                camera_load_default(&viewer->user.camera, pos, ((float)width) / ((float)height));
-
                 viewer->user.cursor_callback = NULL;
                 viewer->user.wheel_callback = NULL;
                 viewer->user.key_callback = NULL;

@@ -5,7 +5,6 @@
 #define VIEWER_H
 
 struct Viewer {
-    struct Camera camera;
     unsigned int width, height;
     void (*cursor_callback)(struct Viewer*, double, double, double, double, int, int, int, void*);
     void (*wheel_callback)(struct Viewer*, double, double, void*);

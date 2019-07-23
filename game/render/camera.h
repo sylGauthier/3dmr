@@ -12,7 +12,7 @@ struct Camera {
     Mat4 projection, view;
 };
 
-void camera_load_default(struct Camera* camera, const Vec3 pos, float ratio);
+void camera_load_default(struct Camera* camera, float ratio);
 
 void camera_get_right(const struct Camera* camera, Vec3 right);
 void camera_get_up(const struct Camera* camera, Vec3 up);

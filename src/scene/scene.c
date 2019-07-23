@@ -14,7 +14,9 @@ int scene_init(struct Scene* scene, struct Camera* camera) {
         return 0;
     }
     scene->camera = camera;
-    camera_buffer_object_update(camera, scene->uboCamera);
+    if (camera) {
+        camera_buffer_object_update(camera, scene->uboCamera);
+    }
     lights_buffer_object_update(&scene->lights, scene->uboLights);
     scene->renderQueue = NULL;
     scene->nRender = 0;

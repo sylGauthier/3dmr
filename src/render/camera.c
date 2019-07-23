@@ -17,7 +17,8 @@ static void camera_update_orientation(struct Camera* camera) {
     mat3to4(camera->view, MAT_CONST_CAST(rot));
 }
 
-void camera_load_default(struct Camera* camera, const Vec3 pos, float ratio) {
+void camera_load_default(struct Camera* camera, float ratio) {
+    const Vec3 pos = {0, 0, 10};
     memcpy(camera->position, pos, sizeof(Vec3));
     quaternion_load_id(camera->orientation);
     load_id4(camera->view);
