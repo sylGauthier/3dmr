@@ -36,7 +36,7 @@ int scene_add(struct Scene* scene, struct Node* node) {
 }
 
 int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene*, struct Node*, void*), void* userdata) {
-    struct Node *cur, *next;
+    struct Node *cur, *next, *prev = NULL;
     int down = 1;
     unsigned int changed = 0;
 
@@ -52,16 +52,18 @@ int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene
                 down = 0;
                 node_update_father_bounding_box(cur);
                 next = cur->father;
+                prev = cur;
             }
         } else {
             unsigned int i;
-            for (i = 0; i < cur->nbChildren && !cur->children[i]->changedFlags; i++);
-            if (i < cur->nbChildren) {
-                next = cur->children[i];
+            for (i = 0; i < cur->nbChildren && cur->children[i] != prev; i++);
+            if (i + 1 < cur->nbChildren) {
+                next = cur->children[i + 1];
                 down = 1;
             } else {
                 node_update_father_bounding_box(cur);
                 next = cur->father;
+                prev = cur;
             }
         }
     }
