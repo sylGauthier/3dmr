@@ -7,7 +7,7 @@ DATADIR ?= share/$(NAME)-$(VERSION)
 DEPS := glfw3 glew libpng
 NAME := game
 LIB := lib$(NAME).a
-VERSION ?= $(shell git describe --tags 2>/dev/null || printf '9999.%d.%s\n' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
+VERSION ?= $(shell git describe --tags 2>/dev/null || printf '9999-%d-%s\n' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
 
 CFLAGS += $(shell pkg-config --cflags $(DEPS)) -I.
 LDLIBS += -lm $(shell pkg-config --libs-only-l $(DEPS))
