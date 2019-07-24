@@ -134,7 +134,7 @@ static void skybox_load(const struct Material* material) {
     glUniform1i(glGetUniformLocation(material->program, "tex"), 0);
 }
 
-int skybox_create(GLuint texture, float size, struct Skybox* skybox) {
+int skybox_create(GLuint texture, struct Skybox* skybox) {
     struct Mesh box;
     struct Viewer* currentViewer;
     GLuint prog;
@@ -156,7 +156,7 @@ int skybox_create(GLuint texture, float size, struct Skybox* skybox) {
             return 0;
         }
     }
-    if (make_box(&box, size, size, size)) {
+    if (make_box(&box, 1, 1, 1)) {
         vertex_array_gen(&box, &skybox->vertexArray);
         mesh_free(&box);
     }
@@ -172,11 +172,11 @@ void skybox_destroy(struct Skybox* skybox) {
     vertex_array_del(&skybox->vertexArray);
 }
 
-struct Skybox* skybox_new(GLuint texture, float size) {
+struct Skybox* skybox_new(GLuint texture) {
     struct Skybox* res;
 
     if ((res = malloc(sizeof(*res)))) {
-        if (skybox_create(texture, size, res)) {
+        if (skybox_create(texture, res)) {
             return res;
         }
         free(res);
