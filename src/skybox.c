@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <game/mesh/box.h>
+#include <game/render/camera_buffer_object.h>
 #include <game/render/texture.h>
 #include <game/render/viewer.h>
 #include <game/img/hdr.h>
@@ -151,6 +152,7 @@ int skybox_create(GLuint texture, struct Skybox* skybox) {
         if (!(prog = game_load_shader("skybox.vert", "skybox.frag", NULL, 0))) {
             return 0;
         }
+        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
         if (!viewer_set_program(currentViewer, progid, prog)) {
             glDeleteProgram(prog);
             return 0;
@@ -194,5 +196,9 @@ void skybox_free(struct Skybox* skybox) {
 void skybox_render(struct Skybox* skybox) {
     Mat4 model;
     Mat3 inv;
+    GLint dfunc;
+    glGetIntegerv(GL_DEPTH_FUNC, &dfunc);
+    glDepthFunc(GL_LEQUAL);
     vertex_array_render(&skybox->vertexArray, &skybox->material, model, inv);
+    glDepthFunc(dfunc);
 }
