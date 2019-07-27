@@ -14,7 +14,7 @@
 struct CallbackParam {
     int running;
     struct Camera* camera;
-    GLuint uboCamera;
+    struct UniformBuffer* cambuffer;
 };
 
 static void usage(const char* prog) {
@@ -40,9 +40,9 @@ static void close_callback(struct Viewer* viewer, void* d) {
 }
 
 static void resize_callback(struct Viewer* viewer, void* d) {
-    ((struct CallbackParam*)d)->camera->ratio = ((float)viewer->width) / ((float)viewer->height);
-    camera_update_projection(((struct CallbackParam*)d)->camera);
-    camera_buffer_object_update_projection(MAT_CONST_CAST(((struct CallbackParam*)d)->camera->projection), ((struct CallbackParam*)d)->uboCamera);
+    camera_projection(((float)viewer->width) / ((float)viewer->height), 1.04, 0.1, 2000, ((struct CallbackParam*)d)->camera->projection);
+    camera_buffer_object_update_projection(((struct CallbackParam*)d)->cambuffer, MAT_CONST_CAST(((struct CallbackParam*)d)->camera->projection));
+    uniform_buffer_send(((struct CallbackParam*)d)->cambuffer);
 }
 
 static int cd_test(const char* prog) {
@@ -87,6 +87,8 @@ void free_node(struct Node* node) {
 int main(int argc, char** argv) {
     struct Scene scene;
     struct Camera camera;
+    Quaternion corient = {1, 0, 0, 0};
+    Vec3 cpos = {0, 0, 10};
     struct Viewer* viewer = NULL;
     unsigned int i;
     int ret = 1, sceneInit = 0;
@@ -131,7 +133,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    camera_load_default(&camera, 640.0 / 480.0);
+    camera_projection(640.0 / 480.0, 1.04, 0.1, 2000, camera.projection);
+    camera_view(cpos, corient, camera.view);
     if (!game_init("../shaders")) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, argv[1]))) {
@@ -145,7 +148,7 @@ int main(int argc, char** argv) {
         double t = 0, dt;
         p.running = 1;
         p.camera = &camera;
-        p.uboCamera = scene.uboCamera;
+        p.cambuffer = &scene.bCamera;
         sceneInit++;
         glfwSwapInterval(1);
         viewer->key_callback = key_callback;

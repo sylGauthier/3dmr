@@ -1,15 +1,15 @@
-#include <game/light/light.h>
+#include <game/render/uniform_buffer.h>
+#include <game/render/viewer.h>
 #include <game/scene/node.h>
 
 #ifndef SCENE_H
 #define SCENE_H
 
 struct Scene {
-    struct Lights lights;
     struct Node root;
-    struct Camera* camera;
-    GLuint uboCamera, uboLights;
+    struct UniformBuffer bCamera, bLights;
     struct Node** renderQueue;
+    struct Camera* camera;
     unsigned int nRender, aRender;
 };
 

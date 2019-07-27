@@ -11,6 +11,10 @@ struct Geometry {
     struct Material* material;
 };
 
+struct Camera {
+    Mat4 view, projection;
+};
+
 struct Node {
     struct Node** children;
     unsigned nbChildren;
@@ -61,7 +65,7 @@ void nodes_free(struct Node* root, void (*free_node)(struct Node*));
 
 int node_update_matrices(struct Node* node);
 void node_update_father_bounding_box(struct Node* node);
-int node_visible(const struct Node* node, const struct Camera* camera);
+int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection);
 
 void node_translate(struct Node* node, const Vec3 t);
 void node_rotate(struct Node* node, const Vec3 axis, float angle);

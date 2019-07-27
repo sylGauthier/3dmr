@@ -54,12 +54,12 @@ unsigned long camera_offset(const char* name) {
 }
 
 int test_camera(GLuint prog) {
-    GLuint ubo;
+    struct UniformBuffer u;
     int ret;
 
-    if (!(ubo = camera_buffer_object())) return 0;
-    ret = test_ubo(prog, ubo, "Camera", camera_offset);
-    glDeleteBuffers(1, &ubo);
+    if (!camera_buffer_object_gen(&u)) return 0;
+    ret = test_ubo(prog, u.ubo, "Camera", camera_offset);
+    uniform_buffer_del(&u);
     return ret;
 }
 
@@ -97,12 +97,12 @@ unsigned long lights_offset(const char* name) {
 }
 
 int test_lights(GLuint prog) {
-    GLuint ubo;
+    struct UniformBuffer u;
     int ret;
 
-    if (!(ubo = lights_buffer_object())) return 0;
-    ret = test_ubo(prog, ubo, "Lights", lights_offset);
-    glDeleteBuffers(1, &ubo);
+    if (!lights_buffer_object_gen(&u)) return 0;
+    ret = test_ubo(prog, u.ubo, "Lights", lights_offset);
+    uniform_buffer_del(&u);
     return ret;
 }
 

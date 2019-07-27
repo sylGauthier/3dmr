@@ -4,24 +4,11 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-struct Camera {
-    Vec3 position;
-    Quaternion orientation;
-    float ratio, fov, zNear, zFar;
+void camera_get_right(const Mat4 view, Vec3 right);
+void camera_get_up(const Mat4 view, Vec3 up);
+void camera_get_backward(const Mat4 view, Vec3 backward);
 
-    Mat4 projection, view;
-};
-
-void camera_load_default(struct Camera* camera, float ratio);
-
-void camera_get_right(const struct Camera* camera, Vec3 right);
-void camera_get_up(const struct Camera* camera, Vec3 up);
-void camera_get_backward(const struct Camera* camera, Vec3 backward);
-
-void camera_move(struct Camera* camera, const Vec3 translation);
-void camera_rotate(struct Camera* camera, const Vec3 axis, float angle);
-
-void camera_update_view(struct Camera* camera);
-void camera_update_projection(struct Camera* camera);
+void camera_view(const Vec3 position, const Quaternion orientation, Mat4 view);
+void camera_projection(float ratio, float fov, float zNear, float zFar, Mat4 projection);
 
 #endif

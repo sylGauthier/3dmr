@@ -4,20 +4,20 @@
 #include <game/scene/scene.h>
 
 int scene_init(struct Scene* scene, struct Camera* camera) {
-    light_init(&scene->lights);
     node_init(&scene->root);
-    if (!(scene->uboCamera = camera_buffer_object())) {
+    if (!camera_buffer_object_gen(&scene->bCamera)) {
         return 0;
     }
-    if (!(scene->uboLights = lights_buffer_object())) {
-        glDeleteBuffers(1, &scene->uboCamera);
+    if (!(lights_buffer_object_gen(&scene->bLights))) {
+        uniform_buffer_del(&scene->bCamera);
         return 0;
     }
+    camera_buffer_object_update_projection(&scene->bCamera, MAT_CONST_CAST(camera->projection));
+    camera_buffer_object_update_view_and_position(&scene->bCamera, MAT_CONST_CAST(camera->view));
+    lights_buffer_object_zero_init(&scene->bLights);
+    uniform_buffer_send(&scene->bCamera);
+    uniform_buffer_send(&scene->bLights);
     scene->camera = camera;
-    if (camera) {
-        camera_buffer_object_update(camera, scene->uboCamera);
-    }
-    lights_buffer_object_update(&scene->lights, scene->uboLights);
     scene->renderQueue = NULL;
     scene->nRender = 0;
     scene->aRender = 0;
@@ -26,8 +26,8 @@ int scene_init(struct Scene* scene, struct Camera* camera) {
 
 void scene_free(struct Scene* scene, void (*free_node)(struct Node*)) {
     nodes_free(&scene->root, free_node);
-    glDeleteBuffers(1, &scene->uboCamera);
-    glDeleteBuffers(1, &scene->uboLights);
+    uniform_buffer_del(&scene->bCamera);
+    uniform_buffer_del(&scene->bLights);
     free(scene->renderQueue);
 }
 
@@ -76,7 +76,7 @@ int scene_update_render_queue(struct Scene* scene) {
 
     scene->nRender = 0;
     for (cur = &scene->root; cur; cur = next) {
-        if (node_visible(cur, scene->camera)) {
+        if (node_visible(cur, MAT_CONST_CAST(scene->camera->view), MAT_CONST_CAST(scene->camera->projection))) {
             if (cur->type == NODE_GEOMETRY) {
                 if (scene->nRender + 1 < scene->aRender) {
                     scene->renderQueue[(scene->nRender)++] = cur;

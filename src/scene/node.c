@@ -134,8 +134,6 @@ int node_update_matrices(struct Node* node) {
                 {
                     Mat3 tmp;
                     mat4to3(tmp, MAT_CONST_CAST(node->model));
-                    quaternion_from_mat3(node->data.camera->orientation, MAT_CONST_CAST(tmp));
-                    memcpy(node->data.camera->position, node->model[3], sizeof(Vec3));
                     transpose3m(tmp);
                     mat3to4(node->data.camera->view, MAT_CONST_CAST(tmp));
                     mul3mv(node->data.camera->view[3], MAT_CONST_CAST(tmp), node->model[3]);
@@ -180,7 +178,7 @@ void node_update_father_bounding_box(struct Node* node) {
     }
 }
 
-int node_visible(const struct Node* node, const struct Camera* camera) {
+int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection) {
     Vec4 tmp, tmp2;
     unsigned int i, left = 0, right = 0, down = 0, up = 0, back = 0;
 
@@ -190,7 +188,7 @@ int node_visible(const struct Node* node, const struct Camera* camera) {
         tmp[1] = node->boundingBox[(i >> 1) & 1][1];
         tmp[2] = node->boundingBox[(i >> 2) & 1][2];
         mul4mv(tmp2, node->model, tmp);
-        mul4mv(tmp, camera->view, tmp2);
+        mul4mv(tmp, view, tmp2);
         if (tmp[2] > 0) {
             back++;
             left += (tmp[0] <= 0);
@@ -198,7 +196,7 @@ int node_visible(const struct Node* node, const struct Camera* camera) {
             down += (tmp[1] <= 0);
             up += (tmp[1] > 0);
         } else {
-            mul4m3v(tmp2, camera->projection, tmp);
+            mul4m3v(tmp2, projection, tmp);
             if (tmp2[0] >= -1 && tmp2[0] <= 1 && tmp2[1] >= -1 && tmp2[1] <= 1 && tmp2[2] <= 0) return 1;
             left += (tmp2[0] < -1);
             right += (tmp2[0] > 1);

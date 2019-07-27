@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdint.h>
 #include <game/render/lights_buffer_object.h>
 
@@ -22,76 +23,71 @@
 #define SIZEOF_LIGHTS_UBO (OFFSET_NUM_PLIGHTS + sizeof(uint32_t))
 
 
-GLuint lights_buffer_object(void) {
-    GLuint ubo;
-
-    glGenBuffers(1, &ubo);
-    if (!ubo) return 0;
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferData(GL_UNIFORM_BUFFER, SIZEOF_LIGHTS_UBO, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTS_UBO_BINDING, ubo, 0, SIZEOF_LIGHTS_UBO);
-    return ubo;
+int lights_buffer_object_gen(struct UniformBuffer* dest) {
+    if (!uniform_buffer_gen(SIZEOF_LIGHTS_UBO, dest)) return 0;
+    glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTS_UBO_BINDING, dest->ubo, 0, SIZEOF_LIGHTS_UBO);
+    return 1;
 }
 
-void lights_buffer_object_zero_init(GLuint ubo) {
+struct UniformBuffer* lights_buffer_object_new(void) {
+    struct UniformBuffer* u;
+    if ((u = malloc(sizeof(*u)))) {
+        if (lights_buffer_object_gen(u)) {
+            return u;
+        }
+        free(u);
+    }
+    return NULL;
+}
+
+void lights_buffer_object_zero_init(struct UniformBuffer* u) {
     struct Lights lights = {0};
-    lights_buffer_object_update(&lights, ubo);
+    lights_buffer_object_update(u, &lights);
 }
 
-void lights_buffer_object_update_ambient(const struct AmbientLight* l, GLuint ubo) {
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_AMBIENT, sizeof(Vec3), l->color);
+void lights_buffer_object_update_ambient(struct UniformBuffer* u, const struct AmbientLight* l) {
+    uniform_buffer_update(u, OFFSET_AMBIENT, sizeof(Vec3), l->color);
 }
 
-void lights_buffer_object_update_dlight(const struct DirectionalLight* l, unsigned int i, GLuint ubo) {
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_DLIGHT_DIRECTION(i), sizeof(Vec3), l->direction);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_DLIGHT_COLOR(i), sizeof(Vec3), l->color);
+void lights_buffer_object_update_dlight(struct UniformBuffer* u, const struct DirectionalLight* l, unsigned int i) {
+    uniform_buffer_update(u, OFFSET_DLIGHT_DIRECTION(i), sizeof(Vec3), l->direction);
+    uniform_buffer_update(u, OFFSET_DLIGHT_COLOR(i), sizeof(Vec3), l->color);
 }
 
-void lights_buffer_object_update_ndlight(unsigned int n, GLuint ubo) {
+void lights_buffer_object_update_ndlight(struct UniformBuffer* u, unsigned int n) {
     uint32_t gn = n;
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_NUM_DLIGHTS, sizeof(gn), &gn);
+    uniform_buffer_update(u, OFFSET_NUM_DLIGHTS, sizeof(gn), &gn);
 }
 
-void lights_buffer_object_update_dlights(const struct Lights* l, GLuint ubo) {
-    uint32_t i, n = l->numDirectionalLights;
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+void lights_buffer_object_update_dlights(struct UniformBuffer* u, const struct Lights* l) {
+    unsigned int i, n = l->numDirectionalLights;
     for (i = 0; i < n; i++) {
-        glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_DLIGHT_DIRECTION(i), sizeof(Vec3), l->directional[i].direction);
-        glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_DLIGHT_COLOR(i), sizeof(Vec3), l->directional[i].color);
+        lights_buffer_object_update_dlight(u, l->directional + i, i);
     }
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_NUM_DLIGHTS, sizeof(n), &n);
+    lights_buffer_object_update_ndlight(u, n);
 }
 
-void lights_buffer_object_update_plight(const struct PointLight* l, unsigned int i, GLuint ubo) {
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_POSITION(i), sizeof(Vec3), l->position);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_COLOR(i), sizeof(Vec3), l->color);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_RADIUS(i), sizeof(float), &l->radius);
+void lights_buffer_object_update_plight(struct UniformBuffer* u, const struct PointLight* l, unsigned int i) {
+    uniform_buffer_update(u, OFFSET_PLIGHT_POSITION(i), sizeof(Vec3), l->position);
+    uniform_buffer_update(u, OFFSET_PLIGHT_COLOR(i), sizeof(Vec3), l->color);
+    uniform_buffer_update(u, OFFSET_PLIGHT_RADIUS(i), sizeof(float), &l->radius);
 }
 
-void lights_buffer_object_update_nplight(unsigned int n, GLuint ubo) {
+void lights_buffer_object_update_nplight(struct UniformBuffer* u, unsigned int n) {
     uint32_t gn = n;
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_NUM_PLIGHTS, sizeof(gn), &gn);
+    uniform_buffer_update(u, OFFSET_NUM_PLIGHTS, sizeof(gn), &gn);
 }
 
-void lights_buffer_object_update_plights(const struct Lights* l, GLuint ubo) {
-    uint32_t i, n = l->numPointLights;
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+void lights_buffer_object_update_plights(struct UniformBuffer* u, const struct Lights* l) {
+    unsigned int i, n = l->numPointLights;
     for (i = 0; i < n; i++) {
-        glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_POSITION(i), sizeof(Vec3), l->point[i].position);
-        glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_COLOR(i), sizeof(Vec3), l->point[i].color);
-        glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_PLIGHT_RADIUS(i), sizeof(float), &l->point[i].radius);
+        lights_buffer_object_update_plight(u, l->point + i, i);
     }
-    glBufferSubData(GL_UNIFORM_BUFFER, OFFSET_NUM_PLIGHTS, sizeof(n), &n);
+    lights_buffer_object_update_nplight(u, n);
 }
 
-void lights_buffer_object_update(const struct Lights* l, GLuint ubo) {
-    lights_buffer_object_update_ambient(&l->ambientLight, ubo);
-    lights_buffer_object_update_dlights(l, ubo);
-    lights_buffer_object_update_plights(l, ubo);
+void lights_buffer_object_update(struct UniformBuffer* u, const struct Lights* l) {
+    lights_buffer_object_update_ambient(u, &l->ambientLight);
+    lights_buffer_object_update_dlights(u, l);
+    lights_buffer_object_update_plights(u, l);
 }
