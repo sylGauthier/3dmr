@@ -4,6 +4,22 @@
 #include <game/math/quaternion.h>
 #include <game/render/camera.h>
 
+void camera_get_position(const Mat4 view, Vec3 position) {
+    Mat3 tmp;
+    Vec3 vtmp;
+    mat4to3(tmp, view);
+    transpose3m(tmp);
+    mul3sv(vtmp, -1, view[3]);
+    mul3mv(position, MAT_CONST_CAST(tmp), vtmp);
+}
+
+void camera_get_orientation(const Mat4 view, Quaternion orientation) {
+    Mat3 rot;
+    mat4to3(rot, view);
+    transpose3m(rot);
+    quaternion_from_mat3(orientation, MAT_CONST_CAST(rot));
+}
+
 void camera_get_right(const Mat4 view, Vec3 right) {
     row3m4(right, view, 0);
 }

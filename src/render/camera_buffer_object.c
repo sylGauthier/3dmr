@@ -50,12 +50,8 @@ void camera_buffer_object_update_position(struct UniformBuffer* u, const Vec3 po
 }
 
 void camera_buffer_object_update_view_and_position(struct UniformBuffer* u, const Mat4 view) {
-    Mat3 tmp;
-    Vec3 position, vtmp;
-    mat4to3(tmp, view);
-    transpose3m(tmp);
-    mul3sv(vtmp, -1, view[3]);
-    mul3mv(position, MAT_CONST_CAST(tmp), vtmp);
+    Vec3 position;
+    camera_get_position(view, position);
     camera_buffer_object_update_view(u, view);
     camera_buffer_object_update_position(u, position);
 }
