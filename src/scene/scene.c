@@ -5,19 +5,20 @@
 
 int scene_init(struct Scene* scene, struct Camera* camera) {
     node_init(&scene->root);
-    if (!camera_buffer_object_gen(&scene->bCamera)) {
+    if (!camera_buffer_object_gen(&scene->camera)) {
         return 0;
     }
-    if (!(lights_buffer_object_gen(&scene->bLights))) {
-        uniform_buffer_del(&scene->bCamera);
+    if (!(lights_buffer_object_gen(&scene->lights))) {
+        uniform_buffer_del(&scene->camera);
         return 0;
     }
-    camera_buffer_object_update_projection(&scene->bCamera, MAT_CONST_CAST(camera->projection));
-    camera_buffer_object_update_view_and_position(&scene->bCamera, MAT_CONST_CAST(camera->view));
-    lights_buffer_object_zero_init(&scene->bLights);
-    uniform_buffer_send(&scene->bCamera);
-    uniform_buffer_send(&scene->bLights);
-    scene->camera = camera;
+    if (camera) {
+        camera_buffer_object_update_projection(&scene->camera, MAT_CONST_CAST(camera->projection));
+        camera_buffer_object_update_view_and_position(&scene->camera, MAT_CONST_CAST(camera->view));
+    }
+    lights_buffer_object_zero_init(&scene->lights);
+    uniform_buffer_send(&scene->camera);
+    uniform_buffer_send(&scene->lights);
     scene->renderQueue = NULL;
     scene->nRender = 0;
     scene->aRender = 0;
@@ -26,8 +27,8 @@ int scene_init(struct Scene* scene, struct Camera* camera) {
 
 void scene_free(struct Scene* scene, void (*free_node)(struct Node*)) {
     nodes_free(&scene->root, free_node);
-    uniform_buffer_del(&scene->bCamera);
-    uniform_buffer_del(&scene->bLights);
+    uniform_buffer_del(&scene->camera);
+    uniform_buffer_del(&scene->lights);
     free(scene->renderQueue);
 }
 
@@ -70,13 +71,13 @@ int scene_update_nodes(struct Scene* scene, void (*changedCallback)(struct Scene
     return !!changed;
 }
 
-int scene_update_render_queue(struct Scene* scene) {
+int scene_update_render_queue(struct Scene* scene, const Mat4 cameraView, const Mat4 cameraProjection) {
     struct Node *cur, *next, **tmp;
     unsigned int i;
 
     scene->nRender = 0;
     for (cur = &scene->root; cur; cur = next) {
-        if (node_visible(cur, MAT_CONST_CAST(scene->camera->view), MAT_CONST_CAST(scene->camera->projection))) {
+        if (node_visible(cur, MAT_CONST_CAST(cameraView), MAT_CONST_CAST(cameraProjection))) {
             if (cur->type == NODE_GEOMETRY) {
                 if (scene->nRender + 1 < scene->aRender) {
                     scene->renderQueue[(scene->nRender)++] = cur;

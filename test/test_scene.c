@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
         double t = 0, dt;
         p.running = 1;
         p.camera = &camera;
-        p.cambuffer = &scene.bCamera;
+        p.cambuffer = &scene.camera;
         sceneInit++;
         glfwSwapInterval(1);
         viewer->key_callback = key_callback;
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
             dt = viewer_next_frame(viewer);
             t += dt;
             if (scene_update_nodes(&scene, NULL, NULL)) {
-                scene_update_render_queue(&scene);
+                scene_update_render_queue(&scene, MAT_CONST_CAST(camera.view), MAT_CONST_CAST(camera.projection));
             }
             scene_render(&scene);
             viewer_process_events(viewer);
