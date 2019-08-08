@@ -2,23 +2,18 @@
 #include <stdlib.h>
 #include <game/img/png.h>
 
-int png_read_write(const char *in, const char *out, unsigned int alignRow) {
-    unsigned int width, height;
-    int alpha;
-    void *buffer;
+int png_read_write(const char* in, const char* out, unsigned int alignRow) {
+    unsigned int width, height, channels;
+    unsigned char* buffer;
     int retval;
 
-    retval = png_read(in, alignRow, &width, &height, &alpha, 0, &buffer);
-    if (!retval) {
-        return EXIT_FAILURE;
+    if (!png_read(in, alignRow, &width, &height, &channels, 0, 0, &buffer)) {
+        return 0;
     }
 
-    retval = png_write(out, alignRow, width, height, alpha, 0, buffer);
-    if (!retval) {
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    retval = png_write(out, alignRow, width, height, channels, 0, buffer);
+    free(buffer);
+    return retval;
 }
 
 int main(int argc, char *argv[]) {
@@ -27,5 +22,5 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    return png_read_write(argv[1], argv[2], 0);
+    return !png_read_write(argv[1], argv[2], 0);
 }

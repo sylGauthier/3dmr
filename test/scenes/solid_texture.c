@@ -15,7 +15,7 @@ int solid_texture_setup(struct Scene* scene) {
     int ok;
 
     if (!make_box(&mesh, SIZE, SIZE, SIZE)) return 0;
-    if (!(tex = texture_load_from_file("assets/rgb_tux.png"))) {
+    if (!(tex = texture_load_from_png("assets/rgb_tux.png"))) {
         mesh_free(&mesh);
         return 0;
     }

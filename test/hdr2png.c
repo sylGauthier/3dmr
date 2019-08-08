@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
     if (hdr_read(argv[1], 4, &width, &height, &hdr)) {
         if ((ldr = hdr_to_ldr(hdr, width, height, 4, 1, 2.2f, 1.0f))) {
-            ret = !png_write(argv[2], 4, width, height, 1, 0, ldr);
+            ret = !png_write(argv[2], 4, width, height, 4, 0, ldr);
             free(ldr);
         }
         free(hdr);

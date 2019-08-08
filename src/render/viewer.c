@@ -197,24 +197,18 @@ double viewer_next_frame(struct Viewer* viewer) {
     return dt;
 }
 
-#define ALIGN 4
 int viewer_screenshot(struct Viewer* viewer, const char* filename) {
     unsigned char* data;
-    unsigned int rowStride;
     int ret;
 
-    rowStride = 3 * viewer->width;
-    if (rowStride % ALIGN) {
-        rowStride += ALIGN - (rowStride % ALIGN);
-    }
-
-    if (!(data = malloc(rowStride * viewer->height))) {
+    if (!(data = malloc(3 * viewer->width * viewer->height))) {
         fprintf(stderr, "Error: cannot allocate memory for screenshot\n");
         return 0;
     }
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ROW_LENGTH, 0);
     glReadPixels(0, 0, viewer->width, viewer->height, GL_RGB, GL_UNSIGNED_BYTE, data);
-    ret = png_write(filename, ALIGN, viewer->width, viewer->height, 0, 1, data);
+    ret = png_write(filename, 1, viewer->width, viewer->height, 3, 1, data);
     free(data);
     return ret;
 }

@@ -28,11 +28,10 @@ static void texture_params_2d(void) {
 static int load_face(const char* path, GLenum target) {
     unsigned char* ldr;
     float* hdr;
-    unsigned int width, height;
-    int alpha;
+    unsigned int width, height, channels;
 
-    if (png_read(path, 4, &width, &height, &alpha, 0, &ldr)) {
-        if ((hdr = ldr_to_hdr(ldr, width, height, 4, alpha, 2.2f, 1.0f))) {
+    if (png_read(path, 4, &width, &height, &channels, 3, 0, &ldr)) {
+        if ((hdr = ldr_to_hdr(ldr, width, height, 4, 0, 2.2f, 1.0f))) {
             glTexImage2D(target, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, hdr);
             free(hdr);
         }
