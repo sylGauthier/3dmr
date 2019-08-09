@@ -115,6 +115,8 @@ void mul4mm(RESTRICT_MAT4(res), const RESTRICT_MAT4(a), const RESTRICT_MAT4(b));
 void mul4m3v(RESTRICT_VEC3(res), const RESTRICT_MAT4(m), const RESTRICT_VEC3(v));
 void neg4m(Mat4 m);
 void transpose4m(Mat4 m);
+float det4(const Mat4 m);
+int invert4m(RESTRICT_MAT4(dest), const RESTRICT_MAT4(src));
 
 /* Conversions */
 void row3m3(RESTRICT_VEC3(dest), const RESTRICT_MAT3(m), unsigned int row);
