@@ -5,7 +5,7 @@ vec3 phong_compute_directional_light(vec3 diffuse, vec3 specular, float shinines
 
     float diffuseFactor = max(dot(surfelToLight, surfelNormal), 0.0);
 
-    vec3 reflectDirection = reflect(surfelToLight, surfelNormal);
+    vec3 reflectDirection = reflect(light.direction, surfelNormal);
     float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), shininess);
 
     return (diffuseFactor * diffuse + specularFactor * specular) * light.color;
@@ -18,7 +18,7 @@ vec3 phong_compute_point_light(vec3 diffuse, vec3 specular, float shininess, Poi
 
     float diffuseFactor = max(dot(surfelToLight, surfelNormal), 0.0);
 
-    vec3 reflectDirection = reflect(surfelToLight, surfelNormal);
+    vec3 reflectDirection = reflect(-surfelToLight, surfelNormal);
     float specularFactor = pow(max(dot(surfelToCamera, reflectDirection), 0.0), shininess);
 
     float attenuation = point_light_attenuation(light, distance);
