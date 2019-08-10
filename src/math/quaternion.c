@@ -65,11 +65,42 @@ void quaternion_compose(Vec3 dest, const Quaternion q, const Vec3 v) {
 }
 
 void quaternion_to_mat3(Mat3 dest, const Quaternion q) {
-    load_rot3(dest, &q[1], quaternion_get_angle(q));
+    float a2 = q[0] * q[0], b2 = q[1] * q[1], c2 = q[2] * q[2], d2 = q[3] * q[3];
+    float ab = q[0] * q[1], ac = q[0] * q[2], ad = q[0] * q[3];
+    float bc = q[1] * q[2], bd = q[1] * q[3];
+    float cd = q[2] * q[3];
+
+    dest[0][0] = a2 + b2 - c2 - d2;
+    dest[0][1] = 2 * bc + 2 * ad;
+    dest[0][2] = 2 * bd - 2 * ac;
+    dest[1][0] = 2 * bc - 2 * ad;
+    dest[1][1] = a2 - b2 + c2 - d2;
+    dest[1][2] = 2 * cd + 2 * ab;
+    dest[2][0] = 2 * bd + 2 * ac;
+    dest[2][1] = 2 * cd - 2 * ab;
+    dest[2][2] = a2 - b2 - c2 + d2;
 }
 
 void quaternion_to_mat4(Mat4 dest, const Quaternion q) {
-    load_rot4(dest, &q[1], quaternion_get_angle(q));
+    float a2 = q[0] * q[0], b2 = q[1] * q[1], c2 = q[2] * q[2], d2 = q[3] * q[3];
+    float ab = q[0] * q[1], ac = q[0] * q[2], ad = q[0] * q[3];
+    float bc = q[1] * q[2], bd = q[1] * q[3];
+    float cd = q[2] * q[3];
+
+    dest[0][0] = a2 + b2 - c2 - d2;
+    dest[0][1] = 2 * bc + 2 * ad;
+    dest[0][2] = 2 * bd - 2 * ac;
+    dest[0][3] = 0;
+    dest[1][0] = 2 * bc - 2 * ad;
+    dest[1][1] = a2 - b2 + c2 - d2;
+    dest[1][2] = 2 * cd + 2 * ab;
+    dest[1][3] = 0;
+    dest[2][0] = 2 * bd + 2 * ac;
+    dest[2][1] = 2 * cd - 2 * ab;
+    dest[2][2] = a2 - b2 - c2 + d2;
+    dest[2][3] = 0;
+    zero3v(dest[3]);
+    dest[3][3] = 1;
 }
 
 #define quaternion_from_mat(n) \
