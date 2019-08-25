@@ -138,9 +138,8 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                     case PHONG_DIFFUSE:
                     case PHONG_SPECULAR:
                     case PHONG_AMBIENT:
-                        if (flags & (1 << mode)) {
-                            fprintf(stderr, "Error: Material: duplicate phong attribute\n");
-                            return 0;
+                        if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
+                            break;
                         }
                         material_param_set_vec3_constant(params + mode, color);
                         flags |= 1 << mode;
@@ -173,15 +172,15 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                 }
                 break;
             case OGEX_TEXTURE:
-                if (!ogex_parse_texture(context, tmp, &attrib, &tex) || !tex) return 0;
                 switch ((mode = get_phong_mode(attrib))) {
                     case PHONG_DIFFUSE:
                     case PHONG_SPECULAR:
                     case PHONG_AMBIENT:
-                        if (flags & (1 << mode)) {
-                            fprintf(stderr, "Error: Material: duplicate phong attribute\n");
+                        if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
+                            fprintf(stderr, "Warning: Material: multiple textures for same phong attribute not supported\n");
                             return 0;
                         }
+                        if (!ogex_parse_texture(context, tmp, &attrib, &tex) || !tex) return 0;
                         material_param_set_vec3_texture(params + mode, tex);
                         flags |= 1 << mode;
                         break;
