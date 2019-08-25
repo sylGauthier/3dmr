@@ -29,6 +29,7 @@ static void free_node_callback(struct Node* node) {
 static void resize_callback(struct Viewer* viewer, void* data) {
     struct Prog* prog = data;
     struct Camera* activeCam = prog->metadata.cameraNodes[prog->activeCam]->data.camera;
+    glViewport(0, 0, viewer->width, viewer->height);
     camera_set_ratio(((float)viewer->width) / ((float)viewer->height), activeCam->projection);
     camera_buffer_object_update_projection(&prog->scene.camera, MAT_CONST_CAST(activeCam->projection));
     uniform_buffer_send(&prog->scene.camera);

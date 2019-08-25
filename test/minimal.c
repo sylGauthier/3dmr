@@ -30,6 +30,7 @@ static void close_callback(struct Viewer* viewer, void* d) {
 
 static void resize_callback(struct Viewer* viewer, void* d) {
     Mat4 projection;
+    glViewport(0, 0, viewer->width, viewer->height);
     camera_projection(((float)viewer->width) / ((float)viewer->height), 1.04, 0.1, 2000, projection);
     camera_buffer_object_update_projection(((struct CallbackParam*)d)->camera, MAT_CONST_CAST(projection));
     uniform_buffer_send(((struct CallbackParam*)d)->camera);

@@ -48,8 +48,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 static void window_size_callback(GLFWwindow* window, int width, int height) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
-    viewer_make_current(&viewer->user);
-    glViewport(0, 0, width, height);
     viewer->user.width = width;
     viewer->user.height = height;
     if (viewer->user.resize_callback) {
