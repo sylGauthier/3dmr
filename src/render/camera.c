@@ -41,6 +41,10 @@ void camera_view(const Vec3 position, const Quaternion orientation, Mat4 view) {
     neg3v(view[3]);
 }
 
+void camera_set_ratio(float ratio, Mat4 projection) {
+    projection[0][0] = projection[1][1] / ratio;
+}
+
 void camera_projection(float ratio, float fov, float zNear, float zFar, Mat4 projection) {
     float tanHalfFov = tan(fov / 2.0);
 

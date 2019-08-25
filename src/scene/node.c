@@ -10,6 +10,7 @@ void node_init(struct Node* node) {
     node->father = NULL;
 
     zero3v(node->position);
+    node->scale[0] = 1.0; node->scale[1] = 1.0; node->scale[2] = 1.0;
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
 
@@ -93,8 +94,11 @@ int node_update_matrices(struct Node* node) {
     unsigned int i;
     int changed;
 
-    if (node->changedFlags & ORIENTATION_CHANGED) {
+    if (node->changedFlags & (ORIENTATION_CHANGED | SCALE_CHANGED)) {
         quaternion_to_mat4(node->transform, node->orientation);
+        scale3v(node->transform[0], node->scale[0]);
+        scale3v(node->transform[1], node->scale[1]);
+        scale3v(node->transform[2], node->scale[2]);
     }
     if (node->changedFlags & (POSITION_CHANGED | ORIENTATION_CHANGED)) {
         memcpy(node->transform[3], node->position, sizeof(Vec3));
@@ -212,10 +216,32 @@ void node_translate(struct Node* node, const Vec3 t) {
     node->changedFlags |= POSITION_CHANGED;
 }
 
+void node_shift(struct Node* node, const Vec3 t) {
+    Vec4 t1;
+    Vec4 t2;
+    memcpy(t1, t, sizeof(Vec3));
+    t1[3] = 0.0;
+    mul4mv(t2, MAT_CONST_CAST(node->model), t1);
+    node_translate(node, t2);
+}
+
+void node_rescale(struct Node* node, const Vec3 s) {
+    node->scale[0] *= s[0];
+    node->scale[1] *= s[1];
+    node->scale[2] *= s[2];
+    node->changedFlags |= SCALE_CHANGED;
+}
+
 void node_rotate(struct Node* node, const Vec3 axis, float angle) {
     Quaternion q;
     quaternion_set_axis_angle(q, axis, angle);
     node_rotate_q(node, q);
+}
+
+void node_slew(struct Node* node, const Vec3 axis, float angle) {
+    Vec3 newAxis;
+    quaternion_compose(newAxis, node->orientation, axis);
+    node_rotate(node, newAxis, angle);
 }
 
 void node_rotate_q(struct Node* node, const Quaternion q) {

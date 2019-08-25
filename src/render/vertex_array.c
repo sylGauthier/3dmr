@@ -10,7 +10,7 @@ static void gen_bounding_box(const struct Mesh* mesh, struct VertexArray* va) {
         va->boundingBox[0][j] = FLT_MAX;
         va->boundingBox[1][j] = -FLT_MAX;
     }
-    for (i = 0; i < mesh->numVertices*stride; i += stride) {
+    for (i = 0; i < mesh->numVertices * stride; i += stride) {
         for (j = 0; j < 3; j++) {
             if (va->boundingBox[0][j] > mesh->vertices[i + j]) {
                 va->boundingBox[0][j] = mesh->vertices[i + j];

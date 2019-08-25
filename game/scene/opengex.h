@@ -1,0 +1,12 @@
+#include <stdio.h>
+#include <game/scene/scene.h>
+#include <game/scene/import.h>
+
+#ifndef OPENGEX_H
+#define OPENGEX_H
+
+#ifdef GAME_OPENGEX
+int ogex_load(struct Scene* scene, FILE* ogexFile, struct SharedData* shared, struct ImportMetadata* metadata);
+#endif
+
+#endif

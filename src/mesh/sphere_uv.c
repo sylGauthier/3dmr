@@ -83,12 +83,12 @@ int compute_sphere_uv(struct Mesh* sphere, double texWidth, double texHeight, do
               | ((fabs(u[0] - u[1]) < (texWidth / 2.0)) << 2);
         }
         for (j = 0; j < 3; j++) {
-            if ((w == (1 << j))) {
+            if (w == (1 << j)) {
                 u[j] = (u[j] > (texWidth / 2.0)) ? (u[j] - texWidth) : (u[j] + texWidth);
             }
         }
         for (j = 0; j < 3; j++) {
-            if ((o == (1 << j))) {
+            if (o == (1 << j)) {
                 u[j] = (u[(j + 1) % 3] + u[(j + 2) % 3]) / 2.0;
             }
         }

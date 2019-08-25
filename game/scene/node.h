@@ -22,15 +22,17 @@ struct Node {
 
     /* Transform relative to parent node */
     Vec3 position;
+    Vec3 scale;
     Quaternion orientation;
     Mat4 transform;
     enum NodeChangedFlags {
         NOTHING_CHANGED = 0,
         POSITION_CHANGED = 1,
         ORIENTATION_CHANGED = 2,
-        PARENT_MODEL_CHANGED = 4,
-        UPDATE_MODEL_MASK = (POSITION_CHANGED | ORIENTATION_CHANGED | PARENT_MODEL_CHANGED),
-        UPDATE_PARENT_BB = 8
+        SCALE_CHANGED = 4,
+        PARENT_MODEL_CHANGED = 8,
+        UPDATE_MODEL_MASK = (POSITION_CHANGED | ORIENTATION_CHANGED | SCALE_CHANGED | PARENT_MODEL_CHANGED),
+        UPDATE_PARENT_BB = 16
     } changedFlags;
 
     /* Absolute (world) transform */
@@ -68,7 +70,10 @@ void node_update_father_bounding_box(struct Node* node);
 int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection);
 
 void node_translate(struct Node* node, const Vec3 t);
+void node_shift(struct Node* node, const Vec3 t);
+void node_rescale(struct Node* node, const Vec3 s);
 void node_rotate(struct Node* node, const Vec3 axis, float angle);
+void node_slew(struct Node* node, const Vec3 axis, float angle);
 void node_rotate_q(struct Node* node, const Quaternion q);
 
 #endif
