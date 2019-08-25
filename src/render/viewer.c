@@ -125,6 +125,9 @@ void viewer_free(struct Viewer* viewer) {
     unsigned int i;
 
     if (viewer) {
+        struct Viewer* current = currentViewer;
+        if (current == viewer) current = NULL;
+        viewer_make_current(viewer);
         for (i = 0; i < ((struct ViewerImpl*)viewer)->numPrograms; i++) {
             if (((struct ViewerImpl*)viewer)->programs[i]) {
                 glDeleteProgram(((struct ViewerImpl*)viewer)->programs[i]);
@@ -136,6 +139,7 @@ void viewer_free(struct Viewer* viewer) {
             glfwTerminate();
         }
         free(viewer);
+        viewer_make_current(current);
     }
 }
 
