@@ -174,7 +174,7 @@ void viewer_set_title(struct Viewer* viewer, const char* title) {
 }
 
 void viewer_make_current(struct Viewer* viewer) {
-    glfwMakeContextCurrent(((struct ViewerImpl*)viewer)->window);
+    glfwMakeContextCurrent(viewer ? (((struct ViewerImpl*)viewer)->window) : ((GLFWwindow*)NULL));
     currentViewer = viewer;
 }
 
