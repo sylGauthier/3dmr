@@ -57,7 +57,7 @@ static int parse_transform(struct OgexContext* context, struct Node* node, struc
         fprintf(stderr, "Error: parse_transform: invalid Transform data layout, expected float[16]\n");
         return 0;
     }
-    memcpy(transform, tmp->dataList, 16*sizeof(float));
+    memcpy(transform, tmp->dataList, sizeof(Mat4));
     if (context->up == AXIS_Z) {
         swap_yz(transform);
     }
@@ -69,6 +69,125 @@ static int parse_transform(struct OgexContext* context, struct Node* node, struc
     node_rescale(node, scale);
     node_rotate_q(node, quat);
     node_translate(node, transform[3]);
+    return 1;
+}
+
+static int parse_xyz_vec(const struct OgexContext* context, struct ODDLStructure* cur, Vec3 dest) {
+    struct ODDLStructure* tmp;
+    char* kind;
+    struct ODDLProperty* prop;
+
+    if (!(prop = oddl_get_property(cur, "kind"))) {
+        kind = "xyz";
+    } else {
+        kind = prop->str;
+    }
+    if (cur->nbStructures != 1) {
+        fprintf(stderr, "Error: Transform: invalid number of substructures\n");
+        return 0;
+    }
+    tmp = cur->structures[0];
+    if (tmp->type != TYPE_FLOAT32) {
+        fprintf(stderr, "Error: Transform: invalid data type: %s\n", typeName[tmp->type]);
+        return 0;
+    }
+    if (!strcmp(kind, "xyz")) {
+        if (tmp->vecSize != 3 || tmp->nbVec != 1) {
+            fprintf(stderr, "Error: Transform: invalid data layout\n");
+            return 0;
+        }
+        memcpy(dest, tmp->dataList, sizeof(Vec3));
+    } else if (*kind >= 'x' && *kind <= 'z' && !kind[1]) {
+        if (tmp->vecSize != 1 || tmp->nbVec != 1) {
+            fprintf(stderr, "Error: Transform: invalid data layout\n");
+            return 0;
+        }
+        dest[*kind - 'x'] = *(float*)(tmp->dataList);
+    } else {
+        fprintf(stderr, "Error: Transform: invalid kind: %s\n", kind);
+        return 0;
+    }
+    if (context->up == AXIS_Z) {
+        float tmpF;
+        tmpF = dest[1];
+        dest[1] = dest[2];
+        dest[2] = -tmpF;
+    }
+    return 1;
+}
+
+static int parse_translation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
+    Vec3 translation = {0, 0, 0};
+
+    if (!parse_xyz_vec(context, cur, translation)) {
+        return 0;
+    }
+    node_translate(node, translation);
+    return 1;
+}
+
+static int parse_rotation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
+    struct ODDLStructure* tmp;
+    char* kind;
+    struct ODDLProperty* prop;
+    Quaternion quat;
+    Vec3 axis = {0};
+    float angle;
+    float* data;
+
+    quaternion_load_id(quat);
+
+    if (!(prop = oddl_get_property(cur, "kind"))) {
+        kind = "axis";
+    } else {
+        kind = prop->str;
+    }
+    if (cur->nbStructures != 1) {
+        fprintf(stderr, "Error: Rotation: invalid number of substructures\n");
+        return 0;
+    }
+    tmp = cur->structures[0];
+    if (tmp->type != TYPE_FLOAT32) {
+        fprintf(stderr, "Error: Rotation: invalid type of Translation data: %s\n", typeName[tmp->type]);
+        return 0;
+    }
+    data = tmp->dataList;
+    if (!strcmp(kind, "axis")) {
+        if (tmp->vecSize != 4 || tmp->nbVec != 1) {
+            fprintf(stderr, "Error: Rotation: invalid data layout\n");
+            return 0;
+        }
+        memcpy(axis, data + 1, 3 * sizeof(float));
+        angle = data[0];
+    } else if (*kind >= 'x' && *kind <= 'z' && !kind[1]) {
+        if (tmp->vecSize != 1 || tmp->nbVec != 1) {
+            fprintf(stderr, "Error: Rotation: invalid data layout\n");
+            return 0;
+        }
+        axis[*kind - 'x'] = 1.0;
+        angle = data[0];
+    } else {
+        fprintf(stderr, "Error: Rotation: invalid kind: %s\n", kind);
+        return 0;
+    }
+    if (context->up == AXIS_Z) {
+        float tmpF;
+        tmpF = axis[1];
+        axis[1] = axis[2];
+        axis[2] = -tmpF;
+    }
+    quaternion_set_axis_angle(quat, axis, angle);
+    node_rotate_q(node, quat);
+    return 1;
+}
+
+static int parse_scale(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
+    Vec3 scale = {1, 1, 1};
+
+    if (!parse_xyz_vec(context, cur, scale)) {
+        return 0;
+    }
+    node_rescale(node, scale);
     return 1;
 }
 
@@ -94,10 +213,22 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
                 parse_transform(context, newNode, tmp);
                 break;
             case OGEX_TRANSLATION:
+                if (!parse_translation(context, newNode, tmp)) {
+                    free(newNode);
+                    return 0;
+                }
                 break;
             case OGEX_ROTATION:
+                if (!parse_rotation(context, newNode, tmp)) {
+                    free(newNode);
+                    return 0;
+                }
                 break;
             case OGEX_SCALE:
+                if (!parse_scale(context, newNode, tmp)) {
+                    free(newNode);
+                    return 0;
+                }
                 break;
             case OGEX_ANIMATION:
                 break;
