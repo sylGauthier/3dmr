@@ -67,7 +67,7 @@ struct OgexContext {
     unsigned nbSharedObjects;
     struct OgexSharedObject* sharedObjs;
 
-    struct Scene* scene;
+    struct Node* root;
     struct ImportMetadata* metadata;
     struct SharedData* shared;
 };
