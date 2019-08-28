@@ -77,12 +77,12 @@ static int parse_metric(struct OgexContext* context, struct ODDLStructure* cur) 
     return 1;
 }
 
-static int parse_root(struct OgexContext* context, struct Scene* scene) {
+static int parse_root(struct OgexContext* context, struct Node* root) {
     unsigned int i;
-    struct ODDLStructure* root = context->doc.root;
+    struct ODDLStructure* docRoot = context->doc.root;
 
-    for (i = 0; i < root->nbStructures; i++) {
-        struct ODDLStructure* cur = root->structures[i];
+    for (i = 0; i < docRoot->nbStructures; i++) {
+        struct ODDLStructure* cur = docRoot->structures[i];
 
         switch (ogex_get_identifier(cur)) {
             case OGEX_NONE:
@@ -98,7 +98,7 @@ static int parse_root(struct OgexContext* context, struct Scene* scene) {
             case OGEX_CAMERA_NODE:
             case OGEX_GEOMETRY_NODE:
             case OGEX_LIGHT_NODE:
-                if (!(ogex_parse_node(context, &scene->root, cur))) return 0;
+                if (!(ogex_parse_node(context, root, cur))) return 0;
                 break;
             case OGEX_MATERIAL:
                 if (!(ogex_parse_material(context, cur))) return 0;
@@ -113,7 +113,7 @@ static int parse_root(struct OgexContext* context, struct Scene* scene) {
     return 1;
 }
 
-int ogex_load(struct Scene* scene, FILE* ogexFile, struct SharedData* shared, struct ImportMetadata* metadata) {
+int ogex_load(struct Node* root, FILE* ogexFile, struct SharedData* shared, struct ImportMetadata* metadata) {
     struct OgexContext context;
     int success;
 
@@ -124,7 +124,7 @@ int ogex_load(struct Scene* scene, FILE* ogexFile, struct SharedData* shared, st
     context.forward = AXIS_X;
     context.nbSharedObjects = 0;
     context.sharedObjs = NULL;
-    context.scene = scene;
+    context.root = root;
     context.metadata = metadata;
     context.shared = shared;
     if (shared) {
@@ -136,7 +136,7 @@ int ogex_load(struct Scene* scene, FILE* ogexFile, struct SharedData* shared, st
     if (!(oddl_parse(&context.doc, ogexFile))) {
         return 0;
     }
-    success = parse_root(&context, scene);
+    success = parse_root(&context, root);
 #if 0
     if (success) {
         printf("Successfully loaded ogex file.\n");

@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to open '%s'\n", argv[1]);
     } else if (!(sceneInit = scene_init(&prog.scene, NULL))) {
         fprintf(stderr, "Error: failed to init scene\n");
-    } else if (!(ogexInit = ogex_load(&prog.scene, f, &shared, &prog.metadata))) {
+    } else if (!(ogexInit = ogex_load(&prog.scene.root, f, &shared, &prog.metadata))) {
         fprintf(stderr, "Error: failed to load scene '%s'\n", argv[1]);
     } else if (!prog.metadata.nbCameraNodes) {
         fprintf(stderr, "Error: no camera node in '%s'\n", argv[1]);
