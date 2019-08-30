@@ -103,6 +103,19 @@ void quaternion_to_mat4(Mat4 dest, const Quaternion q) {
     dest[3][3] = 1;
 }
 
+/* wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Euler_Angles_to_Quaternion_Conversion */
+void quaternion_from_xyz(Quaternion dest, const Vec3 xyz) {
+    float cx, cy, cz;
+    float sx, sy, sz;
+
+    cx = cos(xyz[0] / 2); cy = cos(xyz[1] / 2); cz = cos(xyz[2] / 2);
+    sx = sin(xyz[0] / 2); sy = sin(xyz[1] / 2); sz = sin(xyz[2] / 2);
+    dest[0] = cx * cy * cz + sx * sy * sz;
+    dest[1] = sx * cy * cz - cx * sy * sz;
+    dest[2] = cx * sy * cz + sx * cy * sz;
+    dest[3] = cx * cy * sz - sx * sy * cz;
+}
+
 #define quaternion_from_mat(n) \
 void quaternion_from_mat##n(Quaternion dest, const Mat##n src) { \
     float S, tr = src[0][0] + src[1][1] + src[2][2]; \
