@@ -27,6 +27,7 @@ enum OgexIdentifier {
     OGEX_GEOMETRY_NODE,
     OGEX_GEOMETRY_OBJECT,
     OGEX_INDEX_ARRAY,
+    OGEX_KEY,
     OGEX_LIGHT_NODE,
     OGEX_MATERIAL,
     OGEX_MATERIAL_REF,
@@ -40,9 +41,12 @@ enum OgexIdentifier {
     OGEX_ROTATION,
     OGEX_SCALE,
     OGEX_TEXTURE,
+    OGEX_TIME,
+    OGEX_TRACK,
     OGEX_TRANSFORM,
     OGEX_TRANSLATION,
     OGEX_UNKNOWN,
+    OGEX_VALUE,
     OGEX_VERTEX_ARRAY,
     OGEX_NB_IDENTIFIERS
 };
@@ -89,5 +93,7 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
 int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_light_node(struct OgexContext* context, struct Node* newNode, struct ODDLStructure* cur);
+
+int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 
 #endif

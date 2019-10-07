@@ -231,6 +231,10 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
                 }
                 break;
             case OGEX_ANIMATION:
+                if (!ogex_parse_animation(context, newNode, tmp)) {
+                    free(newNode);
+                    return 0;
+                }
                 break;
             case OGEX_NODE:
             case OGEX_BONE_NODE:

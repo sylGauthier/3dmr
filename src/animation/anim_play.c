@@ -66,7 +66,6 @@ static float value_linear_interp(int curFrame, float s, float* values, unsigned 
 static float time_bezier_interp(int curFrame, float x, Vec3* times, unsigned int nbKeys) {
     unsigned int a;
     float s = 0, t1, t2, c1, c2;
-    float remain;
 
     if (curFrame >= nbKeys-1) return times[nbKeys - 1][0];
     if (x <= times[curFrame][0]) return 0;
@@ -81,7 +80,6 @@ static float time_bezier_interp(int curFrame, float x, Vec3* times, unsigned int
         s = s - ((t2 - 3 * c2 + 3 * c1 - t1) * s * s * s + 3 * (c2 - 2 * c1 + t1) * s * s + 3 * (c1 - t1) * s + t1 - x)
               / (3 * (t2 - 3 * c2 + 3 * c1 - t1) * s * s + 6 * (c2 - 2 * c1 + t1) * s + 3 * (c1 - t1));
     }
-    remain = (1-s)*(1-s)*(1-s)*t1 + 3*s*(1-s)*(1-s)*c1 + 3*s*s*(1-s)*c2 + s*s*s*t2 - x;
     return s;
 }
 

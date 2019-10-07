@@ -45,4 +45,5 @@ void import_free_shared_data(struct SharedData* shared) {
 void import_free_metadata(struct ImportMetadata* metadata) {
     free(metadata->cameraNodes);
     free(metadata->lightNodes);
+    free(metadata->clips);
 }

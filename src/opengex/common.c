@@ -14,6 +14,7 @@ enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st) {
     if (!strcmp(st->identifier, "GeometryNode"))    return OGEX_GEOMETRY_NODE;
     if (!strcmp(st->identifier, "GeometryObject"))  return OGEX_GEOMETRY_OBJECT;
     if (!strcmp(st->identifier, "IndexArray"))      return OGEX_INDEX_ARRAY;
+    if (!strcmp(st->identifier, "Key"))             return OGEX_KEY;
     if (!strcmp(st->identifier, "LightNode"))       return OGEX_LIGHT_NODE;
     if (!strcmp(st->identifier, "Material"))        return OGEX_MATERIAL;
     if (!strcmp(st->identifier, "MaterialRef"))     return OGEX_MATERIAL_REF;
@@ -27,8 +28,11 @@ enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st) {
     if (!strcmp(st->identifier, "Rotation"))        return OGEX_ROTATION;
     if (!strcmp(st->identifier, "Scale"))           return OGEX_SCALE;
     if (!strcmp(st->identifier, "Texture"))         return OGEX_TEXTURE;
+    if (!strcmp(st->identifier, "Time"))            return OGEX_TIME;
+    if (!strcmp(st->identifier, "Track"))           return OGEX_TRACK;
     if (!strcmp(st->identifier, "Transform"))       return OGEX_TRANSFORM;
     if (!strcmp(st->identifier, "Translation"))     return OGEX_TRANSLATION;
+    if (!strcmp(st->identifier, "Value"))           return OGEX_VALUE;
     if (!strcmp(st->identifier, "VertexArray"))     return OGEX_VERTEX_ARRAY;
     return OGEX_UNKNOWN;
 }

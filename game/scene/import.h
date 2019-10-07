@@ -1,4 +1,5 @@
 #include <game/scene/node.h>
+#include <game/animation/animation.h>
 
 #ifndef GAME_IMPORT_H
 #define GAME_IMPORT_H
@@ -16,9 +17,11 @@ struct SharedData {
 struct ImportMetadata {
     struct Node** cameraNodes;
     struct Node** lightNodes;
+    struct Clip* clips;
 
     unsigned int nbCameraNodes;
     unsigned int nbLightNodes;
+    unsigned int nbClips;
 };
 
 int import_add_shared_item(void* ptr, unsigned int* size, void* newItem);
