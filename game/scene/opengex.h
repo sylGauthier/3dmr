@@ -6,7 +6,7 @@
 #define OPENGEX_H
 
 #ifdef GAME_OPENGEX
-int ogex_load(struct Node* root, FILE* ogexFile, struct SharedData* shared, struct ImportMetadata* metadata);
+int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct SharedData* shared, struct ImportMetadata* metadata);
 #endif
 
 #endif

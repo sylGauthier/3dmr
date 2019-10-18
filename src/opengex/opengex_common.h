@@ -63,6 +63,7 @@ struct OgexContext {
     float scale, angle, time;
     enum Axis up, forward;
     struct ODDLDoc doc;
+    const char* path;
 
     unsigned nbSharedObjects;
     struct OgexSharedObject* sharedObjs;

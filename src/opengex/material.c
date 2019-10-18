@@ -60,7 +60,29 @@ int ogex_parse_texture(struct OgexContext* context, struct ODDLStructure* cur, c
                 return 0;
             }
             name = ((char**)(sub->dataList))[0];
-            if (!(*tex = texture_load_from_png(name))) {
+            if (name[0] == '/') {
+                if (name[1] == '/') {
+                    fprintf(stderr, "Error: Texture: //drive/path not supported\n");
+                    return 0;
+                }
+                *tex = texture_load_from_png(name);
+            } else if (!context->path) {
+                *tex = texture_load_from_png(name);
+            } else {
+                char* path;
+                size_t n = strlen(context->path), m = strlen(name), s;
+                if (n > (((size_t)-1) - m) || (s = (n + m)) > ((size_t)-3) || !(path = malloc(s + 2))) {
+                    fprintf(stderr, "Error: Texture: failed to allocated memory for texture path\n");
+                    return 0;
+                }
+                memcpy(path, context->path, n);
+                path[n++] = '/';
+                memcpy(path + n, name, m);
+                path[s + 1] = 0;
+                *tex = texture_load_from_png(path);
+                free(path);
+            }
+            if (!*tex) {
                 fprintf(stderr, "Error: Texture: could not load texture file: %s\n", name);
                 return 0;
             }

@@ -113,7 +113,7 @@ static int parse_root(struct OgexContext* context, struct Node* root) {
     return 1;
 }
 
-int ogex_load(struct Node* root, FILE* ogexFile, struct SharedData* shared, struct ImportMetadata* metadata) {
+int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct SharedData* shared, struct ImportMetadata* metadata) {
     struct OgexContext context;
     int success;
 
@@ -125,6 +125,7 @@ int ogex_load(struct Node* root, FILE* ogexFile, struct SharedData* shared, stru
     context.nbSharedObjects = 0;
     context.sharedObjs = NULL;
     context.root = root;
+    context.path = path;
     context.metadata = metadata;
     context.shared = shared;
     if (shared) {
