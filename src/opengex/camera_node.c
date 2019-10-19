@@ -44,7 +44,9 @@ int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struc
         }
     }
     memcpy(newCam, camTemplate, sizeof(struct Camera));
-    node_slew(node, axis, -M_PI / 2.0);
+    if (context->up == AXIS_Z) {
+        node_slew(node, axis, -M_PI / 2.0);
+    }
     node_set_camera(node, newCam);
     if (context->metadata) {
         struct Node** tmp;

@@ -246,6 +246,9 @@ int mesh_save_obj(const struct Mesh* mesh, FILE* dest) {
             ret &= fprintf(dest, "vt %f %f\n", mesh->vertices[i], mesh->vertices[i + 1]) >= 0;
             i += 2;
         }
+        if (MESH_HAS_TANGENTS(mesh)) {
+            i += 6;
+        }
     }
     if (mesh->numIndices) {
         for (i = 0; i < mesh->numIndices; i += 3) {

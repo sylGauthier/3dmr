@@ -60,7 +60,29 @@ int ogex_parse_texture(struct OgexContext* context, struct ODDLStructure* cur, c
                 return 0;
             }
             name = ((char**)(sub->dataList))[0];
-            if (!(*tex = texture_load_from_png(name))) {
+            if (name[0] == '/') {
+                if (name[1] == '/') {
+                    fprintf(stderr, "Error: Texture: //drive/path not supported\n");
+                    return 0;
+                }
+                *tex = texture_load_from_png(name);
+            } else if (!context->path) {
+                *tex = texture_load_from_png(name);
+            } else {
+                char* path;
+                size_t n = strlen(context->path), m = strlen(name), s;
+                if (n > (((size_t)-1) - m) || (s = (n + m)) > ((size_t)-3) || !(path = malloc(s + 2))) {
+                    fprintf(stderr, "Error: Texture: failed to allocated memory for texture path\n");
+                    return 0;
+                }
+                memcpy(path, context->path, n);
+                path[n++] = '/';
+                memcpy(path + n, name, m);
+                path[s + 1] = 0;
+                *tex = texture_load_from_png(path);
+                free(path);
+            }
+            if (!*tex) {
                 fprintf(stderr, "Error: Texture: could not load texture file: %s\n", name);
                 return 0;
             }
@@ -172,20 +194,22 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                 }
                 break;
             case OGEX_TEXTURE:
+                if (!ogex_parse_texture(context, tmp, &attrib, &tex)) return 0;
                 switch ((mode = get_phong_mode(attrib))) {
                     case PHONG_DIFFUSE:
                     case PHONG_SPECULAR:
                     case PHONG_AMBIENT:
                         if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
                             fprintf(stderr, "Warning: Material: multiple textures for same phong attribute not supported\n");
+                            glDeleteTextures(1, &tex);
                             return 0;
                         }
-                        if (!ogex_parse_texture(context, tmp, &attrib, &tex) || !tex) return 0;
                         material_param_set_vec3_texture(params + mode, tex);
                         flags |= 1 << mode;
                         break;
                     default:
                         fprintf(stderr, "Warning: Material: attribute not supported for Texture\n");
+                        glDeleteTextures(1, &tex);
                         break;
                 }
                 break;

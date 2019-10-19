@@ -508,6 +508,63 @@ void transpose4m(Mat4 m) {
     SWAP(m[2][3], m[3][2]);
 }
 
+float det4(const Mat4 m) {
+    return m[0][1] * m[1][3] * m[2][2] * m[3][0] - m[0][1] * m[1][2] * m[2][3] * m[3][0] - m[0][0] * m[1][3] * m[2][2] * m[3][1] + m[0][0] * m[1][2] * m[2][3] * m[3][1]
+         - m[0][1] * m[1][3] * m[2][0] * m[3][2] + m[0][0] * m[1][3] * m[2][1] * m[3][2] + m[0][1] * m[1][0] * m[2][3] * m[3][2] - m[0][0] * m[1][1] * m[2][3] * m[3][2]
+         + m[0][3] * (m[1][2] * (m[2][1] * m[3][0] - m[2][0] * m[3][1]) + m[1][1] * (m[2][0] * m[3][2] - m[2][2] * m[3][0]) + m[1][0] * (m[2][2] * m[3][1] - m[2][1] * m[3][2]))
+         + m[0][1] * m[1][2] * m[2][0] * m[3][3] - m[0][0] * m[1][2] * m[2][1] * m[3][3] - m[0][1] * m[1][0] * m[2][2] * m[3][3] + m[0][0] * m[1][1] * m[2][2] * m[3][3]
+         + m[0][2] * (m[1][3] * (m[2][0] * m[3][1] - m[2][1] * m[3][0]) + m[1][1] * (m[2][3] * m[3][0] - m[2][0] * m[3][3]) + m[1][0] * (m[2][1] * m[3][3] - m[2][3] * m[3][1]));
+}
+
+
+int invert4m(RESTRICT_MAT4(dest), const RESTRICT_MAT4(src)) {
+    float det, oneOverDet;
+    unsigned int i, j;
+    dest[0][0] = -src[1][3] * src[2][2] * src[3][1] + src[1][2] * src[2][3] * src[3][1] + src[1][3] * src[2][1] * src[3][2]
+               - src[1][1] * src[2][3] * src[3][2] - src[1][2] * src[2][1] * src[3][3] + src[1][1] * src[2][2] * src[3][3];
+    dest[1][0] = src[1][3] * src[2][2] * src[3][0] - src[1][2] * src[2][3] * src[3][0] - src[1][3] * src[2][0] * src[3][2]
+               + src[1][0] * src[2][3] * src[3][2] + src[1][2] * src[2][0] * src[3][3] - src[1][0] * src[2][2] * src[3][3];
+    dest[2][0] = -src[1][3] * src[2][1] * src[3][0] + src[1][1] * src[2][3] * src[3][0] + src[1][3] * src[2][0] * src[3][1]
+               - src[1][0] * src[2][3] * src[3][1] - src[1][1] * src[2][0] * src[3][3] + src[1][0] * src[2][1] * src[3][3];
+    dest[3][0] = src[1][2] * src[2][1] * src[3][0] - src[1][1] * src[2][2] * src[3][0] - src[1][2] * src[2][0] * src[3][1]
+               + src[1][0] * src[2][2] * src[3][1] + src[1][1] * src[2][0] * src[3][2] - src[1][0] * src[2][1] * src[3][2];
+    dest[0][1] = src[0][3] * src[2][2] * src[3][1] - src[0][2] * src[2][3] * src[3][1] - src[0][3] * src[2][1] * src[3][2]
+               + src[0][1] * src[2][3] * src[3][2] + src[0][2] * src[2][1] * src[3][3] - src[0][1] * src[2][2] * src[3][3];
+    dest[1][1] = -src[0][3] * src[2][2] * src[3][0] + src[0][2] * src[2][3] * src[3][0] + src[0][3] * src[2][0] * src[3][2]
+               - src[0][0] * src[2][3] * src[3][2] - src[0][2] * src[2][0] * src[3][3] + src[0][0] * src[2][2] * src[3][3];
+    dest[2][1] = src[0][3] * src[2][1] * src[3][0] - src[0][1] * src[2][3] * src[3][0] - src[0][3] * src[2][0] * src[3][1]
+               + src[0][0] * src[2][3] * src[3][1] + src[0][1] * src[2][0] * src[3][3] - src[0][0] * src[2][1] * src[3][3];
+    dest[3][1] = -src[0][2] * src[2][1] * src[3][0] + src[0][1] * src[2][2] * src[3][0] + src[0][2] * src[2][0] * src[3][1]
+               - src[0][0] * src[2][2] * src[3][1] - src[0][1] * src[2][0] * src[3][2] + src[0][0] * src[2][1] * src[3][2];
+    dest[0][2] = -src[0][3] * src[1][2] * src[3][1] + src[0][2] * src[1][3] * src[3][1] + src[0][3] * src[1][1] * src[3][2]
+               - src[0][1] * src[1][3] * src[3][2] - src[0][2] * src[1][1] * src[3][3] + src[0][1] * src[1][2] * src[3][3];
+    dest[1][2] = src[0][3] * src[1][2] * src[3][0] - src[0][2] * src[1][3] * src[3][0] - src[0][3] * src[1][0] * src[3][2]
+               + src[0][0] * src[1][3] * src[3][2] + src[0][2] * src[1][0] * src[3][3] - src[0][0] * src[1][2] * src[3][3];
+    dest[2][2] = -src[0][3] * src[1][1] * src[3][0] + src[0][1] * src[1][3] * src[3][0] + src[0][3] * src[1][0] * src[3][1]
+               - src[0][0] * src[1][3] * src[3][1] - src[0][1] * src[1][0] * src[3][3] + src[0][0] * src[1][1] * src[3][3];
+    dest[3][2] = src[0][2] * src[1][1] * src[3][0] - src[0][1] * src[1][2] * src[3][0] - src[0][2] * src[1][0] * src[3][1]
+               + src[0][0] * src[1][2] * src[3][1] + src[0][1] * src[1][0] * src[3][2] - src[0][0] * src[1][1] * src[3][2];
+    dest[0][3] = src[0][3] * src[1][2] * src[2][1] - src[0][2] * src[1][3] * src[2][1] - src[0][3] * src[1][1] * src[2][2]
+               + src[0][1] * src[1][3] * src[2][2] + src[0][2] * src[1][1] * src[2][3] - src[0][1] * src[1][2] * src[2][3];
+    dest[1][3] = -src[0][3] * src[1][2] * src[2][0] + src[0][2] * src[1][3] * src[2][0] + src[0][3] * src[1][0] * src[2][2]
+               - src[0][0] * src[1][3] * src[2][2] - src[0][2] * src[1][0] * src[2][3] + src[0][0] * src[1][2] * src[2][3];
+    dest[2][3] = src[0][3] * src[1][1] * src[2][0] - src[0][1] * src[1][3] * src[2][0] - src[0][3] * src[1][0] * src[2][1]
+               + src[0][0] * src[1][3] * src[2][1] + src[0][1] * src[1][0] * src[2][3] - src[0][0] * src[1][1] * src[2][3];
+    dest[3][3] = -src[0][2] * src[1][1] * src[2][0] + src[0][1] * src[1][2] * src[2][0] + src[0][2] * src[1][0] * src[2][1]
+               - src[0][0] * src[1][2] * src[2][1] - src[0][1] * src[1][0] * src[2][2] + src[0][0] * src[1][1] * src[2][2];
+    if (!(det = src[0][0] * dest[0][0] + src[0][1] * dest[1][0] + src[0][2] * dest[2][0] + src[0][3] * dest[3][0])) {
+        return 0;
+    }
+    oneOverDet = 1.0f / det;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            dest[i][j] *= oneOverDet;
+        }
+    }
+    return 1;
+}
+
+
 /* Conversions */
 void row3m3(RESTRICT_VEC3(dest), const RESTRICT_MAT3(m), unsigned int row) {
     dest[0] = m[0][row];

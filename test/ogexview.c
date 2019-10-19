@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <game/init.h>
@@ -97,6 +98,15 @@ static void update_node(struct Scene* scene, struct Node* n, void* data) {
     }
 }
 
+static char* dirname(char* path) {
+    char* s;
+    if ((s = strrchr(path, '/'))) {
+        *s = 0;
+        return path;
+    }
+    return NULL;
+}
+
 int main(int argc, char** argv) {
     FILE* f = NULL;
     struct Prog prog;
@@ -122,7 +132,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to open '%s'\n", argv[1]);
     } else if (!(sceneInit = scene_init(&prog.scene, NULL))) {
         fprintf(stderr, "Error: failed to init scene\n");
-    } else if (!(ogexInit = ogex_load(&prog.scene.root, f, &shared, &prog.metadata))) {
+    } else if (!(ogexInit = ogex_load(&prog.scene.root, f, dirname(argv[1]), &shared, &prog.metadata))) {
         fprintf(stderr, "Error: failed to load scene '%s'\n", argv[1]);
     } else if (!prog.metadata.nbCameraNodes) {
         fprintf(stderr, "Error: no camera node in '%s'\n", argv[1]);

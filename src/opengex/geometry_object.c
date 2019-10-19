@@ -71,8 +71,8 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
                 break;
         }
     }
-    if (!positions || !indices) {
-        fprintf(stderr, "Error: Mesh: must have positions and indices\n");
+    if (!positions) {
+        fprintf(stderr, "Error: Mesh: must have positions\n");
         return 0;
     }
     if ((nbNorm && nbNorm != nbPos) || (nbTex && nbTex != nbPos) || (nbTan && nbTan != nbPos)) {
@@ -114,14 +114,18 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
             import_vec3(context, mesh->vertices + i * stride + offset, tangents + i * 6 + 3);
         }
     }
-    if (!(mesh->indices = malloc(nbIndices * sizeof(*mesh->indices)))) {
-        fprintf(stderr, "Error: Mesh: could not allocate memory for indices\n");
-        free(mesh->vertices);
-        return 0;
-    }
-    /* Loop copy instead of memcpy for ensuring correct type size conversion */
-    for (i = 0; i < nbIndices; i++) {
-        mesh->indices[i] = indices[i];
+    if (nbIndices) {
+        if (!(mesh->indices = malloc(nbIndices * sizeof(*mesh->indices)))) {
+            fprintf(stderr, "Error: Mesh: could not allocate memory for indices\n");
+            free(mesh->vertices);
+            return 0;
+        }
+        /* Loop copy instead of memcpy for ensuring correct type size conversion */
+        for (i = 0; i < nbIndices; i++) {
+            mesh->indices[i] = indices[i];
+        }
+    } else {
+        mesh->indices = NULL;
     }
     return 1;
 }
