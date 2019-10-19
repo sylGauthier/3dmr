@@ -126,6 +126,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    prog.numDirectionalLights = 0;
+    prog.numPointLights = 0;
     if (!(viewer = viewer_new(1024, 768, argv[1]))) {
         fprintf(stderr, "Error: failed to start viewer\n");
     } else if (!(f = fopen(argv[1], "r"))) {
@@ -171,12 +173,18 @@ int main(int argc, char** argv) {
             prog.metadata.clips[i].loop = 1;
             prog.metadata.clips[i].mode = CLIP_FORWARD;
         }
+        {
+            struct AmbientLight ambient = {0};
+            lights_buffer_object_update_ambient(&prog.scene.lights, &ambient);
+        }
         lights_buffer_object_update_ndlight(&prog.scene.lights, prog.numDirectionalLights);
         lights_buffer_object_update_nplight(&prog.scene.lights, prog.numPointLights);
         camera = prog.metadata.cameraNodes[0]->data.camera;
         camera_set_ratio(((float)viewer->width) / ((float)viewer->height), camera->projection);
         camera_buffer_object_update_projection(&prog.scene.camera, MAT_CONST_CAST(camera->projection));
         camera_buffer_object_update_view_and_position(&prog.scene.camera, MAT_CONST_CAST(camera->view));
+        uniform_buffer_send(&prog.scene.lights);
+        uniform_buffer_send(&prog.scene.camera);
         glfwSwapInterval(1);
         while (prog.running) {
             viewer_process_events(viewer);
