@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
     struct Camera* camera;
     unsigned int i;
     int sceneInit = 0, ogexInit = 0;
+    double dt;
 
     if (argc != 2) {
         usage(argv[0]);
@@ -125,6 +126,10 @@ int main(int argc, char** argv) {
                 default:;
             }
         }
+        for (i = 0; i < prog.metadata.nbClips; i++) {
+            prog.metadata.clips[i].loop = 1;
+            prog.metadata.clips[i].mode = CLIP_FORWARD;
+        }
         lights_buffer_object_update(&prog.scene.lights, &lights);
         camera = prog.metadata.cameraNodes[0]->data.camera;
         camera_set_ratio(((float)viewer->width) / ((float)viewer->height), camera->projection);
@@ -135,7 +140,13 @@ int main(int argc, char** argv) {
         glfwSwapInterval(1);
         while (prog.running) {
             viewer_process_events(viewer);
-            viewer_next_frame(viewer);
+            dt = viewer_next_frame(viewer);
+            if (prog.metadata.nbClips) {
+                for (i = 0; i < prog.metadata.nbClips; i++) {
+                    anim_play_clip(prog.metadata.clips + i, dt * 1000);
+                }
+                scene_update_nodes(&prog.scene, NULL, NULL);
+            }
             camera = prog.metadata.cameraNodes[prog.activeCam]->data.camera;
             scene_update_render_queue(&prog.scene, MAT_CONST_CAST(camera->view), MAT_CONST_CAST(camera->projection));
             scene_render(&prog.scene);
