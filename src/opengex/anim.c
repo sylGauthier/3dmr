@@ -338,7 +338,6 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct 
     unsigned int i, nbTracks = 0, duration = 0;
     struct Clip* clip = NULL;
     struct Animation* newAnim = NULL;
-    void* tmp;
 
     if (!context->metadata->nbClips) {
         if (!(context->metadata->clips = malloc(sizeof(struct Clip)))) {
@@ -349,16 +348,11 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct 
         memset(context->metadata->clips, 0, sizeof(struct Clip));
     }
     clip = context->metadata->clips;
-    if (!(tmp = realloc(clip->animations, (clip->nbAnimations + 1) * sizeof(struct Animation)))) {
+    if (anim_clip_new_anim(clip, node, NULL) < 0) {
         fprintf(stderr, "Error: Animation: could not allocate memory for new Animation\n");
         return 0;
     }
-    clip->animations = tmp;
-    newAnim = clip->animations + clip->nbAnimations;
-    clip->nbAnimations++;
-
-    memset(newAnim, 0, sizeof(struct Animation));
-    newAnim->targetNode = node;
+    newAnim = clip->animations + (clip->nbAnimations - 1);
 
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];

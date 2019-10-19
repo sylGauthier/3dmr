@@ -35,8 +35,7 @@ struct Track {
 
 struct Animation {
     struct Node* targetNode;
-
-    struct Track tracks[TRACK_NB_TYPES];
+    struct Track* tracks;
 };
 
 enum ClipPlayMode {
@@ -68,13 +67,19 @@ struct AnimationEngine {
     unsigned int nbAnimSlots;
 };
 
-void clip_init(struct Clip* clip);
-int clip_new_anim(struct Clip* clip, struct Node* targetNode);
+int anim_track_init(struct Track* track, enum TrackCurve timeCurve,
+                    enum TrackCurve valCurve, unsigned int nbKeys);
+struct Track* anim_new_track_set();
+
+void anim_clip_init(struct Clip* clip);
+int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode, struct Track* tracks);
 
 int anim_new_slot(struct AnimationEngine* engine);
 int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 
-void anim_play_all(struct AnimationEngine* engine, unsigned int dt);
+void anim_play_track_set(struct Track* tracks, struct Node* n, unsigned int curPos);
+int anim_play_clip(struct Clip* clip, unsigned int dt);
+void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
 
 #endif

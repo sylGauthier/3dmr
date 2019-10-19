@@ -4,7 +4,29 @@
 
 #include <game/animation/animation.h>
 
-void clip_init(struct Clip* clip) {
+int anim_track_init(struct Track* track, enum TrackCurve timeCurve,
+                    enum TrackCurve valCurve, unsigned int nbKeys) {
+    unsigned int timeSize = nbKeys * (timeCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
+    unsigned int valSize = nbKeys * (valCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
+    track->times.values = NULL;
+    track->values.values = NULL;
+    track->times.curveType = timeCurve;
+    track->values.curveType = valCurve;
+    if (!(track->times.values = malloc(timeSize)) || !(track->values.values = malloc(valSize))) {
+        fprintf(stderr, "Error: anim_track_init: could not allocate memory for keys\n");
+        free(track->times.values);
+        return 0;
+    }
+    track->nbKeys = nbKeys;
+    track->lastIdx = 0;
+    return 1;
+}
+
+struct Track* anim_new_track_set() {
+    return calloc(TRACK_NB_TYPES, sizeof(struct Track));
+}
+
+void anim_clip_init(struct Clip* clip) {
     clip->duration = 0;
     clip->mode = CLIP_FORWARD;
     clip->loop = 0;
@@ -16,27 +38,25 @@ void clip_init(struct Clip* clip) {
     clip->rev = 0;
 }
 
-static void init_animation(struct Animation* anim) {
-    unsigned int i;
-
-    anim->targetNode = NULL;
-    for (i = 0; i < TRACK_NB_TYPES; i++) {
-        anim->tracks[i].times.values = NULL;
-        anim->tracks[i].values.values = NULL;
-        anim->tracks[i].nbKeys = 0;
-        anim->tracks[i].lastIdx = 0;
-    }
-}
-
-int clip_new_anim(struct Clip* clip, struct Node* targetNode) {
+int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode, struct Track* trackSet) {
     void* tmp;
+    struct Animation* newAnim = NULL;
 
     if (!(tmp = realloc(clip->animations, (clip->nbAnimations + 1) * sizeof(struct Animation)))) {
         fprintf(stderr, "Error: clip_new_anim: could not reallocate memory for new animation\n");
         return -1;
     }
     clip->animations = tmp;
-    init_animation(clip->animations + clip->nbAnimations);
+    newAnim = clip->animations + clip->nbAnimations;
+    newAnim->targetNode = targetNode;
+    if (trackSet) {
+        newAnim->tracks = trackSet;
+    } else {
+        if (!(newAnim->tracks = anim_new_track_set())) {
+            fprintf(stderr, "Error: clip_new_anim: cuod not allocate new track set\n");
+            return -1;
+        }
+    }
     return clip->nbAnimations++;
 }
 
@@ -95,4 +115,3 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
     engine->animQueue[slot] = newElem;
     return 1;
 }
-

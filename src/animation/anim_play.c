@@ -137,45 +137,44 @@ static float interp_track(struct Track* track, unsigned int curPos) {
     }
 }
 
-static void play_animation(struct Animation* anim, unsigned int curPos) {
+void anim_play_track_set(struct Track* tracks, struct Node* n, unsigned int curPos) {
     char rotTracked = 0;
-    struct Node* n = anim->targetNode;
     Vec3 rot;
 
-    if (anim->tracks[TRACK_X_POS].nbKeys) {
-        n->position[0] = interp_track(&anim->tracks[TRACK_X_POS], curPos);
+    if (tracks[TRACK_X_POS].nbKeys) {
+        n->position[0] = interp_track(&tracks[TRACK_X_POS], curPos);
         n->changedFlags |= POSITION_CHANGED;
     }
-    if (anim->tracks[TRACK_Y_POS].nbKeys) {
-        n->position[1] = interp_track(&anim->tracks[TRACK_Y_POS], curPos);
+    if (tracks[TRACK_Y_POS].nbKeys) {
+        n->position[1] = interp_track(&tracks[TRACK_Y_POS], curPos);
         n->changedFlags |= POSITION_CHANGED;
     }
-    if (anim->tracks[TRACK_Z_POS].nbKeys) {
-        n->position[2] = interp_track(&anim->tracks[TRACK_Z_POS], curPos);
+    if (tracks[TRACK_Z_POS].nbKeys) {
+        n->position[2] = interp_track(&tracks[TRACK_Z_POS], curPos);
         n->changedFlags |= POSITION_CHANGED;
     }
-    if (anim->tracks[TRACK_X_ROT].nbKeys) {
-        rot[0] = interp_track(&anim->tracks[TRACK_X_ROT], curPos);
+    if (tracks[TRACK_X_ROT].nbKeys) {
+        rot[0] = interp_track(&tracks[TRACK_X_ROT], curPos);
         rotTracked = 1;
     }
-    if (anim->tracks[TRACK_Y_ROT].nbKeys) {
-        rot[1] = interp_track(&anim->tracks[TRACK_Y_ROT], curPos);
+    if (tracks[TRACK_Y_ROT].nbKeys) {
+        rot[1] = interp_track(&tracks[TRACK_Y_ROT], curPos);
         rotTracked = 1;
     }
-    if (anim->tracks[TRACK_Z_ROT].nbKeys) {
-        rot[2] = interp_track(&anim->tracks[TRACK_Z_ROT], curPos);
+    if (tracks[TRACK_Z_ROT].nbKeys) {
+        rot[2] = interp_track(&tracks[TRACK_Z_ROT], curPos);
         rotTracked = 1;
     }
-    if (anim->tracks[TRACK_X_SCALE].nbKeys) {
-        n->scale[0] = interp_track(&anim->tracks[TRACK_X_SCALE], curPos);
+    if (tracks[TRACK_X_SCALE].nbKeys) {
+        n->scale[0] = interp_track(&tracks[TRACK_X_SCALE], curPos);
         n->changedFlags |= SCALE_CHANGED;
     }
-    if (anim->tracks[TRACK_Y_SCALE].nbKeys) {
-        n->scale[1] = interp_track(&anim->tracks[TRACK_Y_SCALE], curPos);
+    if (tracks[TRACK_Y_SCALE].nbKeys) {
+        n->scale[1] = interp_track(&tracks[TRACK_Y_SCALE], curPos);
         n->changedFlags |= SCALE_CHANGED;
     }
-    if (anim->tracks[TRACK_Z_SCALE].nbKeys) {
-        n->scale[2] = interp_track(&anim->tracks[TRACK_Z_SCALE], curPos);
+    if (tracks[TRACK_Z_SCALE].nbKeys) {
+        n->scale[2] = interp_track(&tracks[TRACK_Z_SCALE], curPos);
         n->changedFlags |= SCALE_CHANGED;
     }
     if (rotTracked) {
@@ -184,14 +183,14 @@ static void play_animation(struct Animation* anim, unsigned int curPos) {
     }
 }
 
-static int play_clip(struct Clip* clip, unsigned int dt) {
+int anim_play_clip(struct Clip* clip, unsigned int dt) {
     unsigned int i;
     int running;
 
     running = update_clip_cur_time(clip, dt);
 
     for (i = 0; i < clip->nbAnimations; i++) {
-        play_animation(&clip->animations[i], clip->curPos);
+        anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode, clip->curPos);
     }
     return running;
 }
@@ -202,7 +201,7 @@ static void pop_anim_stack(struct AnimationEngine* engine, unsigned int slot) {
     free(tmp);
 }
 
-void anim_play_all(struct AnimationEngine* engine, unsigned int dt) {
+void anim_run_engine(struct AnimationEngine* engine, unsigned int dt) {
     unsigned int i;
 
     for (i = 0; i < engine->nbAnimSlots; i++) {
@@ -210,7 +209,7 @@ void anim_play_all(struct AnimationEngine* engine, unsigned int dt) {
 
         if (cur && cur->delay < dt) {
             cur->delay = 0;
-            if (!play_clip(cur->clip, dt)) {
+            if (!anim_play_clip(cur->clip, dt)) {
                 pop_anim_stack(engine, i);
             }
         } else if (cur) {
