@@ -9,7 +9,8 @@
 struct Prog {
     struct Scene scene;
     struct ImportMetadata metadata;
-    unsigned int activeCam;
+    unsigned int activeCam, numDirectionalLights, numPointLights;
+    struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS];
     int running;
 };
 
@@ -67,10 +68,38 @@ static void close_callback(struct Viewer* viewer, void* data) {
     prog->running = 0;
 }
 
+static void update_node(struct Scene* scene, struct Node* n, void* data) {
+    struct Prog* prog = data;
+    unsigned int i;
+
+    switch (n->type) {
+        case NODE_DLIGHT:
+            for (i = 0; i < prog->numDirectionalLights; i++) {
+                if (n == prog->dlights[i]) {
+                    lights_buffer_object_update_dlight(&scene->lights, n->data.dlight, i);
+                }
+            }
+            break;
+        case NODE_PLIGHT:
+            for (i = 0; i < prog->numPointLights; i++) {
+                if (n == prog->plights[i]) {
+                    lights_buffer_object_update_plight(&scene->lights, n->data.plight, i);
+                }
+            }
+            break;
+        case NODE_CAMERA:
+            if (n == prog->metadata.cameraNodes[prog->activeCam]) {
+                camera_buffer_object_update_view(&scene->camera, MAT_CONST_CAST(n->data.camera->view));
+                camera_buffer_object_update_position(&scene->camera, n->position);
+            }
+            break;
+        default:;
+    }
+}
+
 int main(int argc, char** argv) {
     FILE* f = NULL;
     struct Prog prog;
-    struct Lights lights;
     struct SharedData shared;
     struct Viewer* viewer = NULL;
     struct Camera* camera;
@@ -105,20 +134,21 @@ int main(int argc, char** argv) {
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
         scene_update_nodes(&prog.scene, NULL, NULL);
-        light_init(&lights);
         for (i = 0; i < prog.metadata.nbLightNodes; i++) {
             struct Node* n = prog.metadata.lightNodes[i];
             switch (n->type) {
                 case NODE_DLIGHT:
-                    if (lights.numDirectionalLights < MAX_DIRECTIONAL_LIGHTS) {
-                        lights.directional[lights.numDirectionalLights++] = *n->data.dlight;
+                    if (prog.numDirectionalLights < MAX_DIRECTIONAL_LIGHTS) {
+                        lights_buffer_object_update_dlight(&prog.scene.lights, n->data.dlight, prog.numDirectionalLights);
+                        prog.dlights[prog.numDirectionalLights++] = n;
                     } else {
                         fprintf(stderr, "Warning: directional lights limit exceeded\n");
                     }
                     break;
                 case NODE_PLIGHT:
-                    if (lights.numPointLights < MAX_POINT_LIGHTS) {
-                        lights.point[lights.numPointLights++] = *n->data.plight;
+                    if (prog.numPointLights < MAX_POINT_LIGHTS) {
+                        lights_buffer_object_update_plight(&prog.scene.lights, n->data.plight, prog.numPointLights);
+                        prog.plights[prog.numPointLights++] = n;
                     } else {
                         fprintf(stderr, "Warning: point lights limit exceeded\n");
                     }
@@ -130,13 +160,12 @@ int main(int argc, char** argv) {
             prog.metadata.clips[i].loop = 1;
             prog.metadata.clips[i].mode = CLIP_FORWARD;
         }
-        lights_buffer_object_update(&prog.scene.lights, &lights);
+        lights_buffer_object_update_ndlight(&prog.scene.lights, prog.numDirectionalLights);
+        lights_buffer_object_update_nplight(&prog.scene.lights, prog.numPointLights);
         camera = prog.metadata.cameraNodes[0]->data.camera;
         camera_set_ratio(((float)viewer->width) / ((float)viewer->height), camera->projection);
         camera_buffer_object_update_projection(&prog.scene.camera, MAT_CONST_CAST(camera->projection));
         camera_buffer_object_update_view_and_position(&prog.scene.camera, MAT_CONST_CAST(camera->view));
-        uniform_buffer_send(&prog.scene.lights);
-        uniform_buffer_send(&prog.scene.camera);
         glfwSwapInterval(1);
         while (prog.running) {
             viewer_process_events(viewer);
@@ -145,7 +174,9 @@ int main(int argc, char** argv) {
                 for (i = 0; i < prog.metadata.nbClips; i++) {
                     anim_play_clip(prog.metadata.clips + i, dt * 1000);
                 }
-                scene_update_nodes(&prog.scene, NULL, NULL);
+                scene_update_nodes(&prog.scene, update_node, &prog);
+                uniform_buffer_send(&prog.scene.lights);
+                uniform_buffer_send(&prog.scene.camera);
             }
             camera = prog.metadata.cameraNodes[prog.activeCam]->data.camera;
             scene_update_render_queue(&prog.scene, MAT_CONST_CAST(camera->view), MAT_CONST_CAST(camera->projection));
