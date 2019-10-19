@@ -115,3 +115,38 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
     engine->animQueue[slot] = newElem;
     return 1;
 }
+
+void anim_free_track(struct Track* track) {
+    free(track->times.values);
+    free(track->values.values);
+}
+
+void anim_free_animation(struct Animation* anim) {
+    if (anim->tracks) {
+        unsigned int i;
+        for (i = 0; i < TRACK_NB_TYPES; i++) {
+            anim_free_track(anim->tracks + i);
+        }
+        free(anim->tracks);
+    }
+}
+
+void anim_free_clip(struct Clip* clip) {
+    unsigned int i;
+    for (i = 0; i < clip->nbAnimations; i++) {
+        anim_free_animation(clip->animations + i);
+    }
+    free(clip->animations);
+}
+
+void anim_free_engine(struct AnimationEngine* engine) {
+    unsigned int i;
+    for (i = 0; i < engine->nbAnimSlots; i++) {
+        struct AnimStack* tmp;
+        while ((tmp = engine->animQueue[i])) {
+            engine->animQueue[i] = tmp->nextInStack;
+            free(tmp);
+        }
+    }
+    free(engine->animQueue);
+}
