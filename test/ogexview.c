@@ -104,16 +104,16 @@ int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct Camera* camera;
     unsigned int i;
-    int sceneInit = 0, ogexInit = 0;
+    int sceneInit = 0, ogexInit = 0, err = 1;
     double dt;
 
     if (argc != 2) {
         usage(argv[0]);
-        return 0;
+        return 1;
     }
     if (!game_init(GAME_SHADERS_PATH)) {
         fprintf(stderr, "Error: failed to init game library\n");
-        return 0;
+        return 1;
     }
 
     if (!(viewer = viewer_new(1024, 768, argv[1]))) {
@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
     } else if (!prog.metadata.nbCameraNodes) {
         fprintf(stderr, "Error: no camera node in '%s'\n", argv[1]);
     } else {
+        err = 0;
         prog.activeCam = 0;
         prog.running = 1;
         viewer->callbackData = &prog;
@@ -193,5 +194,5 @@ int main(int argc, char** argv) {
     if (viewer) viewer_free(viewer);
     game_free();
 
-    return 1;
+    return err;
 }
