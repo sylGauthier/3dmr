@@ -43,7 +43,12 @@ void import_free_shared_data(struct SharedData* shared) {
 }
 
 void import_free_metadata(struct ImportMetadata* metadata) {
+    unsigned int i;
+
     free(metadata->cameraNodes);
     free(metadata->lightNodes);
+    for (i = 0; i < metadata->nbClips; i++) {
+        anim_free_clip(metadata->clips + i);
+    }
     free(metadata->clips);
 }

@@ -82,4 +82,9 @@ void anim_play_track_set(struct Track* tracks, struct Node* n, unsigned int curP
 int anim_play_clip(struct Clip* clip, unsigned int dt);
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
 
+void anim_free_track(struct Track* track);
+void anim_free_animation(struct Animation* anim);
+void anim_free_clip(struct Clip* clip);
+void anim_free_engine(struct AnimationEngine* engine);
+
 #endif
