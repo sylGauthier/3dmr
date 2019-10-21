@@ -100,7 +100,7 @@ int node_update_matrices(struct Node* node) {
         scale3v(node->transform[1], node->scale[1]);
         scale3v(node->transform[2], node->scale[2]);
     }
-    if (node->changedFlags & (POSITION_CHANGED | ORIENTATION_CHANGED)) {
+    if (node->changedFlags & (POSITION_CHANGED | ORIENTATION_CHANGED | SCALE_CHANGED)) {
         memcpy(node->transform[3], node->position, sizeof(Vec3));
     }
     if ((changed = (node->changedFlags & UPDATE_MODEL_MASK))) {
