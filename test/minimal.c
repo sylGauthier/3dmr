@@ -48,7 +48,7 @@ struct VertexArray* mkcube(void) {
 
 struct Material* mkmat(void) {
     struct SolidMaterial* mat;
-    if ((mat = solid_material_new(MAT_PARAM_CONSTANT))) {
+    if ((mat = solid_material_new(0))) {
         material_param_set_vec3_elems(&mat->color, 0, 0, 1);
     }
     return (struct Material*)mat;

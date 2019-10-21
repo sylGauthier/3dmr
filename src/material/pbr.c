@@ -18,37 +18,33 @@ static void pbr_load(const struct Material* material) {
     light_load_ibl_uniforms(material->program, ((const struct PBRMaterial*)material)->ibl, texSlot, texSlot + 1, texSlot + 2);
 }
 
-struct PBRMaterial* pbr_material_new(enum MatParamMode modeAlbedo, enum MatParamMode modeMetalness, enum MatParamMode modeRoughness, int hasNormalMap) {
+struct PBRMaterial* pbr_material_new(enum PBRMaterialFlags flags) {
     static const char* defines[12];
     unsigned int numDefines = 0;
     struct Viewer* currentViewer;
     struct PBRMaterial* pbrMat;
     GLuint prog;
-    unsigned int variant = 0;
+    unsigned int variant = flags & 15;
 
     defines[2 * numDefines] = "HAVE_NORMAL";
     defines[2 * numDefines++ + 1] = NULL;
-    if (hasNormalMap) {
+    if (flags & PBR_NORMALMAP) {
         defines[2 * numDefines] = "HAVE_TANGENT";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 0;
     }
-    if (modeAlbedo == MAT_PARAM_TEXTURED) {
+    if (flags & PBR_ALBEDO_TEXTURED) {
         defines[2 * numDefines] = "ALBEDO_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 1;
     }
-    if (modeMetalness == MAT_PARAM_TEXTURED) {
+    if (flags & PBR_METALNESS_TEXTURED) {
         defines[2 * numDefines] = "METALNESS_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 2;
     }
-    if (modeRoughness == MAT_PARAM_TEXTURED) {
+    if (flags & PBR_ROUGHNESS_TEXTURED) {
         defines[2 * numDefines] = "ROUGHNESS_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 3;
     }
-    if (numDefines > 1) {
+    if (variant) {
         defines[2 * numDefines] = "HAVE_TEXCOORD";
         defines[2 * numDefines++ + 1] = NULL;
     }
@@ -77,10 +73,6 @@ struct PBRMaterial* pbr_material_new(enum MatParamMode modeAlbedo, enum MatParam
     pbrMat->material.load = pbr_load;
     pbrMat->material.program = prog;
     pbrMat->material.polygonMode = GL_FILL;
-    pbrMat->albedo.mode = modeAlbedo;
-    pbrMat->metalness.mode = modeMetalness;
-    pbrMat->roughness.mode = modeRoughness;
-    pbrMat->normalMap = 0;
     pbrMat->ibl = NULL;
 
     return pbrMat;

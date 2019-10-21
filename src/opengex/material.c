@@ -138,6 +138,7 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
     unsigned int i;
     struct MatParamVec3 params[PHONG_NB_PARAMS];
     struct PhongMaterial* newMat;
+    enum PhongMaterialFlags matFlags = 0;
     float spec = 1.0;
     char flags = 0;
 
@@ -196,9 +197,10 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
             case OGEX_TEXTURE:
                 if (!ogex_parse_texture(context, tmp, &attrib, &tex)) return 0;
                 switch ((mode = get_phong_mode(attrib))) {
-                    case PHONG_DIFFUSE:
-                    case PHONG_SPECULAR:
-                    case PHONG_AMBIENT:
+                    case PHONG_DIFFUSE:  matFlags |= PHONG_DIFFUSE_TEXTURED; goto do_tex;
+                    case PHONG_SPECULAR: matFlags |= PHONG_SPECULAR_TEXTURED; goto do_tex;
+                    case PHONG_AMBIENT:  matFlags |= PHONG_AMBIENT_TEXTURED; goto do_tex;
+                    do_tex:
                         if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
                             fprintf(stderr, "Warning: Material: multiple textures for same phong attribute not supported\n");
                             glDeleteTextures(1, &tex);
@@ -217,7 +219,7 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                 break;
         }
     }
-    newMat = phong_material_new(params[PHONG_AMBIENT].mode, params[PHONG_DIFFUSE].mode, params[PHONG_SPECULAR].mode, MAT_PARAM_CONSTANT, 0);
+    newMat = phong_material_new(matFlags);
     newMat->ambient = params[PHONG_AMBIENT];
     newMat->diffuse = params[PHONG_DIFFUSE];
     newMat->specular = params[PHONG_SPECULAR];

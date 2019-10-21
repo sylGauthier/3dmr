@@ -13,7 +13,15 @@ struct PhongMaterial {
     GLuint normalMap;
 };
 
-struct PhongMaterial* phong_material_new(enum MatParamMode modeAmbient, enum MatParamMode modeDiffuse, enum MatParamMode modeSpecular, enum MatParamMode modeShininess, int hasNormalMap);
+enum PhongMaterialFlags {
+    PHONG_AMBIENT_TEXTURED = 1 << 0,
+    PHONG_DIFFUSE_TEXTURED = 1 << 1,
+    PHONG_SPECULAR_TEXTURED = 1 << 2,
+    PHONG_SHININESS_TEXTURED = 1 << 3,
+    PHONG_NORMALMAP = 1 << 4
+};
+
+struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags);
 int material_is_phong(const struct Material* material);
 
 #endif

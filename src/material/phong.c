@@ -18,42 +18,37 @@ static void phong_load(const struct Material* material) {
     }
 }
 
-struct PhongMaterial* phong_material_new(enum MatParamMode modeAmbient, enum MatParamMode modeDiffuse, enum MatParamMode modeSpecular, enum MatParamMode modeShininess, int hasNormalMap) {
+struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
     static const char* defines[14];
     unsigned int numDefines = 0;
     struct Viewer* currentViewer;
     struct PhongMaterial* phong;
     GLuint prog;
-    unsigned int variant = 0;
+    unsigned int variant = flags & 31;
 
     defines[2 * numDefines] = "HAVE_NORMAL";
     defines[2 * numDefines++ + 1] = NULL;
-    if (hasNormalMap) {
+    if (flags & PHONG_NORMALMAP) {
         defines[2 * numDefines] = "HAVE_TANGENT";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 0;
     }
-    if (modeAmbient == MAT_PARAM_TEXTURED) {
+    if (flags & PHONG_AMBIENT_TEXTURED) {
         defines[2 * numDefines] = "AMBIENT_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 1;
     }
-    if (modeDiffuse == MAT_PARAM_TEXTURED) {
+    if (flags & PHONG_DIFFUSE_TEXTURED) {
         defines[2 * numDefines] = "DIFFUSE_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 2;
     }
-    if (modeSpecular == MAT_PARAM_TEXTURED) {
+    if (flags & PHONG_SPECULAR_TEXTURED) {
         defines[2 * numDefines] = "SPECULAR_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 3;
     }
-    if (modeShininess == MAT_PARAM_TEXTURED) {
+    if (flags & PHONG_SHININESS_TEXTURED) {
         defines[2 * numDefines] = "SHININESS_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
-        variant |= 1 << 4;
     }
-    if (numDefines > 1) {
+    if (variant) {
         defines[2 * numDefines] = "HAVE_TEXCOORD";
         defines[2 * numDefines++ + 1] = NULL;
     }
@@ -82,11 +77,6 @@ struct PhongMaterial* phong_material_new(enum MatParamMode modeAmbient, enum Mat
     phong->material.load = phong_load;
     phong->material.program = prog;
     phong->material.polygonMode = GL_FILL;
-    phong->ambient.mode = modeAmbient;
-    phong->diffuse.mode = modeDiffuse;
-    phong->specular.mode = modeSpecular;
-    phong->shininess.mode = modeShininess;
-    phong->normalMap = 0;
 
     return phong;
 }

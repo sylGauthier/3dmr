@@ -12,7 +12,7 @@ static int phong_setup(struct Scene* scene, int withSpecular) {
     int ok;
 
     if (!make_icosphere(&mesh, 2, 4)) return 0;
-    ok = (mat = phong_material_new(MAT_PARAM_CONSTANT, MAT_PARAM_CONSTANT, MAT_PARAM_CONSTANT, MAT_PARAM_CONSTANT, 0)) && (n = create_node(&mesh, mat));
+    ok = (mat = phong_material_new(0)) && (n = create_node(&mesh, mat));
     mesh_free(&mesh);
     ok = ok && scene_add(scene, n);
     if (!ok && n) free_node(n);

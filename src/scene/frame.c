@@ -29,9 +29,9 @@ struct Node* make_frame(void) {
 
     node_init(node);
     vertex_array_gen(&arrow, va);
-    material[0] = solid_material_new(MAT_PARAM_CONSTANT);
-    material[1] = solid_material_new(MAT_PARAM_CONSTANT);
-    material[2] = solid_material_new(MAT_PARAM_CONSTANT);
+    material[0] = solid_material_new(0);
+    material[1] = solid_material_new(0);
+    material[2] = solid_material_new(0);
 
     if (!material[0] || !material[1] || !material[2]) {
         free(node);

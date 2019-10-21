@@ -19,7 +19,7 @@ int solid_texture_setup(struct Scene* scene) {
         mesh_free(&mesh);
         return 0;
     }
-    ok = (mat = solid_material_new(MAT_PARAM_TEXTURED)) && (n = create_node(&mesh, mat));
+    ok = (mat = solid_material_new(SOLID_TEXTURED)) && (n = create_node(&mesh, mat));
     mesh_free(&mesh);
     if (ok) material_param_set_vec3_texture(&mat->color, tex);
     ok = ok && scene_add(scene, n);
