@@ -10,7 +10,8 @@ struct SolidMaterial {
 };
 
 enum SolidMaterialFlags {
-    SOLID_TEXTURED = 1 << 0
+    SOLID_TEXTURED = 1 << 0,
+    SOLID_OVERLAY = 1 << 1
 };
 
 struct SolidMaterial* solid_material_new(enum SolidMaterialFlags flags);

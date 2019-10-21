@@ -32,7 +32,11 @@ uniform mat3 inverseNormal;
 #endif
 
 void main() {
+#ifdef OVERLAY
+    gl_Position = model * vec4(in_Vertex, 1.0);
+#else
     gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
+#endif
 #ifdef HAVE_NORMAL
     surfelPosition = vec3(model * vec4(in_Vertex, 1.0));
 #ifdef HAVE_TANGENT
