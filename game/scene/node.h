@@ -54,6 +54,8 @@ struct Node {
         struct PointLight* plight;
         struct Camera* camera;
     } data;
+
+    int alwaysDraw;
 };
 
 void node_init(struct Node* node);

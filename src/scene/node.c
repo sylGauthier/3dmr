@@ -18,6 +18,7 @@ void node_init(struct Node* node) {
     zero3v(node->boundingBox[1]);
 
     node->type = NODE_EMPTY;
+    node->alwaysDraw = 0;
 }
 
 static void node_reset_bounding_box(struct Node* node, Vec3 bb[2]) {
@@ -185,6 +186,10 @@ void node_update_father_bounding_box(struct Node* node) {
 int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection) {
     Vec4 tmp, tmp2;
     unsigned int i, left = 0, right = 0, down = 0, up = 0, back = 0;
+
+    if (node->alwaysDraw) {
+        return (node->alwaysDraw > 0);
+    }
 
     tmp[3] = 1;
     for (i = 0; i < 8; i++) {
