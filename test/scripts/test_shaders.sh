@@ -7,9 +7,9 @@ cd "$(dirname "$0")/.." || die "wrong directory"
 mkdir -p out
 
 for shader in ../shaders/*.{vert,frag}; do
-    testing "$(basename "$shader")"; (
+    do_test "$(basename "$shader")" <<END
         ./glslcheck -DHAVE_NORMAL "$shader" 2>/dev/null || fail "compilation failed"
-    ) && pass || set_failed
+END
 done
 
 exit "$code"

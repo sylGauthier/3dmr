@@ -5,6 +5,6 @@
 cd "$(dirname "$0")/../.." || die "wrong directory"
 [ -f test/ubo ] || die "wrong directory"
 
-testing "ubo offsets"; (
+do_test "ubo offsets" <<END
     ./test/ubo >/dev/null 2>&1 || fail
-) && pass || set_failed
+END
