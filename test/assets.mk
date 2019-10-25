@@ -10,3 +10,5 @@ indexed24_%.png: %.png
 	convert $< -background white -alpha remove -flatten -colors 24 $@
 tux.png:
 	wget -O $@ "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/200px-Tux.svg.png"
+grad.png:
+	convert -size 256x256 gradient:white-black $@

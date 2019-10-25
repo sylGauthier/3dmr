@@ -38,6 +38,8 @@ uniform float roughness;
 uniform sampler2D normalMap;
 #endif
 
+#include "alpha.glsl"
+
 void main() {
 #ifdef HAVE_TANGENT
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
@@ -62,5 +64,5 @@ void main() {
 
     vec3 color = pbr(a, m, r, normalize(surfelNormal), surfelPosition, cameraPosition);
     color = reinhard_tonemapping(color, GAMMA, EXPOSURE, PURE_WHITE);
-    out_Color = vec4(color, 1.0);
+    out_Color = vec4(color, get_alpha());
 }

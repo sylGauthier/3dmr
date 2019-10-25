@@ -6,18 +6,20 @@
 #include "programs.h"
 
 static void phong_load(const struct Material* material) {
+    const struct PhongMaterial* m = (const struct PhongMaterial*)material;
     unsigned int texSlot = 0;
-    material_param_send_vec3(material->program, &((const struct PhongMaterial*)material)->ambient, "ambient", &texSlot);
-    material_param_send_vec3(material->program, &((const struct PhongMaterial*)material)->diffuse, "diffuse", &texSlot);
-    material_param_send_vec3(material->program, &((const struct PhongMaterial*)material)->specular, "specular", &texSlot);
-    material_param_send_float(material->program, &((const struct PhongMaterial*)material)->shininess, "shininess", &texSlot);
-    if (((const struct PhongMaterial*)material)->normalMap) {
-        material_param_send_texture(material->program, ((const struct PhongMaterial*)material)->normalMap, "normalMap", &texSlot);
+    material_param_send_vec3(material->program, &m->ambient, "ambient", &texSlot);
+    material_param_send_vec3(material->program, &m->diffuse, "diffuse", &texSlot);
+    material_param_send_vec3(material->program, &m->specular, "specular", &texSlot);
+    material_param_send_float(material->program, &m->shininess, "shininess", &texSlot);
+    if (m->normalMap) {
+        material_param_send_texture(material->program, m->normalMap, "normalMap", &texSlot);
     }
+    alpha_params_send(material->program, &m->alpha, &texSlot);
 }
 
 struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
-    static const char* defines[14];
+    static const char* defines[2 * (7 + ALPHA_MAX_DEFINES)];
     unsigned int numDefines = 0;
     struct Viewer* currentViewer;
     struct PhongMaterial* phong;
@@ -50,6 +52,7 @@ struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
         defines[2 * numDefines] = "HAVE_TEXCOORD";
         defines[2 * numDefines++ + 1] = NULL;
     }
+    alpha_set_defines((enum AlphaParamsFlags)flags, defines, &numDefines);
     if ((progid = viewer_get_program_id(GAME_UID_PHONG, variant)) == ((unsigned int)-1)
      || !(currentViewer = viewer_get_current())) {
         return NULL;

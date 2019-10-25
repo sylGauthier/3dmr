@@ -43,6 +43,8 @@ uniform float shininess;
 uniform sampler2D normalMap;
 #endif
 
+#include "alpha.glsl"
+
 void main() {
 #ifdef HAVE_TANGENT
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
@@ -68,5 +70,5 @@ void main() {
 #else
     float sh = shininess;
 #endif
-    out_Color = vec4(phong(a, d, s, sh, cameraPosition, surfelPosition, normalize(surfelNormal)), 1.0);
+    out_Color = vec4(phong(a, d, s, sh, cameraPosition, surfelPosition, normalize(surfelNormal)), get_alpha());
 }

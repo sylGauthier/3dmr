@@ -1,3 +1,4 @@
+#include <game/material/alpha.h>
 #include <game/material/param.h>
 #include <game/render/material.h>
 
@@ -9,6 +10,7 @@
 struct SolidMaterial {
     struct Material material;
     struct MatParamVec3 color;
+    struct AlphaParams alpha;
 };
 
 enum SolidMaterialFlags {

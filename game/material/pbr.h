@@ -1,3 +1,4 @@
+#include <game/material/alpha.h>
 #include <game/material/param.h>
 #include <game/render/material.h>
 
@@ -12,6 +13,7 @@ struct PBRMaterial {
     struct MatParamFloat metalness;
     struct MatParamFloat roughness;
     GLuint normalMap;
+    struct AlphaParams alpha;
     struct IBL* ibl;
 };
 

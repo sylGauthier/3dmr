@@ -1,3 +1,4 @@
+#include <game/material/alpha.h>
 #include <game/material/param.h>
 #include <game/math/linear_algebra.h>
 #include <game/render/material.h>
@@ -13,6 +14,7 @@ struct PhongMaterial {
     struct MatParamVec3 ambient, diffuse, specular;
     struct MatParamFloat shininess;
     GLuint normalMap;
+    struct AlphaParams alpha;
 };
 
 enum PhongMaterialFlags {
