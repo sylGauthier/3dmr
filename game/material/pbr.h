@@ -4,6 +4,8 @@
 #ifndef PBR_H
 #define PBR_H
 
+#define GAME_UID_PBR 3
+
 struct PBRMaterial {
     struct Material material;
     struct MatParamVec3 albedo;

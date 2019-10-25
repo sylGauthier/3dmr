@@ -5,8 +5,6 @@
 #include <game/render/viewer.h>
 #include "programs.h"
 
-static unsigned int progid[32] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-
 static void phong_load(const struct Material* material) {
     unsigned int texSlot = 0;
     material_param_send_vec3(material->program, &((const struct PhongMaterial*)material)->ambient, "ambient", &texSlot);
@@ -24,7 +22,7 @@ struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
     struct Viewer* currentViewer;
     struct PhongMaterial* phong;
     GLuint prog;
-    unsigned int variant = flags & 31;
+    unsigned int progid, variant = flags & 31;
 
     defines[2 * numDefines] = "HAVE_NORMAL";
     defines[2 * numDefines++ + 1] = NULL;
@@ -52,21 +50,17 @@ struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
         defines[2 * numDefines] = "HAVE_TEXCOORD";
         defines[2 * numDefines++ + 1] = NULL;
     }
-    if (progid[variant] == ((unsigned int)-1)) {
-        if ((progid[variant] = viewer_register_program_id()) == ((unsigned int)-1)) {
-            return NULL;
-        }
-    }
-    if (!(currentViewer = viewer_get_current())) {
+    if ((progid = viewer_get_program_id(GAME_UID_PHONG, variant)) == ((unsigned int)-1)
+     || !(currentViewer = viewer_get_current())) {
         return NULL;
     }
-    if (!(prog = viewer_get_program(currentViewer, progid[variant]))) {
+    if (!(prog = viewer_get_program(currentViewer, progid))) {
         if (!(prog = game_load_shader("standard.vert", "phong.frag", defines, numDefines))) {
             return NULL;
         }
         glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
         glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Lights"), LIGHTS_UBO_BINDING);
-        if (!viewer_set_program(currentViewer, progid[variant], prog)) {
+        if (!viewer_set_program(currentViewer, progid, prog)) {
             glDeleteProgram(prog);
             return NULL;
         }
@@ -77,6 +71,7 @@ struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags) {
     phong->material.load = phong_load;
     phong->material.program = prog;
     phong->material.polygonMode = GL_FILL;
+    phong->normalMap = 0;
 
     return phong;
 }

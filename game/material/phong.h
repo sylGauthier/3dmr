@@ -6,6 +6,8 @@
 #ifndef PHONG_H
 #define PHONG_H
 
+#define GAME_UID_PHONG 2
+
 struct PhongMaterial {
     struct Material material;
     struct MatParamVec3 ambient, diffuse, specular;

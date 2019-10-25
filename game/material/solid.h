@@ -4,6 +4,8 @@
 #ifndef SOLID_H
 #define SOLID_H
 
+#define GAME_UID_SOLID 1
+
 struct SolidMaterial {
     struct Material material;
     struct MatParamVec3 color;

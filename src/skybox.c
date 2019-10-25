@@ -8,8 +8,6 @@
 #include <game/skybox.h>
 #include "material/programs.h"
 
-static unsigned int progid = -1;
-
 static void texture_params_cubemap(void) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -137,14 +135,11 @@ static void skybox_load(const struct Material* material) {
 int skybox_create(GLuint texture, struct Skybox* skybox) {
     struct Mesh box;
     struct Viewer* currentViewer;
+    unsigned int progid;
     GLuint prog;
 
-    if (progid == ((unsigned int)-1)) {
-        if ((progid = viewer_register_program_id()) == ((unsigned int)-1)) {
-            return 0;
-        }
-    }
-    if (!(currentViewer = viewer_get_current())) {
+    if ((progid = viewer_get_program_id(GAME_UID_SKYBOX, 0)) == ((unsigned int)-1)
+     || !(currentViewer = viewer_get_current())) {
         return 0;
     }
     if (!(prog = viewer_get_program(currentViewer, progid))) {

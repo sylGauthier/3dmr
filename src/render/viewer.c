@@ -17,6 +17,7 @@ struct ViewerImpl {
 };
 
 static struct Viewer* currentViewer = NULL;
+static unsigned long* programs = NULL;
 static unsigned int numPrograms = 0;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -143,10 +144,16 @@ void viewer_free(struct Viewer* viewer) {
     }
 }
 
-unsigned int viewer_register_program_id(void) {
-    if (numPrograms == ((unsigned int)-1)) {
+unsigned int viewer_get_program_id(unsigned int uid, unsigned int variant) {
+    unsigned long *tmp, k = ((uid & 0xFFFF) << 16) | (variant & 0xFFFF);
+    unsigned int i;
+    for (i = 0; i < numPrograms; i++) {
+        if (programs[i] == k) return i;
+    }
+    if (numPrograms == ((unsigned int)-1) || !(tmp = realloc(programs, (numPrograms + 1) * sizeof(*programs)))) {
         return -1;
     }
+    (programs = tmp)[numPrograms] = k;
     return numPrograms++;
 }
 
@@ -213,4 +220,9 @@ int viewer_screenshot(struct Viewer* viewer, const char* filename) {
     ret = png_write(filename, 1, viewer->width, viewer->height, 3, 1, data);
     free(data);
     return ret;
+}
+
+void _game_viewer_free(void) {
+    free(programs);
+    programs = NULL;
 }

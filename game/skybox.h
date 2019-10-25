@@ -4,6 +4,8 @@
 #ifndef SKYBOX_H
 #define SKYBOX_H
 
+#define GAME_UID_SKYBOX 0
+
 struct Skybox {
     struct Material material;
     GLuint texture;

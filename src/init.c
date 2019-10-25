@@ -15,6 +15,9 @@ int game_init(const char* gameShaderRootPath) {
     return 1;
 }
 
+void _game_viewer_free(void);
+
 void game_free(void) {
     free(shaderRootPath);
+    _game_viewer_free();
 }

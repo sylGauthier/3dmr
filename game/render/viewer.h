@@ -17,7 +17,7 @@ struct Viewer {
 struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* title);
 void viewer_free(struct Viewer* viewer);
 
-unsigned int viewer_register_program_id(void);
+unsigned int viewer_get_program_id(unsigned int uid, unsigned int variant);
 
 GLuint viewer_get_program(struct Viewer* viewer, unsigned int id);
 int viewer_set_program(struct Viewer* viewer, unsigned int id, GLuint program);
