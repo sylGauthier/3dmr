@@ -10,13 +10,14 @@ coverage:
     LDFLAGS: --coverage -Wl,--whole-archive
     LDLIBS: -Wl,--no-whole-archive -lgcov
   script:
-    - bash -c '[ -n "$OPENGEX" ] && (cd .. && git clone https://framagit.org/sgauthier/liboddl && make -C liboddl install PREFIX="$(pwd)/deps")'
+    - bash -c '[ -n "$OPENGEX" ] && (cd .. && rm -rf liboddl && git clone https://framagit.org/sgauthier/liboddl && make -C liboddl install PREFIX="$(pwd)/deps")'
     - git clone https://github.com/linux-test-project/lcov.git
     - make -C lcov install PREFIX="$(pwd)/lcov/usr" CFG_DIR="$(pwd)/lcov/etc"
     - xvfb-run -a -s "-screen 0 1024x768x24" bash -c 'export PKG_CONFIG_PATH="$(pwd)/../deps/lib/pkgconfig"; make test'
     - ./lcov/usr/bin/lcov -d . -b . -k src --no-external --capture -o "$(git describe --always).coverage"
     - ./lcov/usr/bin/genhtml --output-directory cov "$(git describe --always).coverage"
     - tar -czf cov.tgz cov
+    - rm -rf ../deps ../liboddl
   artifacts:
     paths:
       - cov.tgz
