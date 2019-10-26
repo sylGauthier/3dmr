@@ -6,17 +6,12 @@
 #define ALPHA_MAX_DEFINES 4
 
 struct AlphaParams {
-    int enabled;
+    enum AlphaMode {ALPHA_DISABLED, ALPHA_BLEND, ALPHA_TEST} mode;
     struct MatParamFloat alpha;
 };
 
-enum AlphaParamsFlags {
-    ALPHA_ENABLED = 1 << 10,
-    ALPHA_TEXTURED = 1 << 11,
-    ALPHA_TEST = 1 << 12
-};
-
+void alpha_params_init(struct AlphaParams* params);
 void alpha_params_send(GLuint prog, const struct AlphaParams* params, unsigned int* texSlot);
-void alpha_set_defines(enum AlphaParamsFlags flags, const char** defines, unsigned int* numDefines);
+void alpha_set_defines(const struct AlphaParams* params, const char** defines, unsigned int* numDefines);
 
 #endif

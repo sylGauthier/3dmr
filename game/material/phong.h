@@ -9,23 +9,16 @@
 
 #define GAME_UID_PHONG 2
 
-struct PhongMaterial {
-    struct Material material;
+struct PhongMaterialParams {
     struct MatParamVec3 ambient, diffuse, specular;
     struct MatParamFloat shininess;
     GLuint normalMap;
     struct AlphaParams alpha;
 };
 
-enum PhongMaterialFlags {
-    PHONG_AMBIENT_TEXTURED = 1 << 0,
-    PHONG_DIFFUSE_TEXTURED = 1 << 1,
-    PHONG_SPECULAR_TEXTURED = 1 << 2,
-    PHONG_SHININESS_TEXTURED = 1 << 3,
-    PHONG_NORMALMAP = 1 << 4
-};
-
-struct PhongMaterial* phong_material_new(enum PhongMaterialFlags flags);
+void phong_material_params_init(struct PhongMaterialParams* p);
+struct PhongMaterialParams* phong_material_params_new(void);
+struct Material* phong_material_new(struct PhongMaterialParams* params);
 int material_is_phong(const struct Material* material);
 
 #endif

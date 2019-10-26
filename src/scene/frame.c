@@ -16,36 +16,35 @@ static const struct Mesh arrow = {(float*)arrowVertices, NULL, 12, 0, 0};
 struct Node* make_frame(void) {
     struct Node* node;
     struct VertexArray* va;
-    struct SolidMaterial* material[3];
+    struct Material* material[3];
+    struct SolidMaterialParams* matParams;
     struct Geometry* geometry;
-    Vec3 color;
     unsigned int i;
 
-    if (!(node = malloc(4 * sizeof(*node) + sizeof(*va) + 3 * sizeof(*geometry)))) {
+    if (!(node = malloc(4 * sizeof(*node) + sizeof(*va) + 3 * sizeof(*matParams) + 3 * sizeof(*geometry)))) {
         return NULL;
     }
     va = (void*)(node + 4);
-    geometry = (void*)(va + 1);
+    matParams = (void*)(va + 1);
+    geometry = (void*)(matParams + 3);
 
     node_init(node);
     vertex_array_gen(&arrow, va);
-    material[0] = solid_material_new(0);
-    material[1] = solid_material_new(0);
-    material[2] = solid_material_new(0);
+    for (i = 0; i < 3; i++) {
+        solid_material_params_init(matParams + i);
+        material_param_set_vec3_elems(&matParams[i].color, i == 0, i == 1, i == 2);
+        material[i] = solid_material_new(matParams + i);
+    }
 
     if (!material[0] || !material[1] || !material[2]) {
-        free(node);
         vertex_array_del(va);
         for (i = 0; i < 3; i++) free(material[i]);
+        free(node);
         return NULL;
     }
     for (i = 0; i < 3; i++) {
         geometry[i].vertexArray = va;
-        geometry[i].material = (struct Material*)material[i];
-        color[0] = (i == 0);
-        color[1] = (i == 1);
-        color[2] = (i == 2);
-        material_param_set_vec3_constant(&material[i]->color, color);
+        geometry[i].material = material[i];
         node_init(node + i + 1);
         node_set_geometry(node + i + 1, geometry + i);
         node_add_child(node, node + i + 1);

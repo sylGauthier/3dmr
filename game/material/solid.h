@@ -7,18 +7,17 @@
 
 #define GAME_UID_SOLID 1
 
-struct SolidMaterial {
-    struct Material material;
+struct SolidMaterialParams {
     struct MatParamVec3 color;
     struct AlphaParams alpha;
+    enum SolidMaterialOptions {
+        SOLID_OVERLAY = 1 << 0
+    } options;
 };
 
-enum SolidMaterialFlags {
-    SOLID_TEXTURED = 1 << 0,
-    SOLID_OVERLAY = 1 << 1
-};
-
-struct SolidMaterial* solid_material_new(enum SolidMaterialFlags flags);
+void solid_material_params_init(struct SolidMaterialParams* p);
+struct SolidMaterialParams* solid_material_params_new(void);
+struct Material* solid_material_new(struct SolidMaterialParams* params);
 int material_is_solid(const struct Material* material);
 
 #endif

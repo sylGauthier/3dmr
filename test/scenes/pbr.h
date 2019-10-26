@@ -6,26 +6,30 @@
 #include "util.h"
 
 static int pbr_setup(struct Scene* scene) {
-    struct PBRMaterial* mat = NULL;
+    struct PBRMaterialParams* params = NULL;
+    struct Material* mat = NULL;
     struct Node* n = NULL;
     struct Mesh mesh;
-    int ok;
 
     if (!make_icosphere(&mesh, 2, 4)) return 0;
-    ok = (mat = pbr_material_new(0)) && (n = create_node(&mesh, mat));
-    mesh_free(&mesh);
-    ok = ok && scene_add(scene, n);
-    if (!ok && n) free_node(n);
-    if (ok) {
-        material_param_set_vec3_elems(&mat->albedo, 1, 0, 1);
-        material_param_set_float_constant(&mat->metalness, 0.0);
-        material_param_set_float_constant(&mat->roughness, 0.3);
-    } else {
-        if (n) {
-            free_node(n);
-        } else {
+    if ((params = pbr_material_params_new())) {
+        material_param_set_vec3_elems(&params->albedo, 1, 0, 1);
+        material_param_set_float_constant(&params->metalness, 0.0);
+        material_param_set_float_constant(&params->roughness, 0.3);
+        if ((mat = pbr_material_new(params))) {
+            if ((n = create_node(&mesh, mat))) {
+                if (scene_add(scene, n)) {
+                    mesh_free(&mesh);
+                    return 1;
+                }
+                free_node(n);
+                mat = NULL;
+                params = NULL;
+            }
             free(mat);
         }
+        free(params);
     }
-    return ok;
+    mesh_free(&mesh);
+    return 0;
 }

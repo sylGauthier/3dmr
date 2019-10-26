@@ -110,23 +110,6 @@ int ogex_parse_texture(struct OgexContext* context, struct ODDLStructure* cur, c
     return 1;
 }
 
-static void init_phong_params(struct MatParamVec3 params[]) {
-    params[PHONG_AMBIENT].mode = MAT_PARAM_CONSTANT;
-    params[PHONG_AMBIENT].value.constant[0] = 0.0;
-    params[PHONG_AMBIENT].value.constant[1] = 0.0;
-    params[PHONG_AMBIENT].value.constant[2] = 0.0;
-
-    params[PHONG_DIFFUSE].mode = MAT_PARAM_CONSTANT;
-    params[PHONG_DIFFUSE].value.constant[0] = 1.0;
-    params[PHONG_DIFFUSE].value.constant[1] = 1.0;
-    params[PHONG_DIFFUSE].value.constant[2] = 1.0;
-
-    params[PHONG_SPECULAR].mode = MAT_PARAM_CONSTANT;
-    params[PHONG_SPECULAR].value.constant[0] = 0.0;
-    params[PHONG_SPECULAR].value.constant[1] = 0.0;
-    params[PHONG_SPECULAR].value.constant[2] = 0.0;
-}
-
 static enum PhongModes get_phong_mode(const char* attrib) {
     if (!strcmp(attrib, "diffuse")) return PHONG_DIFFUSE;
     if (!strcmp(attrib, "specular")) return PHONG_SPECULAR;
@@ -136,15 +119,15 @@ static enum PhongModes get_phong_mode(const char* attrib) {
 
 int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) {
     unsigned int i;
-    struct MatParamVec3 params[PHONG_NB_PARAMS];
-    struct PhongMaterial* newMat;
-    enum PhongMaterialFlags matFlags = 0;
-    float spec = 1.0;
-    char flags = 0;
+    struct MatParamVec3* params[PHONG_NB_PARAMS];
+    struct PhongMaterialParams* phongParams;
 
     if (ogex_get_shared_object(context, cur)) return 1;
 
-    init_phong_params(params);
+    if (!(phongParams = phong_material_params_new())) return 0;
+    params[PHONG_AMBIENT] = &phongParams->ambient;
+    params[PHONG_DIFFUSE] = &phongParams->diffuse;
+    params[PHONG_SPECULAR] = &phongParams->specular;
 
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
@@ -161,22 +144,11 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                     case PHONG_DIFFUSE:
                     case PHONG_SPECULAR:
                     case PHONG_AMBIENT:
-                        if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
-                            break;
-                        }
-                        material_param_set_vec3_constant(params + mode, color);
-                        flags |= 1 << mode;
+                        if (params[mode]->mode == MAT_PARAM_TEXTURED) break;
+                        material_param_set_vec3_constant(params[mode], color);
                         break;
                     default:
-                        if (!strcmp(attrib, "specular")) {
-                            params[PHONG_SPECULAR].mode = MAT_PARAM_CONSTANT;
-                            memcpy(params[PHONG_SPECULAR].value.constant, color, sizeof(Vec3));
-                            flags |= 1 << PHONG_SPECULAR;
-                        } else if (!strcmp(attrib, "ambient")) {
-                            params[PHONG_AMBIENT].mode = MAT_PARAM_CONSTANT;
-                            memcpy(params[PHONG_AMBIENT].value.constant, color, sizeof(Vec3));
-                            flags |= 1 << PHONG_AMBIENT;
-                        } else if (!strcmp(attrib, "opacity")) {
+                        if (!strcmp(attrib, "opacity")) {
                             fprintf(stderr, "Warning: Material: opacity attribute not supported\n");
                         } else if (!strcmp(attrib, "transparency")) {
                             fprintf(stderr, "Warning: Material: transparency attribute not supported\n");
@@ -189,7 +161,7 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
             case OGEX_PARAM:
                 if (!ogex_parse_param(tmp, &attrib, &param)) return 0;
                 if (!strcmp(attrib, "specular_power")) {
-                    spec = param;
+                    material_param_set_float_constant(&phongParams->shininess, param);
                 } else {
                     fprintf(stderr, "Warning: Material: unsupported Param attribute: %s\n", attrib);
                 }
@@ -197,17 +169,15 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
             case OGEX_TEXTURE:
                 if (!ogex_parse_texture(context, tmp, &attrib, &tex)) return 0;
                 switch ((mode = get_phong_mode(attrib))) {
-                    case PHONG_DIFFUSE:  matFlags |= PHONG_DIFFUSE_TEXTURED; goto do_tex;
-                    case PHONG_SPECULAR: matFlags |= PHONG_SPECULAR_TEXTURED; goto do_tex;
-                    case PHONG_AMBIENT:  matFlags |= PHONG_AMBIENT_TEXTURED; goto do_tex;
-                    do_tex:
-                        if ((flags & (1 << mode)) && params[mode].mode == MAT_PARAM_TEXTURED) {
+                    case PHONG_DIFFUSE:
+                    case PHONG_SPECULAR:
+                    case PHONG_AMBIENT:
+                        if (params[mode]->mode == MAT_PARAM_TEXTURED) {
                             fprintf(stderr, "Warning: Material: multiple textures for same phong attribute not supported\n");
                             glDeleteTextures(1, &tex);
-                            return 0;
+                        } else {
+                            material_param_set_vec3_texture(params[mode], tex);
                         }
-                        material_param_set_vec3_texture(params + mode, tex);
-                        flags |= 1 << mode;
                         break;
                     default:
                         fprintf(stderr, "Warning: Material: attribute not supported for Texture\n");
@@ -219,14 +189,10 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
                 break;
         }
     }
-    newMat = phong_material_new(matFlags);
-    newMat->ambient = params[PHONG_AMBIENT];
-    newMat->diffuse = params[PHONG_DIFFUSE];
-    newMat->specular = params[PHONG_SPECULAR];
-    material_param_set_float_constant(&newMat->shininess, spec);
-    if (!ogex_add_shared_object(context, cur, newMat, 1)) return 0;
+    if (!ogex_add_shared_object(context, cur, phongParams, 1)) return 0;
     if (context->shared) {
-        if (!import_add_shared_item(&context->shared->mats, &context->shared->nbMat, newMat)) {
+        if (!import_add_shared_item(&context->shared->matParams, &context->shared->nbMatParams, phongParams)) {
+            free(phongParams);
             return 0;
         }
     }

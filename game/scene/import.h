@@ -6,12 +6,13 @@
 
 struct SharedData {
     struct Material** mats;
+    void** matParams;
     struct VertexArray** va;
     struct Camera** cams;
     struct PointLight** plights;
     struct DirectionalLight** dlights;
 
-    unsigned int nbMat, nbVA, nbCams, nbPLights, nbDLights;
+    unsigned int nbMat, nbMatParams, nbVA, nbCams, nbPLights, nbDLights;
 };
 
 struct ImportMetadata {

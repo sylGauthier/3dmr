@@ -7,8 +7,7 @@
 
 #define GAME_UID_PBR 3
 
-struct PBRMaterial {
-    struct Material material;
+struct PBRMaterialParams {
     struct MatParamVec3 albedo;
     struct MatParamFloat metalness;
     struct MatParamFloat roughness;
@@ -17,14 +16,9 @@ struct PBRMaterial {
     struct IBL* ibl;
 };
 
-enum PBRMaterialFlags {
-    PBR_ALBEDO_TEXTURED = 1 << 0,
-    PBR_METALNESS_TEXTURED = 1 << 1,
-    PBR_ROUGHNESS_TEXTURED = 1 << 2,
-    PBR_NORMALMAP = 1 << 3
-};
-
-struct PBRMaterial* pbr_material_new(enum PBRMaterialFlags flags);
+void pbr_material_params_init(struct PBRMaterialParams* p);
+struct PBRMaterialParams* pbr_material_params_new(void);
+struct Material* pbr_material_new(struct PBRMaterialParams* params);
 int material_is_pbr(const struct Material* material);
 
 #endif

@@ -6,8 +6,11 @@
 
 struct Material {
     void (*load)(const struct Material*);
+    void* params;
     GLuint program;
     GLuint polygonMode;
 };
+
+struct Material* material_new(void (*load)(const struct Material*), void* params, GLuint program, GLuint polygonMode);
 
 #endif

@@ -17,7 +17,7 @@ static struct VertexArray* parse_object_ref(struct OgexContext* context, struct 
     return ogex_get_shared_object(context, goPtr);
 }
 
-static struct Material* parse_material_ref(struct OgexContext* context, struct ODDLStructure* cur) {
+static struct PhongMaterialParams* parse_material_ref(struct OgexContext* context, struct ODDLStructure* cur) {
     struct ODDLStructure* matPtr;
 
     if (!ogex_parse_ref(cur, &matPtr)) {
@@ -34,6 +34,7 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
     unsigned int i;
     struct Geometry* glObject;
     struct VertexArray* va = NULL;
+    struct PhongMaterialParams* matParams = NULL;
     struct Material* mat = NULL;
 
     if (!(cur->structures)) return 0;
@@ -50,7 +51,7 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
                 va = parse_object_ref(context, tmp);
                 break;
             case OGEX_MATERIAL_REF:
-                mat = parse_material_ref(context, tmp);
+                matParams = parse_material_ref(context, tmp);
                 break;
             default:
                 break;
@@ -59,6 +60,16 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
     if (!(va && mat)) {
         fprintf(stderr, "Error: GeometryNode: missing vertex array or material, aborting\n");
         return 0;
+    }
+    if (!(mat = phong_material_new(matParams))) {
+        fprintf(stderr, "Error: GeometryNode: failed to create material\n");
+        return 0;
+    }
+    if (context->shared) {
+        if (!import_add_shared_item(&context->shared->mats, &context->shared->nbMat, mat)) {
+            free(mat);
+            return 0;
+        }
     }
     glObject->vertexArray = va;
     glObject->material = mat;

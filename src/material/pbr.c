@@ -5,50 +5,71 @@
 #include <game/render/viewer.h>
 #include "programs.h"
 
-static void pbr_load(const struct Material* material) {
-    const struct PBRMaterial* m = (const struct PBRMaterial*)material;
-    unsigned int texSlot = 0;
-    material_param_send_vec3(material->program,  &m->albedo, "albedo", &texSlot);
-    material_param_send_float(material->program, &m->metalness, "metalness", &texSlot);
-    material_param_send_float(material->program, &m->roughness, "roughness", &texSlot);
-    if (m->normalMap) {
-        material_param_send_texture(material->program, m->normalMap, "normalMap", &texSlot);
-    }
-    alpha_params_send(material->program, &m->alpha, &texSlot);
-    light_load_ibl_uniforms(material->program, m->ibl, texSlot, texSlot + 1, texSlot + 2);
+void pbr_material_params_init(struct PBRMaterialParams* p) {
+    material_param_set_vec3_elems(&p->albedo, 1, 1, 1);
+    material_param_set_float_constant(&p->metalness, 0);
+    material_param_set_float_constant(&p->roughness, 0.5);
+    alpha_params_init(&p->alpha);
+    p->normalMap = 0;
+    p->ibl = NULL;
 }
 
-struct PBRMaterial* pbr_material_new(enum PBRMaterialFlags flags) {
+struct PBRMaterialParams* pbr_material_params_new(void) {
+    struct PBRMaterialParams* p;
+    if ((p = malloc(sizeof(*p)))) {
+        pbr_material_params_init(p);
+    }
+    return p;
+}
+
+static void pbr_load(const struct Material* material) {
+    const struct PBRMaterialParams* p = material->params;
+    unsigned int texSlot = 0;
+    material_param_send_vec3(material->program,  &p->albedo, "albedo", &texSlot);
+    material_param_send_float(material->program, &p->metalness, "metalness", &texSlot);
+    material_param_send_float(material->program, &p->roughness, "roughness", &texSlot);
+    if (p->normalMap) {
+        material_param_send_texture(material->program, p->normalMap, "normalMap", &texSlot);
+    }
+    alpha_params_send(material->program, &p->alpha, &texSlot);
+    light_load_ibl_uniforms(material->program, p->ibl, texSlot, texSlot + 1, texSlot + 2);
+}
+
+struct Material* pbr_material_new(struct PBRMaterialParams* params) {
     static const char* defines[2 * (6 + ALPHA_MAX_DEFINES)];
     unsigned int numDefines = 0;
     struct Viewer* currentViewer;
-    struct PBRMaterial* pbrMat;
     GLuint prog;
-    unsigned int progid, variant = flags & 15;
+    unsigned int progid, variant = 0;
 
     defines[2 * numDefines] = "HAVE_NORMAL";
     defines[2 * numDefines++ + 1] = NULL;
-    if (flags & PBR_NORMALMAP) {
+    if (params->normalMap) {
         defines[2 * numDefines] = "HAVE_TANGENT";
         defines[2 * numDefines++ + 1] = NULL;
+        variant |= 1;
     }
-    if (flags & PBR_ALBEDO_TEXTURED) {
+    if (params->albedo.mode == MAT_PARAM_TEXTURED) {
         defines[2 * numDefines] = "ALBEDO_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
+        variant |= 2;
     }
-    if (flags & PBR_METALNESS_TEXTURED) {
+    if (params->metalness.mode == MAT_PARAM_TEXTURED) {
         defines[2 * numDefines] = "METALNESS_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
+        variant |= 4;
     }
-    if (flags & PBR_ROUGHNESS_TEXTURED) {
+    if (params->roughness.mode == MAT_PARAM_TEXTURED) {
         defines[2 * numDefines] = "ROUGHNESS_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
+        variant |= 8;
     }
     if (variant) {
         defines[2 * numDefines] = "HAVE_TEXCOORD";
         defines[2 * numDefines++ + 1] = NULL;
     }
-    alpha_set_defines((enum AlphaParamsFlags)flags, defines, &numDefines);
+    alpha_set_defines(&params->alpha, defines, &numDefines);
+
     if ((progid = viewer_get_program_id(GAME_UID_PBR, variant)) == ((unsigned int)-1)
      || !(currentViewer = viewer_get_current())) {
         return NULL;
@@ -64,16 +85,8 @@ struct PBRMaterial* pbr_material_new(enum PBRMaterialFlags flags) {
             return NULL;
         }
     }
-    if (!(pbrMat = malloc(sizeof(*pbrMat)))) {
-        return NULL;
-    }
-    pbrMat->material.load = pbr_load;
-    pbrMat->material.program = prog;
-    pbrMat->material.polygonMode = GL_FILL;
-    pbrMat->normalMap = 0;
-    pbrMat->ibl = NULL;
 
-    return pbrMat;
+    return material_new(pbr_load, params, prog, GL_FILL);
 }
 
 int material_is_pbr(const struct Material* material) {

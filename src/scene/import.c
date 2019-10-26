@@ -23,6 +23,9 @@ void import_free_shared_data(struct SharedData* shared) {
     for (i = 0; i < shared->nbMat; i++) {
         free(shared->mats[i]);
     }
+    for (i = 0; i < shared->nbMatParams; i++) {
+        free(shared->matParams[i]);
+    }
     for (i = 0; i < shared->nbVA; i++) {
         vertex_array_free(shared->va[i]);
     }
@@ -36,6 +39,7 @@ void import_free_shared_data(struct SharedData* shared) {
         free(shared->dlights[i]);
     }
     free(shared->mats);
+    free(shared->matParams);
     free(shared->va);
     free(shared->cams);
     free(shared->plights);

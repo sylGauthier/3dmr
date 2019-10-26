@@ -46,14 +46,6 @@ struct VertexArray* mkcube(void) {
     return va;
 }
 
-struct Material* mkmat(void) {
-    struct SolidMaterial* mat;
-    if ((mat = solid_material_new(0))) {
-        material_param_set_vec3_elems(&mat->color, 0, 0, 1);
-    }
-    return (struct Material*)mat;
-}
-
 int main(int argc, char** argv) {
     Mat4 model;
     Mat3 inv;
@@ -61,14 +53,17 @@ int main(int argc, char** argv) {
     struct VertexArray* va = NULL;
     struct Material* mat = NULL;
     struct UniformBuffer camera, lights;
+    struct SolidMaterialParams matParams;
 
     load_id4(model);
     load_id3(inv);
+    solid_material_params_init(&matParams);
+    material_param_set_vec3_elems(&matParams.color, 0, 0, 1);
     if (!game_init(GAME_SHADERS_PATH)) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
-    } else if (!(va = mkcube()) || !(mat = mkmat())) {
+    } else if (!(va = mkcube()) || !(mat = solid_material_new(&matParams))) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else if (!camera_buffer_object_gen(&camera) || !lights_buffer_object_gen(&lights)) {
         fprintf(stderr, "Error: failed to create UBOs\n");
