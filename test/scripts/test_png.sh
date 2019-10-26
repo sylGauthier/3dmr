@@ -10,8 +10,8 @@ assets rgb_tux.png gray_alpha_tux.png gray_tux.png indexed24_alpha_tux.png index
 
 for png in assets/*tux.png; do
     do_test "$(basename "$png")" <<END
-        ./png_rw "$png" "out/${png##*/}" 2>/dev/null || fail "png_rw"
-        ./scripts/cmp_img.sh "$png" "out/${png##*/}" 2>/dev/null || fail "cmp_img"
+        ./png_rw "$png" "out/${png##*/}" || fail "png_rw"
+        ./scripts/cmp_img.sh "$png" "out/${png##*/}" || fail "cmp_img"
 END
 done
 
