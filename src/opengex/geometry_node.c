@@ -57,7 +57,7 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
                 break;
         }
     }
-    if (!(va && mat)) {
+    if (!(va && matParams)) {
         fprintf(stderr, "Error: GeometryNode: missing vertex array or material, aborting\n");
         return 0;
     }
