@@ -3,15 +3,17 @@ image: gcc
 coverage:
   stage: test
   before_script:
-    - apt update && apt -y install make libglfw3-dev libglew-dev libpng-dev libfreetype6-dev xvfb wget dc imagemagick libjson-perl libperlio-gzip-perl libgd-perl
+    - apt update && apt -y install make libglfw3-dev libglew-dev libpng-dev libfreetype6-dev xvfb wget dc imagemagick libjson-perl libperlio-gzip-perl libgd-perl flex
   variables:
+    OPENGEX: 1
     CFLAGS: --coverage
     LDFLAGS: --coverage -Wl,--whole-archive
     LDLIBS: -Wl,--no-whole-archive -lgcov
   script:
+    - bash -c '[ -n "$OPENGEX" ] && (cd .. && git clone https://framagit.org/sgauthier/liboddl && make -C liboddl install PREFIX="$(pwd)/deps")'
     - git clone https://github.com/linux-test-project/lcov.git
     - make -C lcov install PREFIX="$(pwd)/lcov/usr" CFG_DIR="$(pwd)/lcov/etc"
-    - xvfb-run -a -s "-screen 0 1024x768x24" make test
+    - xvfb-run -a -s "-screen 0 1024x768x24" bash -c 'export PKG_CONFIG_PATH="$(pwd)/../deps/lib/pkgconfig"; make test'
     - ./lcov/usr/bin/lcov -d . -b . --no-external --capture -o "$(git describe --always).coverage"
     - ./lcov/usr/bin/genhtml --output-directory cov "$(git describe --always).coverage"
     - tar -czf cov.tgz cov
