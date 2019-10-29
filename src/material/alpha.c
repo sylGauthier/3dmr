@@ -17,8 +17,6 @@ void alpha_set_defines(const struct AlphaParams* params, const char** defines, u
     if (params->alpha.mode == MAT_PARAM_TEXTURED) {
         defines[2 * (*numDefines)] = "ALPHA_TEXTURED";
         defines[2 * (*numDefines)++ + 1] = NULL;
-        defines[2 * (*numDefines)] = "HAVE_TEXCOORD";
-        defines[2 * (*numDefines)++ + 1] = NULL;
     }
     if (params->mode == ALPHA_TEST) {
         defines[2 * (*numDefines)] = "ALPHA_TEST";

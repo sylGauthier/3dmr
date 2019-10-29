@@ -1,5 +1,9 @@
 #version 140
 
+#if defined(SOLID_TEXTURED) || defined(ALPHA_TEXTURED)
+#define HAVE_TEXCOORD
+#endif
+
 #ifdef HAVE_TEXCOORD
 in vec2 coordTexture;
 #endif

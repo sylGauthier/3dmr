@@ -4,8 +4,6 @@
 #ifndef LIGHTS_BUFFER_OBJECT_H
 #define LIGHTS_BUFFER_OBJECT_H
 
-#define LIGHTS_UBO_BINDING 1
-
 int lights_buffer_object_gen(struct UniformBuffer* dest);
 struct UniformBuffer* lights_buffer_object_new(void);
 

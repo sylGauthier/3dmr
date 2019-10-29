@@ -4,15 +4,15 @@
 #include "pbr/pbr.glsl"
 #include "hdr.glsl"
 
-#ifndef HAVE_NORMAL
-#error "PBR shader needs normals"
+#if defined(ALBEDO_TEXTURED) || defined(METALNESS_TEXTURED) || defined(ROUGHNESS_TEXTURED) || defined(NORMALMAP) || defined(ALPHA_TEXTURED)
+#define HAVE_TEXCOORD
 #endif
 
 in vec3 surfelPosition;
 #ifdef HAVE_TEXCOORD
 in vec2 coordTexture;
 #endif
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
 in mat3 tangentBasis;
 #else
 in vec3 surfelNormal;
@@ -34,14 +34,14 @@ uniform sampler2D roughness;
 #else
 uniform float roughness;
 #endif
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
 uniform sampler2D normalMap;
 #endif
 
 #include "alpha.glsl"
 
 void main() {
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
     surfelNormal = tangentBasis * surfelNormal;
 #endif

@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include <game/init.h>
 #include <game/render/camera_buffer_object.h>
 #include <game/render/lights_buffer_object.h>
 #include <game/render/vertex_array.h>
+#include <game/render/vertex_shader.h>
 #include <game/render/viewer.h>
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
@@ -46,6 +44,17 @@ struct VertexArray* mkcube(void) {
     return va;
 }
 
+struct Material* mkmat(const struct SolidMaterialParams* params) {
+    GLuint shaders[2] = {0, 0};
+    struct Material* m = NULL;
+    if ((shaders[0] = vertex_shader_standard(0)) && (shaders[1] = solid_shader_new(params))) {
+        m = material_new_from_shaders(shaders, 2, solid_load, (struct SolidMaterialParams*)params, GL_FILL);
+    }
+    if (shaders[0]) glDeleteShader(shaders[0]);
+    if (shaders[1]) glDeleteShader(shaders[1]);
+    return m;
+}
+
 int main(int argc, char** argv) {
     Mat4 model;
     Mat3 inv;
@@ -63,7 +72,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
-    } else if (!(va = mkcube()) || !(mat = solid_material_new(&matParams))) {
+    } else if (!(va = mkcube()) || !(mat = mkmat(&matParams))) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else if (!camera_buffer_object_gen(&camera) || !lights_buffer_object_gen(&lights)) {
         fprintf(stderr, "Error: failed to create UBOs\n");
@@ -80,9 +89,11 @@ int main(int argc, char** argv) {
         lights_buffer_object_zero_init(&lights);
         uniform_buffer_send(&camera);
         uniform_buffer_send(&lights);
+        material_use(mat);
+        material_set_matrices(mat, model, inv);
         while (p.running) {
             viewer_next_frame(viewer);
-            vertex_array_render(va, mat, model, inv);
+            vertex_array_render(va);
             viewer_process_events(viewer);
         }
     }

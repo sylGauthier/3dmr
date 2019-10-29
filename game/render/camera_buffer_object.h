@@ -4,8 +4,6 @@
 #ifndef CAMERA_BUFFER_OBJECT_H
 #define CAMERA_BUFFER_OBJECT_H
 
-#define CAMERA_UBO_BINDING 0
-
 int camera_buffer_object_gen(struct UniformBuffer* dest);
 struct UniformBuffer* camera_buffer_object_new(void);
 

@@ -114,18 +114,12 @@ void vertex_array_free(struct VertexArray* va) {
     }
 }
 
-void vertex_array_render(const struct VertexArray* vertexArray, const struct Material* material, Mat4 model, Mat3 inverseNormal) {
-    glUseProgram(material->program);
+void vertex_array_render(const struct VertexArray* vertexArray) {
     glBindVertexArray(vertexArray->vao);
-    glUniformMatrix4fv(glGetUniformLocation(material->program, "model"), 1, GL_FALSE, &model[0][0]);
-    glUniformMatrix3fv(glGetUniformLocation(material->program, "inverseNormal"), 1, GL_FALSE, &inverseNormal[0][0]);
-    glPolygonMode(GL_FRONT_AND_BACK, material->polygonMode);
-    material->load(material);
     if (vertexArray->numIndices) {
         glDrawElements(GL_TRIANGLES, vertexArray->numIndices, GL_UNSIGNED_INT, 0);
     } else {
         glDrawArrays(GL_TRIANGLES, 0, vertexArray->numVertices);
     }
     glBindVertexArray(0);
-    glUseProgram(0);
 }

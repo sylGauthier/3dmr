@@ -2,6 +2,7 @@
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
 #include <game/render/texture.h>
+#include <game/render/vertex_shader.h>
 #include <game/scene/scene.h>
 #include "util.h"
 
@@ -24,14 +25,16 @@ static int solid_color_setup(struct Scene* scene, float size, enum AlphaMode alp
     struct Mesh mesh;
     struct SolidMaterialParams* params = NULL;
     struct Material* mat = NULL;
-    GLuint alphamap;
+    GLuint shaders[2] = {0, 0}, alphamap;
 
     if (!make_box(&mesh, size, size, size)) return 0;
     if ((params = solid_material_params_new())) {
         material_param_set_vec3_elems(&params->color, 1, 0, 1);
         if (alpha_setup(alphaMode, &params->alpha)) {
             if (alphaMode) alphamap = params->alpha.alpha.value.texture;
-            if ((mat = solid_material_new(params))) {
+            shaders[0] = vertex_shader_standard(mesh.flags);
+            shaders[1] = solid_shader_new(params);
+            if (shaders[0] && shaders[1] && (mat = material_new_from_shaders(shaders, 2, solid_load, params, GL_FILL))) {
                 if ((n = create_node(&mesh, mat))) {
                     if (scene_add(scene, n)) {
                         mesh_free(&mesh);

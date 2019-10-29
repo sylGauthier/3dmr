@@ -3,7 +3,7 @@
 #ifndef GAME_MATERIAL_ALPHA_H
 #define GAME_MATERIAL_ALPHA_H
 
-#define ALPHA_MAX_DEFINES 4
+#define ALPHA_MAX_DEFINES 3
 
 struct AlphaParams {
     enum AlphaMode {ALPHA_DISABLED, ALPHA_BLEND, ALPHA_TEST} mode;

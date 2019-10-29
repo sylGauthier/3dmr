@@ -5,8 +5,6 @@
 #ifndef SOLID_H
 #define SOLID_H
 
-#define GAME_UID_SOLID 1
-
 struct SolidMaterialParams {
     struct MatParamVec3 color;
     struct AlphaParams alpha;
@@ -15,9 +13,11 @@ struct SolidMaterialParams {
     } options;
 };
 
+void solid_load(GLuint program, void* params);
+
 void solid_material_params_init(struct SolidMaterialParams* p);
 struct SolidMaterialParams* solid_material_params_new(void);
-struct Material* solid_material_new(struct SolidMaterialParams* params);
+GLuint solid_shader_new(const struct SolidMaterialParams* params);
 int material_is_solid(const struct Material* material);
 
 #endif

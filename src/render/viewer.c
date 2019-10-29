@@ -12,13 +12,9 @@ struct ViewerImpl {
     int hasLast;
     double lastX, lastY;
     double lastTime;
-    GLuint* programs;
-    unsigned int numPrograms;
 };
 
 static struct Viewer* currentViewer = NULL;
-static unsigned long* programs = NULL;
-static unsigned int numPrograms = 0;
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
@@ -110,8 +106,6 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 glEnable(GL_MULTISAMPLE);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                viewer->programs = NULL;
-                viewer->numPrograms = 0;
                 viewer_make_current(&viewer->user);
                 return &viewer->user;
             }
@@ -123,18 +117,10 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
 }
 
 void viewer_free(struct Viewer* viewer) {
-    unsigned int i;
-
     if (viewer) {
         struct Viewer* current = currentViewer;
         if (current == viewer) current = NULL;
         viewer_make_current(viewer);
-        for (i = 0; i < ((struct ViewerImpl*)viewer)->numPrograms; i++) {
-            if (((struct ViewerImpl*)viewer)->programs[i]) {
-                glDeleteProgram(((struct ViewerImpl*)viewer)->programs[i]);
-            }
-        }
-        free(((struct ViewerImpl*)viewer)->programs);
         if (((struct ViewerImpl*)viewer)->window) {
             glfwDestroyWindow(((struct ViewerImpl*)viewer)->window);
             glfwTerminate();
@@ -142,42 +128,6 @@ void viewer_free(struct Viewer* viewer) {
         free(viewer);
         viewer_make_current(current);
     }
-}
-
-unsigned int viewer_get_program_id(unsigned int uid, unsigned int variant) {
-    unsigned long *tmp, k = ((uid & 0xFFFF) << 16) | (variant & 0xFFFF);
-    unsigned int i;
-    for (i = 0; i < numPrograms; i++) {
-        if (programs[i] == k) return i;
-    }
-    if (numPrograms == ((unsigned int)-1) || !(tmp = realloc(programs, (numPrograms + 1) * sizeof(*programs)))) {
-        return -1;
-    }
-    (programs = tmp)[numPrograms] = k;
-    return numPrograms++;
-}
-
-GLuint viewer_get_program(struct Viewer* viewer, unsigned int id) {
-    if (((struct ViewerImpl*)viewer)->numPrograms <= id) return 0;
-    return ((struct ViewerImpl*)viewer)->programs[id];
-}
-
-int viewer_set_program(struct Viewer* viewer, unsigned int id, GLuint program) {
-    if (id >= numPrograms) return 0;
-    if (((struct ViewerImpl*)viewer)->numPrograms <= id) {
-        GLuint* tmp;
-        unsigned int i;
-        if (!(tmp = realloc(((struct ViewerImpl*)viewer)->programs, numPrograms * sizeof(*tmp)))) {
-            return 0;
-        }
-        ((struct ViewerImpl*)viewer)->programs = tmp;
-        for (i = ((struct ViewerImpl*)viewer)->numPrograms; i < numPrograms; i++) {
-            ((struct ViewerImpl*)viewer)->programs[i] = 0;
-        }
-        ((struct ViewerImpl*)viewer)->numPrograms = numPrograms;
-    }
-    ((struct ViewerImpl*)viewer)->programs[id] = program;
-    return 1;
 }
 
 void viewer_set_title(struct Viewer* viewer, const char* title) {
@@ -220,9 +170,4 @@ int viewer_screenshot(struct Viewer* viewer, const char* filename) {
     ret = png_write(filename, 1, viewer->width, viewer->height, 3, 1, data);
     free(data);
     return ret;
-}
-
-void _game_viewer_free(void) {
-    free(programs);
-    programs = NULL;
 }

@@ -55,6 +55,16 @@ static int append_code(const char* string, char** code, GLint* codeSize, unsigne
     return 1;
 }
 
+GLuint shader_find_compile(const char* filename, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
+    char* path;
+    GLuint shader = 0;
+    if ((path = find_file(includePaths, numIncludePaths, filename))) {
+        shader = shader_compile(path, type, includePaths, numIncludePaths, defines, numDefines);
+        free(path);
+    }
+    return shader;
+}
+
 GLuint shader_compile(const char* path, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
     FILE* fd;
     GLuint shader = 0;
@@ -271,7 +281,7 @@ GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char
     return shader;
 }
 
-GLuint shader_link(GLuint* shaders, size_t numShaders) {
+GLuint shader_link(const GLuint* shaders, size_t numShaders) {
     char* errorString;
     size_t i;
     GLint error, size;
@@ -309,22 +319,9 @@ GLuint shader_link(GLuint* shaders, size_t numShaders) {
     if (error != GL_TRUE) {
         glDeleteProgram(prog);
         prog = 0;
-    }
-
-    return prog;
-}
-
-GLuint shader_compile_link_vert_frag(const char* vertexShaderPath, const char* fragmentShaderPath, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines) {
-    GLuint prog = 0, shaders[2];
-
-    if ((shaders[0] = shader_compile(vertexShaderPath, GL_VERTEX_SHADER, includePaths, numIncludePaths, defines, numDefines))) {
-        if ((shaders[1] = shader_compile(fragmentShaderPath, GL_FRAGMENT_SHADER, includePaths, numIncludePaths, defines, numDefines))) {
-            if (!(prog = shader_link(shaders, 2))) {
-                fprintf(stderr, "The shaders were '%s' and '%s'\n", vertexShaderPath, fragmentShaderPath);
-            }
-            glDeleteShader(shaders[1]);
-        }
-        glDeleteShader(shaders[0]);
+    } else {
+        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
+        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Lights"), LIGHTS_UBO_BINDING);
     }
 
     return prog;

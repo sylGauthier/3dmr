@@ -3,12 +3,12 @@
 #include "camera.glsl"
 #include "phong.glsl"
 
-#ifndef HAVE_NORMAL
-#error "Phong shader needs normals"
+#if defined(AMBIENT_TEXTURED) || defined(DIFFUSE_TEXTURED) || defined(SPECULAR_TEXTURED) || defined(SHININESS_TEXTURED) || defined(NORMALMAP) || defined(ALPHA_TEXTURED)
+#define HAVE_TEXCOORD
 #endif
 
 in vec3 surfelPosition;
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
 in mat3 tangentBasis;
 #else
 in vec3 surfelNormal;
@@ -39,14 +39,14 @@ uniform sampler2D shininess;
 #else
 uniform float shininess;
 #endif
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
 uniform sampler2D normalMap;
 #endif
 
 #include "alpha.glsl"
 
 void main() {
-#ifdef HAVE_TANGENT
+#ifdef NORMALMAP
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
     surfelNormal = tangentBasis * surfelNormal;
 #endif

@@ -1,12 +1,11 @@
 #include <stdlib.h>
+#include <game/init.h>
 #include <game/mesh/box.h>
-#include <game/render/camera_buffer_object.h>
+#include <game/render/shader.h>
 #include <game/render/texture.h>
-#include <game/render/viewer.h>
 #include <game/img/hdr.h>
 #include <game/img/png.h>
 #include <game/skybox.h>
-#include "material/programs.h"
 
 static void texture_params_cubemap(void) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -61,7 +60,7 @@ GLuint skybox_load_texture_png_6faces(const char* left, const char* right, const
 }
 
 GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceSize) {
-    GLuint tex[2], program, fbo, rbo, empty;
+    GLuint tex[2], shaders[2] = {0, 0}, program, fbo, rbo, empty;
     GLint viewport[4];
     float* data;
     unsigned int width, height;
@@ -84,7 +83,9 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                     glBindVertexArray(empty);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     if (hdr_read(path, 4, &width, &height, &data)) {
-                        if ((program = game_load_shader("cubemap.vert", "equirect_to_cubemap.frag", NULL, 0))) {
+                        shaders[0] = shader_find_compile("cubemap.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
+                        shaders[1] = shader_find_compile("equirect_to_cubemap.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
+                        if (shaders[0] && shaders[1] && (program = shader_link(shaders, 2))) {
                             glUseProgram(program);
                             glBindTexture(GL_TEXTURE_CUBE_MAP, tex[1]);
                             texture_params_cubemap();
@@ -108,6 +109,8 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                             glDeleteProgram(program);
                             ok = 1;
                         }
+                        if (shaders[0]) glDeleteShader(shaders[0]);
+                        if (shaders[1]) glDeleteShader(shaders[1]);
                         free(data);
                     }
                     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -126,32 +129,22 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
     return ok ? tex[1] : 0;
 }
 
-static void skybox_load(const struct Material* material) {
+static void skybox_load(GLuint program, void* param) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ((const struct Skybox*)material)->texture);
-    glUniform1i(glGetUniformLocation(material->program, "tex"), 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, *(GLuint*)param);
+    glUniform1i(glGetUniformLocation(program, "tex"), 0);
 }
 
 int skybox_create(GLuint texture, struct Skybox* skybox) {
     struct Mesh box;
-    struct Viewer* currentViewer;
-    unsigned int progid;
-    GLuint prog;
+    GLuint shaders[2] = {0, 0}, prog = 0;
 
-    if ((progid = viewer_get_program_id(GAME_UID_SKYBOX, 0)) == ((unsigned int)-1)
-     || !(currentViewer = viewer_get_current())) {
-        return 0;
-    }
-    if (!(prog = viewer_get_program(currentViewer, progid))) {
-        if (!(prog = game_load_shader("skybox.vert", "skybox.frag", NULL, 0))) {
-            return 0;
-        }
-        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
-        if (!viewer_set_program(currentViewer, progid, prog)) {
-            glDeleteProgram(prog);
-            return 0;
-        }
-    }
+    shaders[0] = shader_find_compile("skybox.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
+    shaders[1] = shader_find_compile("skybox.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
+    if (shaders[0] && shaders[1]) prog = shader_link(shaders, 2);
+    if (shaders[0]) glDeleteShader(shaders[0]);
+    if (shaders[1]) glDeleteShader(shaders[1]);
+    if (!prog) return 0;
     if (make_box(&box, 1, 1, 1)) {
         vertex_array_gen(&box, &skybox->vertexArray);
         mesh_free(&box);
@@ -159,6 +152,7 @@ int skybox_create(GLuint texture, struct Skybox* skybox) {
     skybox->material.load = skybox_load;
     skybox->material.program = prog;
     skybox->material.polygonMode = GL_FILL;
+    skybox->material.params = &skybox->texture;
     skybox->texture = texture;
 
     return 1;
@@ -166,6 +160,7 @@ int skybox_create(GLuint texture, struct Skybox* skybox) {
 
 void skybox_destroy(struct Skybox* skybox) {
     vertex_array_del(&skybox->vertexArray);
+    glDeleteProgram(skybox->material.program);
 }
 
 struct Skybox* skybox_new(GLuint texture) {
@@ -188,11 +183,10 @@ void skybox_free(struct Skybox* skybox) {
 }
 
 void skybox_render(struct Skybox* skybox) {
-    Mat4 model;
-    Mat3 inv;
     GLint dfunc;
     glGetIntegerv(GL_DEPTH_FUNC, &dfunc);
     glDepthFunc(GL_LEQUAL);
-    vertex_array_render(&skybox->vertexArray, &skybox->material, model, inv);
+    material_use(&skybox->material);
+    vertex_array_render(&skybox->vertexArray);
     glDepthFunc(dfunc);
 }
