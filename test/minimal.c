@@ -6,7 +6,6 @@
 #include <game/render/camera_buffer_object.h>
 #include <game/render/lights_buffer_object.h>
 #include <game/render/vertex_array.h>
-#include <game/render/vertex_shader.h>
 #include <game/render/viewer.h>
 #include <game/material/solid.h>
 #include <game/mesh/box.h>
@@ -44,17 +43,6 @@ struct VertexArray* mkcube(void) {
     return va;
 }
 
-struct Material* mkmat(const struct SolidMaterialParams* params) {
-    GLuint shaders[2] = {0, 0};
-    struct Material* m = NULL;
-    if ((shaders[0] = vertex_shader_standard(0)) && (shaders[1] = solid_shader_new(params))) {
-        m = material_new_from_shaders(shaders, 2, solid_load, (struct SolidMaterialParams*)params, GL_FILL);
-    }
-    if (shaders[0]) glDeleteShader(shaders[0]);
-    if (shaders[1]) glDeleteShader(shaders[1]);
-    return m;
-}
-
 int main(int argc, char** argv) {
     Mat4 model;
     Mat3 inv;
@@ -72,7 +60,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
-    } else if (!(va = mkcube()) || !(mat = mkmat(&matParams))) {
+    } else if (!(va = mkcube()) || !(mat = solid_material_new(0, &matParams))) {
         fprintf(stderr, "Error: failed to create cube\n");
     } else if (!camera_buffer_object_gen(&camera) || !lights_buffer_object_gen(&lights)) {
         fprintf(stderr, "Error: failed to create UBOs\n");

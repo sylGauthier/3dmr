@@ -17,5 +17,6 @@ GLuint shader_find_compile(const char* filename, GLenum type, const char** inclu
 GLuint shader_compile(const char* path, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);
 GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);
 GLuint shader_link(const GLuint* shaders, size_t numShaders);
+GLuint shader_find_compile_link_vertfrag(const char* vpath, const char* fpath, const char** includePaths, size_t numIncludePaths, const char** vdefines, size_t vNumDefines, const char** fdefines, size_t fNumDefines);
     
 #endif

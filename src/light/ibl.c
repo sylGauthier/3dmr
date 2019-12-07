@@ -19,15 +19,10 @@ static void params_2d_texture(void) {
 }
 
 static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap) {
-    GLuint shaders[2] = {0, 0}, program = 0;
+    GLuint program;
     GLint i;
 
-    shaders[0] = shader_find_compile("cubemap.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
-    shaders[1] = shader_find_compile("ibl/irradiance_map.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-    if (shaders[0] && shaders[1]) program = shader_link(shaders, 2);
-    if (shaders[0]) glDeleteShader(shaders[0]);
-    if (shaders[1]) glDeleteShader(shaders[1]);
-    if (!program) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/irradiance_map.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     params_cubemap_texture(0);
@@ -51,16 +46,11 @@ static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap
 }
 
 static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmaps, GLuint specularMap) {
-    GLuint shaders[2] = {0, 0}, program = 0;
+    GLuint program;
     GLint i, level;
     float roughness;
 
-    shaders[0] = shader_find_compile("cubemap.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
-    shaders[1] = shader_find_compile("ibl/specular_map.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-    if (shaders[0] && shaders[1]) program = shader_link(shaders, 2);
-    if (shaders[0]) glDeleteShader(shaders[0]);
-    if (shaders[1]) glDeleteShader(shaders[1]);
-    if (!program) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/specular_map.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_CUBE_MAP, specularMap);
     params_cubemap_texture(1);
@@ -91,14 +81,9 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
 }
 
 static int specular_brdf(unsigned int size, GLuint specularBrdf) {
-    GLuint shaders[2] = {0, 0}, program = 0;
+    GLuint program;
 
-    shaders[0] = shader_find_compile("quad.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
-    shaders[1] = shader_find_compile("ibl/specular_brdf.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-    if (shaders[0] && shaders[1]) program = shader_link(shaders, 2);
-    if (shaders[0]) glDeleteShader(shaders[0]);
-    if (shaders[1]) glDeleteShader(shaders[1]);
-    if (!program) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("quad.vert", "ibl/specular_brdf.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_2D, specularBrdf);
     params_2d_texture();

@@ -2,7 +2,6 @@
 #include <game/material/phong.h>
 #include <game/mesh/icosphere.h>
 #include <game/render/lights_buffer_object.h>
-#include <game/render/vertex_shader.h>
 #include <game/scene/scene.h>
 #include "util.h"
 
@@ -11,7 +10,6 @@ static int phong_setup(struct Scene* scene, int withSpecular) {
     struct Material* mat = NULL;
     struct Node* n = NULL;
     struct Mesh mesh;
-    GLuint shaders[2] = {0, 0};
 
     if (!make_icosphere(&mesh, 2, 4)) return 0;
     if ((params = phong_material_params_new())) {
@@ -19,9 +17,7 @@ static int phong_setup(struct Scene* scene, int withSpecular) {
         material_param_set_vec3_elems(&params->diffuse, 0.6, 0.0, 0.6);
         material_param_set_vec3_elems(&params->specular, withSpecular ? 0.1 : 0.0, 0.0, withSpecular ? 0.1 : 0.0);
         material_param_set_float_constant(&params->shininess, 1.0);
-            shaders[0] = vertex_shader_standard(mesh.flags);
-            shaders[1] = phong_shader_new(params);
-            if (shaders[0] && shaders[1] && (mat = material_new_from_shaders(shaders, 2, phong_load, params, GL_FILL))) {
+        if ((mat = phong_material_new(mesh.flags, params))) {
             if ((n = create_node(&mesh, mat))) {
                 if (scene_add(scene, n)) {
                     mesh_free(&mesh);

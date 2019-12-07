@@ -1,5 +1,6 @@
 #include <game/material/alpha.h>
 #include <game/material/param.h>
+#include <game/mesh/mesh.h>
 #include <game/render/material.h>
 
 #ifndef PHONG_H
@@ -17,6 +18,7 @@ void phong_load(GLuint program, void* params);
 void phong_material_params_init(struct PhongMaterialParams* p);
 struct PhongMaterialParams* phong_material_params_new(void);
 GLuint phong_shader_new(const struct PhongMaterialParams* params);
+struct Material* phong_material_new(enum MeshFlags mflags, const struct PhongMaterialParams* params);
 int material_is_phong(const struct Material* material);
 
 #endif

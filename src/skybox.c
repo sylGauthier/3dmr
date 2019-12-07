@@ -60,7 +60,7 @@ GLuint skybox_load_texture_png_6faces(const char* left, const char* right, const
 }
 
 GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceSize) {
-    GLuint tex[2], shaders[2] = {0, 0}, program, fbo, rbo, empty;
+    GLuint tex[2], program, fbo, rbo, empty;
     GLint viewport[4];
     float* data;
     unsigned int width, height;
@@ -83,9 +83,7 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                     glBindVertexArray(empty);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     if (hdr_read(path, 4, &width, &height, &data)) {
-                        shaders[0] = shader_find_compile("cubemap.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
-                        shaders[1] = shader_find_compile("equirect_to_cubemap.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-                        if (shaders[0] && shaders[1] && (program = shader_link(shaders, 2))) {
+                        if ((program = shader_find_compile_link_vertfrag("cubemap.vert", "equirect_to_cubemap.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) {
                             glUseProgram(program);
                             glBindTexture(GL_TEXTURE_CUBE_MAP, tex[1]);
                             texture_params_cubemap();
@@ -109,8 +107,6 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                             glDeleteProgram(program);
                             ok = 1;
                         }
-                        if (shaders[0]) glDeleteShader(shaders[0]);
-                        if (shaders[1]) glDeleteShader(shaders[1]);
                         free(data);
                     }
                     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -137,14 +133,9 @@ static void skybox_load(GLuint program, void* param) {
 
 int skybox_create(GLuint texture, struct Skybox* skybox) {
     struct Mesh box;
-    GLuint shaders[2] = {0, 0}, prog = 0;
+    GLuint prog;
 
-    shaders[0] = shader_find_compile("skybox.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
-    shaders[1] = shader_find_compile("skybox.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-    if (shaders[0] && shaders[1]) prog = shader_link(shaders, 2);
-    if (shaders[0]) glDeleteShader(shaders[0]);
-    if (shaders[1]) glDeleteShader(shaders[1]);
-    if (!prog) return 0;
+    if (!(prog = shader_find_compile_link_vertfrag("skybox.vert", "skybox.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     if (make_box(&box, 1, 1, 1)) {
         vertex_array_gen(&box, &skybox->vertexArray);
         mesh_free(&box);

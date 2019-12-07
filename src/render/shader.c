@@ -326,3 +326,14 @@ GLuint shader_link(const GLuint* shaders, size_t numShaders) {
 
     return prog;
 }
+
+GLuint shader_find_compile_link_vertfrag(const char* vpath, const char* fpath, const char** includePaths, size_t numIncludePaths, const char** vdefines, size_t vNumDefines, const char** fdefines, size_t fNumDefines) {
+    GLuint shaders[2] = {0, 0}, program = 0;
+
+    shaders[0] = shader_find_compile(vpath, GL_VERTEX_SHADER, includePaths, numIncludePaths, vdefines, vNumDefines);
+    shaders[1] = shader_find_compile(fpath, GL_FRAGMENT_SHADER, includePaths, numIncludePaths, fdefines, fNumDefines);
+    if (shaders[0] && shaders[1]) program = shader_link(shaders, 2);
+    if (shaders[0]) glDeleteShader(shaders[0]);
+    if (shaders[1]) glDeleteShader(shaders[1]);
+    return program;
+}

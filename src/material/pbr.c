@@ -2,6 +2,7 @@
 #include <game/init.h>
 #include <game/material/pbr.h>
 #include <game/render/shader.h>
+#include <game/render/vertex_shader.h>
 
 void pbr_material_params_init(struct PBRMaterialParams* p) {
     material_param_set_vec3_elems(&p->albedo, 1, 1, 1);
@@ -55,6 +56,17 @@ GLuint pbr_shader_new(const struct PBRMaterialParams* params) {
     }
     alpha_set_defines(&params->alpha, defines, &numDefines);
     return shader_find_compile("pbr.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, defines, numDefines);
+}
+
+struct Material* pbr_material_new(enum MeshFlags mflags, const struct PBRMaterialParams* params) {
+    struct Material* m = NULL;
+    GLuint shaders[2];
+    shaders[0] = vertex_shader_standard(mflags);
+    shaders[1] = pbr_shader_new(params);
+    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, pbr_load, params, GL_FILL);
+    if (shaders[0]) glDeleteShader(shaders[0]);
+    if (shaders[1]) glDeleteShader(shaders[1]);
+    return m;
 }
 
 int material_is_pbr(const struct Material* material) {

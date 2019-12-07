@@ -3,6 +3,7 @@
 #include <game/material/solid.h>
 #include <game/mesh/mesh.h>
 #include <game/render/shader.h>
+#include <game/render/vertex_shader.h>
 #include <game/scene/node.h>
 #include <game/scene/frame.h>
 
@@ -37,7 +38,7 @@ struct Node* make_frame(void) {
         solid_material_params_init(matParams + i);
         material_param_set_vec3_elems(&matParams[i].color, i == 0, i == 1, i == 2);
     }
-    shaders[0] = shader_find_compile("standard.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, NULL, 0);
+    shaders[0] = vertex_shader_standard(0);
     shaders[1] = solid_shader_new(matParams);
     if (shaders[0] && shaders[1]) prog = shader_link(shaders, 2);
     if (shaders[0]) glDeleteShader(shaders[0]);

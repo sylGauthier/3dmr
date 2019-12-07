@@ -2,18 +2,18 @@
 #include <game/render/material.h>
 #include <game/render/shader.h>
 
-struct Material* material_new(void (*load)(GLuint program, void* params), void* params, GLuint program, GLuint polygonMode) {
+struct Material* material_new(void (*load)(GLuint program, void* params), const void* params, GLuint program, GLuint polygonMode) {
     struct Material* m;
     if ((m = malloc(sizeof(*m)))) {
         m->load = load;
-        m->params = params;
+        m->params = (void*)params;
         m->program = program;
         m->polygonMode = polygonMode;
     }
     return m;
 }
 
-struct Material* material_new_from_shaders(const GLuint* shaders, unsigned int numShaders, void (*load)(GLuint program, void* params), void* params, GLuint polygonMode) {
+struct Material* material_new_from_shaders(const GLuint* shaders, unsigned int numShaders, void (*load)(GLuint program, void* params), const void* params, GLuint polygonMode) {
     GLuint program;
     if (!(program = shader_link(shaders, numShaders))) return 0;
     return material_new(load, params, program, polygonMode);

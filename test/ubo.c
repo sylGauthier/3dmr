@@ -108,14 +108,12 @@ int test_lights(GLuint prog) {
 int main() {
     static const char* defines[] = {"HAVE_NORMAL", NULL};
     struct Viewer* viewer;
-    GLuint shaders[2], prog;
+    GLuint prog;
     int ret = 1;
 
     if (!game_init("shaders")) return 1;
     if ((viewer = viewer_new(640, 480, ""))) {
-        shaders[0] = shader_find_compile("standard.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)));
-        shaders[1] = shader_find_compile("phong.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, NULL, 0);
-        if (shaders[0] && shaders[1] && (prog = shader_link(shaders, 2))) {
+        if ((prog = shader_find_compile_link_vertfrag("standard.vert", "phong.frag", &shaderRootPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)), NULL, 0))) {
             printf("================================================================================\n");
             printf("  %-44s %-16s %-16s\n", "name", "offset", "expected");
             printf("--------------------------------------------------------------------------------\n");
@@ -125,8 +123,6 @@ int main() {
             printf("================================================================================\n");
             glDeleteProgram(prog);
         }
-        if (shaders[0]) glDeleteShader(shaders[0]);
-        if (shaders[1]) glDeleteShader(shaders[1]);
         viewer_free(viewer);
     }
     game_free();
