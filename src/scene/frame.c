@@ -57,7 +57,10 @@ struct Node* make_frame(void) {
         materials[i].program = prog;
         node_init(node + i + 1);
         node_set_geometry(node + i + 1, geometry + i);
-        node_add_child(node, node + i + 1);
+        if (!node_add_child(node, node + i + 1)) {
+            free_frame(node);
+            return NULL;
+        }
     }
     node_rotate(node + 2, VEC3_AXIS_Z, M_PI / 2.0);
     node_rotate(node + 3, VEC3_AXIS_Y, -M_PI / 2.0);
