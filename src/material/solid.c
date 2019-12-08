@@ -7,7 +7,6 @@
 void solid_material_params_init(struct SolidMaterialParams* p) {
     material_param_set_vec3_elems(&p->color, 1, 1, 1);
     alpha_params_init(&p->alpha);
-    p->options = 0;
 }
 
 struct SolidMaterialParams* solid_material_params_new(void) {
@@ -33,10 +32,6 @@ GLuint solid_shader_new(const struct SolidMaterialParams* params) {
         defines[2 * numDefines] = "SOLID_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
     }
-    if (params->options & SOLID_OVERLAY) {
-        defines[2 * numDefines] = "OVERLAY";
-        defines[2 * numDefines++ + 1] = NULL;
-    }
     alpha_set_defines(&params->alpha, defines, &numDefines);
     return shader_find_compile("solid.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, defines, numDefines);
 }
@@ -45,6 +40,17 @@ struct Material* solid_material_new(enum MeshFlags mflags, const struct SolidMat
     struct Material* m = NULL;
     GLuint shaders[2];
     shaders[0] = vertex_shader_standard(mflags);
+    shaders[1] = solid_shader_new(params);
+    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, solid_load, params, GL_FILL);
+    if (shaders[0]) glDeleteShader(shaders[0]);
+    if (shaders[1]) glDeleteShader(shaders[1]);
+    return m;
+}
+
+struct Material* solid_overlay_material_new(enum MeshFlags mflags, const struct SolidMaterialParams* params) {
+    struct Material* m = NULL;
+    GLuint shaders[2];
+    shaders[0] = vertex_shader_overlay(mflags);
     shaders[1] = solid_shader_new(params);
     if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, solid_load, params, GL_FILL);
     if (shaders[0]) glDeleteShader(shaders[0]);
