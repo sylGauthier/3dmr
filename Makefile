@@ -61,7 +61,7 @@ D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
 install: $(LIB) $(NAME).pc $(if $(OPENGEX),test/ogexview_dist)
 	mkdir -p $(D)/$(INCLUDEDIR) $(D)/$(LIBDIR)/pkgconfig $(D)/$(DATADIR)/$(NAME) $(D)/bin
 	cp -R $(NAME) $(D)/$(INCLUDEDIR)
-	find $(D)/$(INCLUDEDIR) -type f -name '*.h' -exec sed -i 's,^\(#include <\)\(shaders/\),\1game/\2,' {} +
+	find $(D)/$(INCLUDEDIR)/$(NAME) -type f -name '*.h' -exec sed -i 's,^\(#include <\)\(shaders/\),\1game/\2,' {} +
 	cp -R shaders $(D)/$(DATADIR)/$(NAME)
 	cp $(LIB) $(D)/$(LIBDIR)
 	cp $(NAME).pc $(D)/$(LIBDIR)/pkgconfig
