@@ -39,8 +39,12 @@ static int infer_target_type(struct ODDLStructure* target, enum TrackTargetType*
     struct ODDLProperty* prop;
 
     if (!(prop = oddl_get_property(target, "kind")) || !prop->str) {
-        fprintf(stderr, "Error: could not infer target type, missing 'kind' property\n");
-        return 0;
+        if (ogex_get_identifier(target) != OGEX_TRANSFORM) {
+            fprintf(stderr, "Error: could not infer target type, invalid target type or missing 'kind' property\n");
+            return 0;
+        }
+        *type = TRACK_TRANSFORM;
+        return 1;
     }
     switch (ogex_get_identifier(target)) {
         case OGEX_TRANSLATION:
@@ -61,9 +65,6 @@ static int infer_target_type(struct ODDLStructure* target, enum TrackTargetType*
             else if (!strcmp(prop->str, "z"))   *type = TRACK_Z_ROT;
             else return 0;
             break;
-        case OGEX_TRANSFORM:
-            fprintf(stderr, "Error: Transform Tracks are not supported\n");
-            return 0;
         default:
             fprintf(stderr, "Error: can't infer target type, invalid target structure\n");
             return 0;
@@ -76,10 +77,73 @@ enum TrackKeyType {
     TRACK_KEY_VALUE
 };
 
+static int extract_scale(Vec3 scale, Mat4 t) {
+    scale[0] = norm3(t[0]);
+    scale[1] = norm3(t[1]);
+    scale[2] = norm3(t[2]);
+    if (!(scale[0] && scale[1] && scale[2])) return 0;
+    scale3v(t[0], 1 / scale[0]);
+    scale3v(t[1], 1 / scale[1]);
+    scale3v(t[2], 1 / scale[2]);
+    return 1;
+}
+
+/* When the animation target is the transform matrix itself, instead of doing a costly matrix interpolation
+ * we simply convert every single transform key into the regular (pos,scale,rot) channels and we animate all of
+ * them simultaneously.
+ */
+static int parse_m4_track(struct OgexContext* context, struct Animation* anim, struct ODDLStructure* cur) {
+    unsigned int i;
+    Mat4* mat = cur->dataList;
+
+    if (cur->vecSize != 16) {
+        fprintf(stderr, "Error: Key: Transform data must be float[16]\n");
+        return 0;
+    }
+    for (i = 0; i < TRACK_NB_TYPES; i++) {
+        anim->tracks[i].values.curveType = TRACK_LINEAR;
+        if (anim->tracks[i].nbKeys && anim->tracks[i].nbKeys != cur->nbVec) {
+            fprintf(stderr, "Error: Key: invalid number of key values\n");
+            return 0;
+        }
+        anim->tracks[i].nbKeys = cur->nbVec;
+        if (!(anim->tracks[i].values.values = malloc(cur->nbVec * sizeof(float)))) {
+            fprintf(stderr, "Error: Key: could not allocate memory for Transform data\n");
+            return 0;
+        }
+    }
+    for (i = 0; i < cur->nbVec; i++) {
+        Vec3 pos, scale, euler;
+        Quaternion quat;
+        if (context->up == AXIS_Z) swap_yz(mat[i]);
+        if (!extract_scale(scale, mat[i])) {
+            fprintf(stderr, "Error: Key: invalid Transform (null scale)\n");
+            goto exit_e;
+        }
+        memcpy(pos, mat[i][3], sizeof(Vec3));
+        quaternion_from_mat4(quat, MAT_CONST_CAST(mat[i]));
+        quaternion_to_xyz(euler, quat);
+        ((float*)(anim->tracks[TRACK_X_POS].values.values))[i] = pos[0];
+        ((float*)(anim->tracks[TRACK_Y_POS].values.values))[i] = pos[1];
+        ((float*)(anim->tracks[TRACK_Z_POS].values.values))[i] = pos[2];
+        ((float*)(anim->tracks[TRACK_X_ROT].values.values))[i] = euler[0];
+        ((float*)(anim->tracks[TRACK_Y_ROT].values.values))[i] = euler[1];
+        ((float*)(anim->tracks[TRACK_Z_ROT].values.values))[i] = euler[2];
+        ((float*)(anim->tracks[TRACK_X_SCALE].values.values))[i] = scale[0];
+        ((float*)(anim->tracks[TRACK_Y_SCALE].values.values))[i] = scale[1];
+        ((float*)(anim->tracks[TRACK_Z_SCALE].values.values))[i] = scale[2];
+    }
+    return 1;
+exit_e:
+    for (i = 0; i < TRACK_NB_TYPES; i++) free(anim->tracks[i].values.values);
+    return 0;
+}
+
 static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
                             enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
     struct ODDLStructure* sub;
     float* array = NULL;
+    unsigned int i;
 
     if (cur->nbStructures != 1) {
         fprintf(stderr, "Error: Key: must contain exactly one substructure\n");
@@ -90,7 +154,7 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
         fprintf(stderr, "Error: Key: substructure must be of type float\n");
         return 0;
     }
-    if (sub->vecSize != 1) {
+    if (type != TRACK_TRANSFORM && sub->vecSize != 1) {
         fprintf(stderr, "Error: Key: multidimensional values not supported\n");
         return 0;
     }
@@ -98,7 +162,7 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
         fprintf(stderr, "Error: Key: must have at least one float value\n");
         return 0;
     }
-    if (anim->tracks[type].nbKeys && anim->tracks[type].nbKeys != sub->nbVec) {
+    if (type != TRACK_TRANSFORM && anim->tracks[type].nbKeys && anim->tracks[type].nbKeys != sub->nbVec) {
         fprintf(stderr, "Error: Key: inconsistent nb of key values, expected %d but got %d\n",
                 anim->tracks[type].nbKeys, sub->nbVec);
         return 0;
@@ -128,15 +192,33 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
     }
     switch (keyType) {
         case TRACK_KEY_TIME:
-            anim->tracks[type].times.values = array;
-            anim->tracks[type].times.curveType = TRACK_LINEAR;
-            anim->tracks[type].nbKeys = sub->nbVec;
+            if (type == TRACK_TRANSFORM) {
+                for (i = 0; i < TRACK_NB_TYPES; i++) {
+                    anim->tracks[i].times.values = array;
+                    anim->tracks[i].times.curveType = TRACK_LINEAR;
+                    anim->tracks[i].times.sharedValues = i > 0;
+                    anim->tracks[i].nbKeys = sub->nbVec;
+                }
+            } else {
+                anim->tracks[type].times.values = array;
+                anim->tracks[type].times.curveType = TRACK_LINEAR;
+                anim->tracks[type].nbKeys = sub->nbVec;
+            }
             return 1;
         case TRACK_KEY_VALUE:
-            anim->tracks[type].values.values = array;
-            anim->tracks[type].values.curveType = TRACK_LINEAR;
-            anim->tracks[type].nbKeys = sub->nbVec;
-            return 1;
+            if (type == TRACK_TRANSFORM) {
+                if (!parse_m4_track(context, anim, sub)) {
+                    free(array);
+                    return 0;
+                }
+                free(array);
+                return 1;
+            } else {
+                anim->tracks[type].values.values = array;
+                anim->tracks[type].values.curveType = TRACK_LINEAR;
+                anim->tracks[type].nbKeys = sub->nbVec;
+                return 1;
+            }
         default:
             free(array);
             return 0;

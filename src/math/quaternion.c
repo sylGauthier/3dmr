@@ -116,6 +116,21 @@ void quaternion_from_xyz(Quaternion dest, const Vec3 xyz) {
     dest[3] = cx * cy * sz - sx * sy * cz;
 }
 
+void quaternion_to_xyz(Vec3 dest, const Quaternion src) {
+    float srcp, crcp, sinp, sycp, cycp;
+
+    srcp = 2 * (src[0] * src[1] + src[2] * src[3]);
+    crcp = 1 - 2 * (src[1] * src[1] + src[2] * src[2]);
+    sinp = 2 * (src[0] * src[2] - src[3] * src[1]);
+    sycp = 2 * (src[0] * src[3] + src[1] * src[2]);
+    cycp = 1 - 2 * (src[2] * src[2] + src[3] * src[3]);
+
+    dest[0] = atan2(srcp, crcp);
+    if (fabs(sinp) > 1) dest[1] = sinp / fabs(sinp) * M_PI / 2;
+    else dest[1] = asin(sinp);
+    dest[2] = atan2(sycp, cycp);
+}
+
 #define quaternion_from_mat(n) \
 void quaternion_from_mat##n(Quaternion dest, const Mat##n src) { \
     float S, tr = src[0][0] + src[1][1] + src[2][2]; \

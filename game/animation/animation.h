@@ -14,7 +14,8 @@ enum TrackTargetType {
     TRACK_X_SCALE,
     TRACK_Y_SCALE,
     TRACK_Z_SCALE,
-    TRACK_NB_TYPES
+    TRACK_NB_TYPES,
+    TRACK_TRANSFORM
 };
 
 struct AnimCurve {
@@ -23,6 +24,7 @@ struct AnimCurve {
         TRACK_BEZIER
     } curveType;
     void* values;
+    char sharedValues;
 };
 
 struct Track {

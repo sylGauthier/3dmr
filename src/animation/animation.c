@@ -117,8 +117,8 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
 }
 
 void anim_free_track(struct Track* track) {
-    free(track->times.values);
-    free(track->values.values);
+    if (!track->times.sharedValues) free(track->times.values);
+    if (!track->values.sharedValues) free(track->values.values);
 }
 
 void anim_free_animation(struct Animation* anim) {
