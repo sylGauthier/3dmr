@@ -54,7 +54,7 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
                     fprintf(stderr, "Warning: VertexArray: unhandled attribute: %s\n", prop->str);
                 }
                 break;
-            case OGEX_INDEX_ARRAY:
+            case OGEX_INDEX_ARRAY: /* TODO: Remove code duplication with skinning */
                 if (tmp->nbStructures != 1) {
                     fprintf(stderr, "Error: VertexArray: invalid number of substructures in (expected 1)\n");
                     return 0;
@@ -66,6 +66,15 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
                 }
                 indices = subTmp->dataList;
                 nbIndices = 3 * subTmp->nbVec;
+                break;
+            case OGEX_SKIN:
+                if (!(mesh->skin = calloc(1, sizeof(struct Skin)))) {
+                    fprintf(stderr, "Error: Mesh: could not allocate memory for Skin\n");
+                    return 0;
+                }
+                if (!(ogex_parse_skin(context, mesh->skin, tmp))) {
+                    return 0;
+                }
                 break;
             default:
                 break;
@@ -79,9 +88,14 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
         fprintf(stderr, "Error: Mesh: invalid number of normals or texcoords or tangents\n");
         return 0;
     }
-    mesh->flags = (!!nbNorm * MESH_NORMALS) | (!!nbTex * MESH_TEXCOORDS) | (!!nbTan * MESH_TANGENTS);
+    mesh->flags = (!!nbNorm * MESH_NORMALS) | (!!nbTex * MESH_TEXCOORDS) | (!!nbTan * MESH_TANGENTS) | (!!mesh->skin * MESH_SKIN);
     mesh->numVertices = nbPos;
     mesh->numIndices = nbIndices;
+    if (mesh->skin && mesh->numVertices != mesh->skin->nbVertices) {
+        fprintf(stderr, "Error: Mesh: Skin has inconsistent number of vertices (Mesh has %d, Skin has %d)\n",
+                         mesh->numVertices, mesh->skin->nbVertices);
+        return 0;
+    }
     if (!(mesh->vertices = malloc(MESH_SIZEOF_VERTICES(mesh)))) {
         fprintf(stderr, "Error: Mesh: could not allocate memory for vertices\n");
         return 0;
@@ -112,6 +126,15 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
             import_vec3(context, mesh->vertices + i * stride + offset, tangents + i * 6);
             offset += 3;
             import_vec3(context, mesh->vertices + i * stride + offset, tangents + i * 6 + 3);
+            offset += 3;
+        }
+
+        /* Skin */
+        if (MESH_HAS_SKIN(mesh)) {
+            mesh->vertices[i * stride + offset] = mesh->skin->indexArray[i * 2];
+            mesh->vertices[i * stride + offset + 1] = mesh->skin->indexArray[i * 2 + 1];
+            mesh->vertices[i * stride + offset + 2] = mesh->skin->weightArray[i * 2];
+            mesh->vertices[i * stride + offset + 3] = mesh->skin->weightArray[i * 2 + 1];
         }
     }
     if (nbIndices) {
@@ -145,6 +168,7 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
     mesh.numVertices = 0;
     mesh.numIndices = 0;
     mesh.flags = 0;
+    mesh.skin = NULL;
 
     /* Geometry object has already been parsed and loaded in the context */
     if (ogex_get_shared_object(context, cur)) return 1;
@@ -178,6 +202,10 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
     }
     tmpVA = vertex_array_new(&mesh);
     mesh_free(&mesh);
+    if (tmpVA->skin) {
+        if (!skin_gen(tmpVA->skin))
+            return 0;
+    }
     if (!(ogex_add_shared_object(context, cur, tmpVA, 1))) {
         fprintf(stderr, "Error: GeometryObject: couldn't reallocate memory for opengex context\n");
         vertex_array_free(tmpVA);

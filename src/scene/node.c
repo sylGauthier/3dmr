@@ -13,6 +13,8 @@ void node_init(struct Node* node) {
     node->scale[0] = 1.0; node->scale[1] = 1.0; node->scale[2] = 1.0;
     quaternion_load_id(node->orientation);
     node->changedFlags = POSITION_CHANGED | ORIENTATION_CHANGED;
+    load_id4(node->transform);
+    load_id4(node->model);
 
     zero3v(node->boundingBox[0]);
     zero3v(node->boundingBox[1]);

@@ -3,6 +3,7 @@
 #include <game/render/camera.h>
 #include <game/material/phong.h>
 #include <game/scene/opengex.h>
+#include <game/scene/skin.h>
 
 #ifndef OGEX_COMMON_H
 #define OGEX_COMMON_H
@@ -20,7 +21,11 @@ enum OgexIdentifier {
     OGEX_NONE,
     OGEX_ANIMATION,
     OGEX_ATTEN,
+    OGEX_BONE_COUNT_ARRAY,
+    OGEX_BONE_INDEX_ARRAY,
     OGEX_BONE_NODE,
+    OGEX_BONE_REF_ARRAY,
+    OGEX_BONE_WEIGHT_ARRAY,
     OGEX_CAMERA_NODE,
     OGEX_CAMERA_OBJECT,
     OGEX_COLOR,
@@ -40,6 +45,8 @@ enum OgexIdentifier {
     OGEX_PARAM,
     OGEX_ROTATION,
     OGEX_SCALE,
+    OGEX_SKELETON,
+    OGEX_SKIN,
     OGEX_TEXTURE,
     OGEX_TIME,
     OGEX_TRACK,
@@ -77,6 +84,8 @@ struct OgexContext {
     struct SharedData* shared;
 };
 
+void swap_yz(Mat4 mat);
+
 enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st);
 int ogex_add_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct, void* object, int persistent);
 void* ogex_get_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct);
@@ -89,12 +98,14 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_camera_object(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_light_object(struct OgexContext* context, struct ODDLStructure* cur);
+int ogex_parse_transform(struct OgexContext* context, struct ODDLStructure* cur, Mat4 transform);
+int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4** transforms, unsigned int* nbTransforms);
 
 int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLStructure* cur);
 int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_light_node(struct OgexContext* context, struct Node* newNode, struct ODDLStructure* cur);
-
+int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur);
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 
 #endif

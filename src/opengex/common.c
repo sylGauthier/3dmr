@@ -7,7 +7,11 @@ enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st) {
     if (!st->identifier)                            return OGEX_NONE;
     if (!strcmp(st->identifier, "Animation"))       return OGEX_ANIMATION;
     if (!strcmp(st->identifier, "Atten"))           return OGEX_ATTEN;
+    if (!strcmp(st->identifier, "BoneCountArray"))  return OGEX_BONE_COUNT_ARRAY;
+    if (!strcmp(st->identifier, "BoneIndexArray"))  return OGEX_BONE_INDEX_ARRAY;
     if (!strcmp(st->identifier, "BoneNode"))        return OGEX_BONE_NODE;
+    if (!strcmp(st->identifier, "BoneRefArray"))    return OGEX_BONE_REF_ARRAY;
+    if (!strcmp(st->identifier, "BoneWeightArray")) return OGEX_BONE_WEIGHT_ARRAY;
     if (!strcmp(st->identifier, "CameraNode"))      return OGEX_CAMERA_NODE;
     if (!strcmp(st->identifier, "CameraObject"))    return OGEX_CAMERA_OBJECT;
     if (!strcmp(st->identifier, "Color"))           return OGEX_COLOR;
@@ -27,6 +31,8 @@ enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st) {
     if (!strcmp(st->identifier, "Param"))           return OGEX_PARAM;
     if (!strcmp(st->identifier, "Rotation"))        return OGEX_ROTATION;
     if (!strcmp(st->identifier, "Scale"))           return OGEX_SCALE;
+    if (!strcmp(st->identifier, "Skeleton"))        return OGEX_SKELETON;
+    if (!strcmp(st->identifier, "Skin"))            return OGEX_SKIN;
     if (!strcmp(st->identifier, "Texture"))         return OGEX_TEXTURE;
     if (!strcmp(st->identifier, "Time"))            return OGEX_TIME;
     if (!strcmp(st->identifier, "Track"))           return OGEX_TRACK;
@@ -111,5 +117,83 @@ int ogex_parse_param(struct ODDLStructure* cur, char** attrib, float* value) {
     }
     *attrib = prop->str;
     *value = *((float*)(cur->structures[0]->dataList));
+    return 1;
+}
+
+void swap_yz(Mat4 mat) {
+    Vec4 tmp;
+    unsigned int i;
+
+    /* Swap columns 1 and 2 */
+    memcpy(tmp, mat[1], sizeof(Vec4));
+    memcpy(mat[1], mat[2], sizeof(Vec4));
+    memcpy(mat[2], tmp, sizeof(Vec4));
+    /* Swap rows 1 and 2 */
+    for (i = 0; i < 4; i++) {
+        float tmpf = mat[i][1];
+        mat[i][1] = mat[i][2];
+        mat[i][2] = tmpf;
+    }
+    /* Negate relevant coefs */
+    mat[0][2] *= -1.0;
+    mat[1][2] *= -1.0;
+    mat[2][0] *= -1.0;
+    mat[2][1] *= -1.0;
+    mat[3][2] *= -1.0;
+}
+
+int ogex_parse_transform(struct OgexContext* context, struct ODDLStructure* cur, Mat4 transform) {
+    struct ODDLStructure* tmp;
+
+    if (cur->nbStructures != 1) {
+        fprintf(stderr, "Error: parse_transform: invalid number of sub structures in Transform\n");
+        return 0;
+    }
+    tmp = cur->structures[0];
+    if (tmp->type != TYPE_FLOAT32) {
+        fprintf(stderr, "Error: parse_transform: invalid type of Transform data: %s\n", typeName[tmp->type]);
+        return 0;
+    }
+    if (tmp->vecSize != 16 || tmp->nbVec != 1) {
+        fprintf(stderr, "Error: parse_transform: invalid Transform data layout, expected float[16]\n");
+        return 0;
+    }
+    memcpy(transform, tmp->dataList, sizeof(Mat4));
+    if (context->up == AXIS_Z) {
+        swap_yz(transform);
+    }
+    return 1;
+}
+
+int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4** transforms, unsigned int* nbTransforms) {
+    struct ODDLStructure* tmp;
+    unsigned int i;
+    Mat4* list;
+
+    if (cur->nbStructures != 1) {
+        fprintf(stderr, "Error: parse_transforms: invalid number of sub structures in Transform\n");
+        return 0;
+    }
+    tmp = cur->structures[0];
+    if (tmp->type != TYPE_FLOAT32) {
+        fprintf(stderr, "Error: parse_transforms: invalid type of Transform data: %s\n", typeName[tmp->type]);
+        return 0;
+    }
+    if (tmp->vecSize != 16) {
+        fprintf(stderr, "Error: parse_transforms: invalid Transform data layout, expected float[16]\n");
+        return 0;
+    }
+    if (!(*transforms = malloc(tmp->nbVec * sizeof(Mat4)))) {
+        fprintf(stderr, "Error: parse_transforms: could not allocate memory for transforms\n");
+        return 0;
+    }
+    list = tmp->dataList;
+    for (i = 0; i < tmp->nbVec; i++) {
+        memcpy((*transforms)[i], list[i], sizeof(Mat4));
+        if (context->up == AXIS_Z) {
+            swap_yz((*transforms)[i]);
+        }
+    }
+    *nbTransforms = tmp->nbVec;
     return 1;
 }

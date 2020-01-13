@@ -16,53 +16,16 @@ static int extract_scale(Vec3 scale, Mat4 t) {
     return 1;
 }
 
-static void swap_yz(Mat4 mat) {
-    Vec4 tmp;
-    unsigned int i;
-
-    /* Swap columns 1 and 2 */
-    memcpy(tmp, mat[1], sizeof(Vec4));
-    memcpy(mat[1], mat[2], sizeof(Vec4));
-    memcpy(mat[2], tmp, sizeof(Vec4));
-    /* Swap rows 1 and 2 */
-    for (i = 0; i < 4; i++) {
-        float tmpf = mat[i][1];
-        mat[i][1] = mat[i][2];
-        mat[i][2] = tmpf;
-    }
-    /* Negate relevant coefs */
-    mat[0][2] *= -1.0;
-    mat[1][2] *= -1.0;
-    mat[2][0] *= -1.0;
-    mat[2][1] *= -1.0;
-    mat[3][2] *= -1.0;
-}
-
-static int parse_transform(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
-    struct ODDLStructure* tmp;
+static int parse_node_transform(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
     Mat4 transform;
     Vec3 scale;
     Quaternion quat;
 
-    if (cur->nbStructures != 1) {
-        fprintf(stderr, "Error: parse_transform: invalid number of sub structures in Transform\n");
+    if (!ogex_parse_transform(context, cur, transform)) {
         return 0;
-    }
-    tmp = cur->structures[0];
-    if (tmp->type != TYPE_FLOAT32) {
-        fprintf(stderr, "Error: parse_transform: invalid type of Transform data: %s\n", typeName[tmp->type]);
-        return 0;
-    }
-    if (tmp->vecSize != 16 || tmp->nbVec != 1) {
-        fprintf(stderr, "Error: parse_transform: invalid Transform data layout, expected float[16]\n");
-        return 0;
-    }
-    memcpy(transform, tmp->dataList, sizeof(Mat4));
-    if (context->up == AXIS_Z) {
-        swap_yz(transform);
     }
     if (!extract_scale(scale, transform)) {
-        fprintf(stderr, "Error: parse_transform: invalid transform matrix (null scaling)\n");
+        fprintf(stderr, "Error: parse_node_transform: invalid transform matrix (null scaling)\n");
         return 0;
     }
     quaternion_from_mat4(quat, MAT_CONST_CAST(transform));
@@ -202,6 +165,10 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
         return 0;
     }
     node_init(newNode);
+    if (!node_add_child(root, newNode)) {
+        free(newNode);
+        return 0;
+    }
 
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
@@ -210,7 +177,8 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
             case OGEX_NAME:
                 break;
             case OGEX_TRANSFORM:
-                parse_transform(context, newNode, tmp);
+                parse_node_transform(context, newNode, tmp);
+                node_update_matrices(newNode);
                 break;
             case OGEX_TRANSLATION:
                 if (!parse_translation(context, newNode, tmp)) {
@@ -252,7 +220,8 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
 
     switch (ogex_get_identifier(cur)) {
         case OGEX_BONE_NODE:
-            fprintf(stderr, "Warning: BoneNode: not implemented\n");
+            newNode->type = NODE_BONE;
+            ogex_add_shared_object(context, cur, newNode, 1);
             break;
         case OGEX_GEOMETRY_NODE:
             if (!ogex_parse_geometry_node(context, newNode, cur)) {
@@ -275,5 +244,5 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
         default:
             break;
     }
-    return node_add_child(root, newNode);
+    return 1;
 }

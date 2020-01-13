@@ -38,12 +38,17 @@ void import_free_shared_data(struct SharedData* shared) {
     for (i = 0; i < shared->nbDLights; i++) {
         free(shared->dlights[i]);
     }
+    for (i = 0; i < shared->nbSkins; i++) {
+        skin_free(shared->skins[i]);
+        free(shared->skins[i]);
+    }
     free(shared->mats);
     free(shared->matParams);
     free(shared->va);
     free(shared->cams);
     free(shared->plights);
     free(shared->dlights);
+    free(shared->skins);
 }
 
 void import_free_metadata(struct ImportMetadata* metadata) {

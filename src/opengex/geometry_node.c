@@ -61,8 +61,7 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
         fprintf(stderr, "Error: GeometryNode: missing vertex array or material, aborting\n");
         return 0;
     }
-    /* TODO: do not hardcord mesh flags below, but infer them from the actual mesh */
-    if (!(mat = phong_material_new(MESH_NORMALS | MESH_TEXCOORDS, matParams))) {
+    if (!(mat = phong_material_new(va->flags, matParams))) {
         fprintf(stderr, "Error: GeometryNode: failed to create material\n");
         return 0;
     }
