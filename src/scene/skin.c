@@ -52,6 +52,10 @@ int skin_gen(struct Skin* skin) {
 }
 
 void skin_load(struct Skin* skin) {
+    /* TODO: be smarter and only recompute/resend bones that were modified */
+    compute_transforms(skin, (void*)skin->transforms->cache);
+    uniform_buffer_invalidate_cache(skin->transforms);
+    uniform_buffer_send(skin->transforms);
     glBindBufferRange(GL_UNIFORM_BUFFER, BONES_UBO_BINDING, skin->transforms->ubo, 0, skin->nbBones * sizeof(Mat4));
 }
 
