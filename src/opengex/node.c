@@ -182,25 +182,21 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
                 break;
             case OGEX_TRANSLATION:
                 if (!parse_translation(context, newNode, tmp)) {
-                    free(newNode);
                     return 0;
                 }
                 break;
             case OGEX_ROTATION:
                 if (!parse_rotation(context, newNode, tmp)) {
-                    free(newNode);
                     return 0;
                 }
                 break;
             case OGEX_SCALE:
                 if (!parse_scale(context, newNode, tmp)) {
-                    free(newNode);
                     return 0;
                 }
                 break;
             case OGEX_ANIMATION:
                 if (!ogex_parse_animation(context, newNode, tmp)) {
-                    free(newNode);
                     return 0;
                 }
                 break;
@@ -210,7 +206,6 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
             case OGEX_CAMERA_NODE:
             case OGEX_LIGHT_NODE:
                 if (!ogex_parse_node(context, newNode, tmp)) {
-                    free(newNode);
                     return 0;
                 }
             default:
@@ -225,19 +220,16 @@ int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLS
             break;
         case OGEX_GEOMETRY_NODE:
             if (!ogex_parse_geometry_node(context, newNode, cur)) {
-                free(newNode);
                 return 0;
             }
             break;
         case OGEX_CAMERA_NODE:
             if (!ogex_parse_camera_node(context, newNode, cur)) {
-                free(newNode);
                 return 0;
             }
             break;
         case OGEX_LIGHT_NODE:
             if (!ogex_parse_light_node(context, newNode, cur)) {
-                free(newNode);
                 return 0;
             }
             break;
