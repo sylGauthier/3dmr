@@ -46,7 +46,8 @@ struct Node {
         NODE_GEOMETRY,
         NODE_DLIGHT,
         NODE_PLIGHT,
-        NODE_CAMERA
+        NODE_CAMERA,
+        NODE_BONE
     } type;
     union NodeData {
         struct Geometry* geometry;

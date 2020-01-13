@@ -9,9 +9,12 @@
 #define LOCATION_TEXCOORD 2
 #define LOCATION_TANGENT 3
 #define LOCATION_BITANGENT 4
+#define LOCATION_BONE_IDX 5
+#define LOCATION_BONE_WEIGHT 6
 
 #define CAMERA_UBO_BINDING 0
 #define LIGHTS_UBO_BINDING 1
+#define BONES_UBO_BINDING 2
 
 GLuint shader_find_compile(const char* filename, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);
 GLuint shader_compile(const char* path, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);

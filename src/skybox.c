@@ -177,7 +177,7 @@ void skybox_render(struct Skybox* skybox) {
     GLint dfunc;
     glGetIntegerv(GL_DEPTH_FUNC, &dfunc);
     glDepthFunc(GL_LEQUAL);
-    material_use(&skybox->material);
+    material_use(&skybox->material, &skybox->vertexArray);
     vertex_array_render(&skybox->vertexArray);
     glDepthFunc(dfunc);
 }

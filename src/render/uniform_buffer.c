@@ -53,6 +53,11 @@ void uniform_buffer_update(struct UniformBuffer* u, unsigned int offset, unsigne
     memcpy(u->cache + offset, data, size);
 }
 
+void uniform_buffer_invalidate_cache(struct UniformBuffer* u) {
+    u->dStart = 0;
+    u->dEnd = u->size;
+}
+
 void uniform_buffer_send(struct UniformBuffer* u) {
     if (u->dStart >= u->dEnd) return;
     glBindBuffer(GL_UNIFORM_BUFFER, u->ubo);

@@ -29,7 +29,9 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
 
     va->numVertices = mesh->numVertices;
     va->numIndices = mesh->numIndices;
+    va->flags = mesh->flags;
     gen_bounding_box(mesh, va);
+    va->skin = mesh->skin;
 
     /* VBO */
     glGenBuffers(1, &va->vbo);
@@ -74,6 +76,14 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
         glEnableVertexAttribArray(LOCATION_BITANGENT);
         glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, stride, offset);
         offset += 3;
+    }
+    if (MESH_HAS_SKIN(mesh)) {
+        glEnableVertexAttribArray(LOCATION_BONE_IDX);
+        glVertexAttribPointer(LOCATION_BONE_IDX, 2, GL_FLOAT, GL_FALSE, stride, offset);
+        offset += 2;
+        glEnableVertexAttribArray(LOCATION_BONE_WEIGHT);
+        glVertexAttribPointer(LOCATION_BONE_WEIGHT, 2, GL_FLOAT, GL_FALSE, stride, offset);
+        offset += 2;
     }
     /* - Indices */
     if (hasIndices) {

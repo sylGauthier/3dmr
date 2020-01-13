@@ -2,9 +2,14 @@
 #include <game/render/material.h>
 #include <game/render/shader.h>
 
-struct Material* material_new(void (*load)(GLuint program, void* params), const void* params, GLuint program, GLuint polygonMode) {
+struct Material* material_new(void (*vertex_load)(const struct VertexArray* va),
+                              void (*load)(GLuint program, void* params),
+                              const void* params,
+                              GLuint program,
+                              GLuint polygonMode) {
     struct Material* m;
     if ((m = malloc(sizeof(*m)))) {
+        m->vertex_load = vertex_load;
         m->load = load;
         m->params = (void*)params;
         m->program = program;
@@ -13,15 +18,21 @@ struct Material* material_new(void (*load)(GLuint program, void* params), const 
     return m;
 }
 
-struct Material* material_new_from_shaders(const GLuint* shaders, unsigned int numShaders, void (*load)(GLuint program, void* params), const void* params, GLuint polygonMode) {
+struct Material* material_new_from_shaders(const GLuint* shaders,
+                                           unsigned int numShaders,
+                                           void (*vertex_load)(const struct VertexArray* va),
+                                           void (*load)(GLuint program, void* params),
+                                           const void* params,
+                                           GLuint polygonMode) {
     GLuint program;
     if (!(program = shader_link(shaders, numShaders))) return 0;
-    return material_new(load, params, program, polygonMode);
+    return material_new(vertex_load, load, params, program, polygonMode);
 }
 
-void material_use(const struct Material* material) {
+void material_use(const struct Material* material, const struct VertexArray* va) {
     glUseProgram(material->program);
     glPolygonMode(GL_FRONT_AND_BACK, material->polygonMode);
+    material->vertex_load(va);
     material->load(material->program, material->params);
 }
 

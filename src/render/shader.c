@@ -299,6 +299,8 @@ GLuint shader_link(const GLuint* shaders, size_t numShaders) {
     glBindAttribLocation(prog, LOCATION_TEXCOORD, "in_TexCoord");
     glBindAttribLocation(prog, LOCATION_TANGENT, "in_Tangent");
     glBindAttribLocation(prog, LOCATION_BITANGENT, "in_Bitangent");
+    glBindAttribLocation(prog, LOCATION_BONE_IDX, "in_Index");
+    glBindAttribLocation(prog, LOCATION_BONE_WEIGHT, "in_Weight");
     glLinkProgram(prog);
 
     glGetProgramiv(prog, GL_LINK_STATUS, &error);
@@ -322,6 +324,7 @@ GLuint shader_link(const GLuint* shaders, size_t numShaders) {
     } else {
         glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Camera"), CAMERA_UBO_BINDING);
         glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Lights"), LIGHTS_UBO_BINDING);
+        glUniformBlockBinding(prog, glGetUniformBlockIndex(prog, "Bones"), BONES_UBO_BINDING);
     }
 
     return prog;

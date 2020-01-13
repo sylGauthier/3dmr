@@ -13,6 +13,10 @@ in vec2 in_TexCoord;
 in vec3 in_Tangent;
 in vec3 in_Bitangent;
 #endif
+#ifdef HAVE_SKIN
+in vec2 in_Index;
+in vec2 in_Weight;
+#endif
 
 #ifdef HAVE_NORMAL
 out vec3 surfelPosition;
@@ -30,19 +34,43 @@ uniform mat4 model;
 #ifdef HAVE_NORMAL
 uniform mat3 inverseNormal;
 #endif
+#ifdef HAVE_SKIN
+layout(std140) uniform Bones {
+    mat4 bones[NB_BONES];
+};
+#endif
 
 void main() {
-#ifdef OVERLAY
-    gl_Position = model * vec4(in_Vertex, 1.0);
+    vec4 skinnedVertex;
+    vec4 skinnedNormal;
+
+#ifdef HAVE_SKIN
+    int index1, index2;
+    index1 = int(in_Index.x);
+    index2 = int(in_Index.y);
+    skinnedVertex = (bones[index1] * vec4(in_Vertex, 1.0)) * in_Weight.x;
+    skinnedVertex = skinnedVertex + (bones[index2] * vec4(in_Vertex, 1.0)) * in_Weight.y;
 #else
-    gl_Position = projection * view * model * vec4(in_Vertex, 1.0);
+    skinnedVertex = vec4(in_Vertex, 1.0);
+#endif
+#ifdef OVERLAY
+    gl_Position = model * skinnedVertex;
+#else
+    gl_Position = projection * view * model * skinnedVertex;
 #endif
 #ifdef HAVE_NORMAL
-    surfelPosition = vec3(model * vec4(in_Vertex, 1.0));
+#ifdef HAVE_SKIN
+    skinnedNormal = (vec4(in_Normal, 0.0) * inverse(bones[index1])) * in_Weight.x;
+    skinnedNormal = skinnedNormal + vec4(in_Normal, 0.0) * inverse(bones[index2]) * in_Weight.y;
+#else
+    skinnedNormal = vec4(in_Normal, 0.0);
+#endif
+    surfelPosition = vec3(model * vec4(skinnedVertex.xyz, 1.0));
 #ifdef HAVE_TANGENT
+    /*TODO: update with skinned tgt, bitgt and normal */
     tangentBasis = inverseNormal * mat3(in_Tangent, in_Bitangent, in_Normal);
 #else
-    surfelNormal = normalize(inverseNormal * in_Normal);
+    surfelNormal = normalize(inverseNormal * skinnedNormal.xyz);
 #endif
 #endif
 #ifdef HAVE_TEXCOORD
