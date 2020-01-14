@@ -38,8 +38,7 @@ static int parse_bone_ref_array(struct OgexContext* context, struct ODDLStructur
             return 0;
         }
         if (!(skin->bones[i] = ogex_get_shared_object(context, ref))) {
-            fprintf(stderr, "Error: BoneRefArray: a ref points to a bone node that doesn't exist, make sure "
-                            "the skeleton is declared after all bone nodes\n");
+            fprintf(stderr, "Error: BoneRefArray: a ref points to a bone node that doesn't exist, make sure the skeleton is declared after all bone nodes\n");
             free(skin->bones);
             return 0;
         }
@@ -56,8 +55,7 @@ static int parse_bind_pose(struct OgexContext* context, struct ODDLStructure* cu
         return 0;
     }
     if (skin->nbBones && nbTransforms != skin->nbBones) {
-        fprintf(stderr, "Error: Skeleton: inconsistent number of bind pose transforms (nbBones=%d, nbTransforms=%d\n",
-                skin->nbBones, nbTransforms);
+        fprintf(stderr, "Error: Skeleton: inconsistent number of bind pose transforms (nbBones=%d, nbTransforms=%d)\n", skin->nbBones, nbTransforms);
         free(tmp);
         return 0;
     }
@@ -104,7 +102,7 @@ static int parse_int_array(struct ODDLStructure* cur, unsigned int** array, unsi
     }
     tmp = cur->structures[0];
     if (!(tmp->type == TYPE_UINT8 || tmp->type == TYPE_UINT16 || tmp->type == TYPE_UINT32 || tmp->type == TYPE_UINT64)
-            || tmp->vecSize != 1) {
+     || tmp->vecSize != 1) {
         fprintf(stderr, "Error: Skin: Int arrays must be of an unsigned integer type with only single value vectors\n");
         printf("type=%d, vecSize=%d\n", tmp->type, tmp->vecSize);
         return 0;
@@ -154,9 +152,7 @@ static int parse_float_array(struct ODDLStructure* cur, float** array, unsigned 
     return 1;
 }
 
-static int load_skin_arrays(struct Skin* skin, unsigned int* countArray, unsigned int countLen,
-                            unsigned int* indexArray, unsigned int idxLen,
-                            float* weightArray, unsigned int weightLen) {
+static int load_skin_arrays(struct Skin* skin, unsigned int* countArray, unsigned int countLen, unsigned int* indexArray, unsigned int idxLen, float* weightArray, unsigned int weightLen) {
     unsigned int cntPos;
     unsigned int idxPos = 0;
 
@@ -198,69 +194,51 @@ int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLS
     float* weightArray = NULL;
     int success = 1;
 
+    memset(skin, 0, sizeof(*skin));
     load_id4(skin->skinTransform);
     for (i = 0; i < cur->nbStructures && success; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
         switch (ogex_get_identifier(tmp)) {
             case OGEX_TRANSFORM:
-                if (!ogex_parse_transform(context, tmp, skin->skinTransform)) {
-                    success = 0;
-                    goto exit;
-                }
+                success = ogex_parse_transform(context, tmp, skin->skinTransform);
                 break;
             case OGEX_SKELETON:
-                if (!parse_skeleton(context, tmp, skin)) {
-                    success = 0;
-                    goto exit;
-                }
+                success = parse_skeleton(context, tmp, skin);
                 break;
             case OGEX_BONE_COUNT_ARRAY:
-                if (!parse_int_array(tmp, &countArray, &countLen)) {
-                    success = 0;
-                    goto exit;
-                }
+                success = !countArray && parse_int_array(tmp, &countArray, &countLen);
                 break;
             case OGEX_BONE_INDEX_ARRAY:
-                if (!parse_int_array(tmp, &indexArray, &idxLen)) {
-                    success = 0;
-                    goto exit;
-                }
+                success = !indexArray && parse_int_array(tmp, &indexArray, &idxLen);
                 break;
             case OGEX_BONE_WEIGHT_ARRAY:
-                if (!parse_float_array(tmp, &weightArray, &weightLen)) {
-                    success = 0;
-                    goto exit;
-                }
+                success = !weightArray && parse_float_array(tmp, &weightArray, &weightLen);
                 break;
-            default:
-                break;
+            default:;
         }
     }
-    if (!skin->bones || !countArray || !indexArray || !weightArray) {
-        fprintf(stderr, "Error: Skin: missing substructure (Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray)\n");
+    if (success) {
         success = 0;
-        goto exit;
+        if (!skin->bones || !countArray || !indexArray || !weightArray) {
+            fprintf(stderr, "Error: Skin: missing substructure (Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray)\n");
+        } else {
+            skin->nbVertices = countLen;
+            skin->indexArray = malloc(2 * countLen * sizeof(*skin->indexArray));
+            skin->weightArray = malloc(2 * countLen * sizeof(*skin->weightArray));
+            if (!skin->indexArray || !skin->weightArray) {
+                fprintf(stderr, "Error: Skin: couldn't allocate memory for index or weight array\n");
+            } else {
+                load_skin_arrays(skin, countArray, countLen, indexArray, idxLen, weightArray, weightLen);
+                success = import_add_shared_item(&context->shared->skins, &context->shared->nbSkins, skin);
+            }
+        }
     }
-    skin->nbVertices = countLen;
-    if (!(skin->indexArray = malloc(2 * countLen * sizeof(*skin->indexArray)))
-            || !(skin->weightArray = malloc(2 * countLen * sizeof(*skin->weightArray)))) {
-        fprintf(stderr, "Error: Skin: couldn't allocate memory for index or weight array\n");
-        success = 0;
-        goto exit;
-    }
-    load_skin_arrays(skin, countArray, countLen, indexArray, idxLen, weightArray, weightLen);
-    if (!import_add_shared_item(&context->shared->skins, &context->shared->nbSkins, skin)) {
-        success = 0;
-        goto exit;
-    }
-exit:
     free(countArray);
     free(indexArray);
     free(weightArray);
     if (!success) {
         skin_free(skin);
-        free(skin);
     }
     return success;
 }

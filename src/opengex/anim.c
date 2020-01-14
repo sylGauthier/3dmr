@@ -109,6 +109,7 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         anim->tracks[i].nbKeys = cur->nbVec;
         if (!(anim->tracks[i].values.values = malloc(cur->nbVec * sizeof(float)))) {
             fprintf(stderr, "Error: Key: could not allocate memory for Transform data\n");
+            while (i) free(anim->tracks[--i].values.values);
             return 0;
         }
     }
@@ -118,7 +119,8 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         if (context->up == AXIS_Z) swap_yz(mat[i]);
         if (!extract_scale(scale, mat[i])) {
             fprintf(stderr, "Error: Key: invalid Transform (null scale)\n");
-            goto exit_e;
+            for (i = 0; i < TRACK_NB_TYPES; i++) free(anim->tracks[i].values.values);
+            return 0;
         }
         memcpy(pos, mat[i][3], sizeof(Vec3));
         quaternion_from_mat4(quat, MAT_CONST_CAST(mat[i]));
@@ -134,13 +136,9 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         ((float*)(anim->tracks[TRACK_Z_SCALE].values.values))[i] = scale[2];
     }
     return 1;
-exit_e:
-    for (i = 0; i < TRACK_NB_TYPES; i++) free(anim->tracks[i].values.values);
-    return 0;
 }
 
-static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
-                            enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
+static int parse_linear_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
     struct ODDLStructure* sub;
     float* array = NULL;
     unsigned int i;
@@ -226,8 +224,7 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
     return 0;
 }
 
-static int parse_bezier_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType,
-                            struct ODDLStructure* vals, struct ODDLStructure* mControl, struct ODDLStructure* pControl) {
+static int parse_bezier_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* vals, struct ODDLStructure* mControl, struct ODDLStructure* pControl) {
     struct ODDLStructure *subVal, *subPCtrl, *subMCtrl;
     unsigned int i;
     float *valArray, *mCtrlArray, *pCtrlArray;
@@ -310,8 +307,7 @@ static int parse_bezier_key(struct OgexContext* context, struct Animation* anim,
     return 0;
 }
 
-static int parse_key(struct OgexContext* context, struct Animation* anim,
-                     enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
+static int parse_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
     struct ODDLStructure *valKey = NULL, *mControlKey = NULL, *pControlKey = NULL;
     struct ODDLProperty* prop;
     enum TrackCurve curve = TRACK_LINEAR;

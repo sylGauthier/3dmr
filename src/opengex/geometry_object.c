@@ -68,11 +68,12 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
                 nbIndices = 3 * subTmp->nbVec;
                 break;
             case OGEX_SKIN:
-                if (!(mesh->skin = calloc(1, sizeof(struct Skin)))) {
+                if (!(mesh->skin = malloc(sizeof(struct Skin)))) {
                     fprintf(stderr, "Error: Mesh: could not allocate memory for Skin\n");
                     return 0;
                 }
                 if (!(ogex_parse_skin(context, mesh->skin, tmp))) {
+                    free(mesh->skin);
                     return 0;
                 }
                 break;
@@ -92,8 +93,7 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct ODD
     mesh->numVertices = nbPos;
     mesh->numIndices = nbIndices;
     if (mesh->skin && mesh->numVertices != mesh->skin->nbVertices) {
-        fprintf(stderr, "Error: Mesh: Skin has inconsistent number of vertices (Mesh has %d, Skin has %d)\n",
-                         mesh->numVertices, mesh->skin->nbVertices);
+        fprintf(stderr, "Error: Mesh: Skin has inconsistent number of vertices (Mesh has %d, Skin has %d)\n", mesh->numVertices, mesh->skin->nbVertices);
         return 0;
     }
     if (!(mesh->vertices = malloc(MESH_SIZEOF_VERTICES(mesh)))) {
@@ -203,8 +203,9 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
     tmpVA = vertex_array_new(&mesh);
     mesh_free(&mesh);
     if (tmpVA->skin) {
-        if (!skin_gen(tmpVA->skin))
+        if (!skin_gen(tmpVA->skin)) {
             return 0;
+        }
     }
     if (!(ogex_add_shared_object(context, cur, tmpVA, 1))) {
         fprintf(stderr, "Error: GeometryObject: couldn't reallocate memory for opengex context\n");

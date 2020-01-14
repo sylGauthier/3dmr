@@ -2,11 +2,7 @@
 #include <game/render/material.h>
 #include <game/render/shader.h>
 
-struct Material* material_new(void (*vertex_load)(const struct VertexArray* va),
-                              void (*load)(GLuint program, void* params),
-                              const void* params,
-                              GLuint program,
-                              GLuint polygonMode) {
+struct Material* material_new(void (*vertex_load)(const struct VertexArray* va), void (*load)(GLuint program, void* params), const void* params, GLuint program, GLuint polygonMode) {
     struct Material* m;
     if ((m = malloc(sizeof(*m)))) {
         m->vertex_load = vertex_load;
@@ -18,12 +14,7 @@ struct Material* material_new(void (*vertex_load)(const struct VertexArray* va),
     return m;
 }
 
-struct Material* material_new_from_shaders(const GLuint* shaders,
-                                           unsigned int numShaders,
-                                           void (*vertex_load)(const struct VertexArray* va),
-                                           void (*load)(GLuint program, void* params),
-                                           const void* params,
-                                           GLuint polygonMode) {
+struct Material* material_new_from_shaders(const GLuint* shaders, unsigned int numShaders, void (*vertex_load)(const struct VertexArray* va), void (*load)(GLuint program, void* params), const void* params, GLuint polygonMode) {
     GLuint program;
     if (!(program = shader_link(shaders, numShaders))) return 0;
     return material_new(vertex_load, load, params, program, polygonMode);
