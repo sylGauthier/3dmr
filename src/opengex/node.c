@@ -5,17 +5,6 @@
 
 #include "opengex_common.h"
 
-static int extract_scale(Vec3 scale, Mat4 t) {
-    scale[0] = norm3(t[0]);
-    scale[1] = norm3(t[1]);
-    scale[2] = norm3(t[2]);
-    if (!(scale[0] && scale[1] && scale[2])) return 0;
-    scale3v(t[0], 1 / scale[0]);
-    scale3v(t[1], 1 / scale[1]);
-    scale3v(t[2], 1 / scale[2]);
-    return 1;
-}
-
 static int parse_node_transform(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
     Mat4 transform;
     Vec3 scale;

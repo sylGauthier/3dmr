@@ -120,6 +120,17 @@ int ogex_parse_param(struct ODDLStructure* cur, char** attrib, float* value) {
     return 1;
 }
 
+int extract_scale(Vec3 scale, Mat4 t) {
+    scale[0] = norm3(t[0]);
+    scale[1] = norm3(t[1]);
+    scale[2] = norm3(t[2]);
+    if (!(scale[0] && scale[1] && scale[2])) return 0;
+    scale3v(t[0], 1 / scale[0]);
+    scale3v(t[1], 1 / scale[1]);
+    scale3v(t[2], 1 / scale[2]);
+    return 1;
+}
+
 void swap_yz(Mat4 mat) {
     Vec4 tmp;
     unsigned int i;
