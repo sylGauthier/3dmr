@@ -72,6 +72,9 @@ int node_update_matrices(struct Node* node);
 void node_update_father_bounding_box(struct Node* node);
 int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection);
 
+void node_set_scale(struct Node* node, const Vec3 scale);
+void node_set_pos(struct Node* node, const Vec3 pos);
+void node_set_orientation(struct Node* node, Quaternion q);
 void node_translate(struct Node* node, const Vec3 t);
 void node_shift(struct Node* node, const Vec3 t);
 void node_rescale(struct Node* node, const Vec3 s);
