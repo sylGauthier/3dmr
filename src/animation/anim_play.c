@@ -137,7 +137,7 @@ static float interp_track(struct Track* track, unsigned int curPos) {
     }
 }
 
-void anim_play_track_set(struct Track* tracks, struct Node* n, char flags, unsigned int curPos) {
+void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos) {
     Vec3 rot;
 
     if (flags & TRACKING_POS) {
