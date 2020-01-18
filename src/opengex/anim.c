@@ -102,7 +102,7 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         }
     }
     for (i = 0; i < cur->nbVec; i++) {
-        Vec3 pos, scale, euler;
+        Vec3 pos, scale;
         Quaternion quat;
         if (context->up == AXIS_Z) swap_yz(mat[i]);
         if (!extract_scale(scale, mat[i])) {
@@ -111,16 +111,16 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         }
         memcpy(pos, mat[i][3], sizeof(Vec3));
         quaternion_from_mat4(quat, MAT_CONST_CAST(mat[i]));
-        quaternion_to_xyz(euler, quat);
         ((float*)(anim->tracks[TRACK_X_POS].values.values))[i] = pos[0];
         ((float*)(anim->tracks[TRACK_Y_POS].values.values))[i] = pos[1];
         ((float*)(anim->tracks[TRACK_Z_POS].values.values))[i] = pos[2];
-        ((float*)(anim->tracks[TRACK_X_ROT].values.values))[i] = euler[0];
-        ((float*)(anim->tracks[TRACK_Y_ROT].values.values))[i] = euler[1];
-        ((float*)(anim->tracks[TRACK_Z_ROT].values.values))[i] = euler[2];
         ((float*)(anim->tracks[TRACK_X_SCALE].values.values))[i] = scale[0];
         ((float*)(anim->tracks[TRACK_Y_SCALE].values.values))[i] = scale[1];
         ((float*)(anim->tracks[TRACK_Z_SCALE].values.values))[i] = scale[2];
+        ((float*)(anim->tracks[TRACK_W_QUAT].values.values))[i] = quat[0];
+        ((float*)(anim->tracks[TRACK_X_QUAT].values.values))[i] = quat[1];
+        ((float*)(anim->tracks[TRACK_Y_QUAT].values.values))[i] = quat[2];
+        ((float*)(anim->tracks[TRACK_Z_QUAT].values.values))[i] = quat[3];
     }
     return 1;
 exit_e:
@@ -375,6 +375,35 @@ static int parse_track(struct OgexContext* context, struct Animation* anim, stru
         return 0;
     }
 
+    switch (tgtType) {
+        case TRACK_X_POS:
+        case TRACK_Y_POS:
+        case TRACK_Z_POS:
+            anim_track_pos(anim);
+            break;
+        case TRACK_X_SCALE:
+        case TRACK_Y_SCALE:
+        case TRACK_Z_SCALE:
+            anim_track_scale(anim);
+            break;
+        case TRACK_X_ROT:
+        case TRACK_Y_ROT:
+        case TRACK_Z_ROT:
+            anim_track_rot(anim);
+            break;
+        case TRACK_W_QUAT:
+        case TRACK_X_QUAT:
+        case TRACK_Y_QUAT:
+        case TRACK_Z_QUAT:
+            anim_track_quat(anim);
+            break;
+        case TRACK_TRANSFORM:
+            anim_track_transform(anim);
+            break;
+        default:
+            break;
+    }
+
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
@@ -419,7 +448,7 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct 
         memset(context->metadata->clips, 0, sizeof(struct Clip));
     }
     clip = context->metadata->clips;
-    if (anim_clip_new_anim(clip, node, NULL) < 0) {
+    if (anim_clip_new_anim(clip, node) < 0) {
         fprintf(stderr, "Error: Animation: could not allocate memory for new Animation\n");
         return 0;
     }
