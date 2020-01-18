@@ -18,9 +18,9 @@ static int parse_node_transform(struct OgexContext* context, struct Node* node, 
         return 0;
     }
     quaternion_from_mat4(quat, MAT_CONST_CAST(transform));
-    node_rescale(node, scale);
-    node_rotate_q(node, quat);
-    node_translate(node, transform[3]);
+    node_set_scale(node, scale);
+    node_set_orientation(node, quat);
+    node_set_pos(node, transform[3]);
     return 1;
 }
 
