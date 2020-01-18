@@ -25,13 +25,15 @@ static int check_skeleton(struct Skin* skin) {
 
 static void compute_transforms(struct Skin* skin, Mat4* transforms) {
     unsigned int i;
-    Mat4 invBindPose;
-    Mat4 tmp;
+    Mat4 invBindPose, invSkin;
+    Mat4 tmp, tmp2;
 
+    invert4m(invSkin, MAT_CONST_CAST(skin->skinTransform));
     for (i = 0; i < skin->nbBones; i++) {
         invert4m(invBindPose, MAT_CONST_CAST(skin->bindPose[i]));
         mul4mm(tmp, MAT_CONST_CAST(skin->bones[i]->model), MAT_CONST_CAST(invBindPose));
-        mul4mm(transforms[i], MAT_CONST_CAST(tmp), MAT_CONST_CAST(skin->skinTransform));
+        mul4mm(tmp2, MAT_CONST_CAST(tmp), MAT_CONST_CAST(skin->skinTransform));
+        mul4mm(transforms[i], MAT_CONST_CAST(invSkin), MAT_CONST_CAST(tmp2));
     }
 }
 

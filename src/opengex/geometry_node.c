@@ -74,13 +74,5 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
     glObject->vertexArray = va;
     glObject->material = mat;
     node_set_geometry(node, glObject);
-    if (va->skin) { /* HACK: reset node transform because it's embedded in the Skin transform */
-        Vec3 pos = {0,0,0}, scale = {1,1,1};
-        Quaternion q = {1, 0, 0, 0};
-        node_set_pos(node, pos);
-        node_set_scale(node, scale);
-        node_set_orientation(node, q);
-        node_update_matrices(node);
-    }
     return 1;
 }
