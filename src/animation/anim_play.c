@@ -137,48 +137,59 @@ static float interp_track(struct Track* track, unsigned int curPos) {
     }
 }
 
-void anim_play_track_set(struct Track* tracks, struct Node* n, unsigned int curPos) {
-    char rotTracked = 0;
+void anim_play_track_set(struct Track* tracks, struct Node* n, char flags, unsigned int curPos) {
     Vec3 rot;
 
-    if (tracks[TRACK_X_POS].nbKeys) {
-        n->position[0] = interp_track(&tracks[TRACK_X_POS], curPos);
+    if (flags & TRACKING_POS) {
+        if (tracks[TRACK_X_POS].nbKeys) {
+            n->position[0] = interp_track(&tracks[TRACK_X_POS], curPos);
+        }
+        if (tracks[TRACK_Y_POS].nbKeys) {
+            n->position[1] = interp_track(&tracks[TRACK_Y_POS], curPos);
+        }
+        if (tracks[TRACK_Z_POS].nbKeys) {
+            n->position[2] = interp_track(&tracks[TRACK_Z_POS], curPos);
+        }
         n->changedFlags |= POSITION_CHANGED;
     }
-    if (tracks[TRACK_Y_POS].nbKeys) {
-        n->position[1] = interp_track(&tracks[TRACK_Y_POS], curPos);
-        n->changedFlags |= POSITION_CHANGED;
-    }
-    if (tracks[TRACK_Z_POS].nbKeys) {
-        n->position[2] = interp_track(&tracks[TRACK_Z_POS], curPos);
-        n->changedFlags |= POSITION_CHANGED;
-    }
-    if (tracks[TRACK_X_ROT].nbKeys) {
-        rot[0] = interp_track(&tracks[TRACK_X_ROT], curPos);
-        rotTracked = 1;
-    }
-    if (tracks[TRACK_Y_ROT].nbKeys) {
-        rot[1] = interp_track(&tracks[TRACK_Y_ROT], curPos);
-        rotTracked = 1;
-    }
-    if (tracks[TRACK_Z_ROT].nbKeys) {
-        rot[2] = interp_track(&tracks[TRACK_Z_ROT], curPos);
-        rotTracked = 1;
-    }
-    if (tracks[TRACK_X_SCALE].nbKeys) {
-        n->scale[0] = interp_track(&tracks[TRACK_X_SCALE], curPos);
+    if (flags & TRACKING_SCALE) {
+        if (tracks[TRACK_X_SCALE].nbKeys) {
+            n->scale[0] = interp_track(&tracks[TRACK_X_SCALE], curPos);
+        }
+        if (tracks[TRACK_Y_SCALE].nbKeys) {
+            n->scale[1] = interp_track(&tracks[TRACK_Y_SCALE], curPos);
+        }
+        if (tracks[TRACK_Z_SCALE].nbKeys) {
+            n->scale[2] = interp_track(&tracks[TRACK_Z_SCALE], curPos);
+        }
         n->changedFlags |= SCALE_CHANGED;
     }
-    if (tracks[TRACK_Y_SCALE].nbKeys) {
-        n->scale[1] = interp_track(&tracks[TRACK_Y_SCALE], curPos);
-        n->changedFlags |= SCALE_CHANGED;
-    }
-    if (tracks[TRACK_Z_SCALE].nbKeys) {
-        n->scale[2] = interp_track(&tracks[TRACK_Z_SCALE], curPos);
-        n->changedFlags |= SCALE_CHANGED;
-    }
-    if (rotTracked) {
+    if (flags & TRACKING_ROT) {
+        if (tracks[TRACK_X_ROT].nbKeys) {
+            rot[0] = interp_track(&tracks[TRACK_X_ROT], curPos);
+        }
+        if (tracks[TRACK_Y_ROT].nbKeys) {
+            rot[1] = interp_track(&tracks[TRACK_Y_ROT], curPos);
+        }
+        if (tracks[TRACK_Z_ROT].nbKeys) {
+            rot[2] = interp_track(&tracks[TRACK_Z_ROT], curPos);
+        }
         quaternion_from_xyz(n->orientation, rot);
+        n->changedFlags |= ORIENTATION_CHANGED;
+    }
+    if (flags & TRACKING_QUAT) {
+        if (tracks[TRACK_W_QUAT].nbKeys) {
+            n->orientation[0] = interp_track(&tracks[TRACK_W_QUAT], curPos);
+        }
+        if (tracks[TRACK_X_QUAT].nbKeys) {
+            n->orientation[1] = interp_track(&tracks[TRACK_X_QUAT], curPos);
+        }
+        if (tracks[TRACK_Y_QUAT].nbKeys) {
+            n->orientation[2] = interp_track(&tracks[TRACK_Y_QUAT], curPos);
+        }
+        if (tracks[TRACK_Z_QUAT].nbKeys) {
+            n->orientation[3] = interp_track(&tracks[TRACK_Z_QUAT], curPos);
+        }
         n->changedFlags |= ORIENTATION_CHANGED;
     }
 }
@@ -190,7 +201,8 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
     running = update_clip_cur_time(clip, dt);
 
     for (i = 0; i < clip->nbAnimations; i++) {
-        anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode, clip->curPos);
+        anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode,
+                            clip->animations[i].flags, clip->curPos);
     }
     return running;
 }
