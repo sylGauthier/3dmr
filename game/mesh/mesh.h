@@ -13,8 +13,9 @@ enum MeshFlags {
 struct Mesh {
     float* vertices;
     unsigned int* indices;
-    unsigned int numVertices, numIndices, flags;
+    unsigned int numVertices, numIndices;
     struct Skin* skin;
+    enum MeshFlags flags;
 };
 
 #define MESH_HAS_NORMALS(mesh) ((mesh)->flags & MESH_NORMALS)

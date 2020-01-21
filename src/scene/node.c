@@ -233,6 +233,23 @@ void node_shift(struct Node* node, const Vec3 t) {
     node_translate(node, t2);
 }
 
+void node_set_scale(struct Node* node, const Vec3 scale) {
+    node->scale[0] = scale[0];
+    node->scale[1] = scale[1];
+    node->scale[2] = scale[2];
+    node->changedFlags |= SCALE_CHANGED;
+}
+
+void node_set_pos(struct Node* node, const Vec3 pos) {
+    memcpy(node->position, pos, sizeof(Vec3));
+    node->changedFlags |= POSITION_CHANGED;
+}
+
+void node_set_orientation(struct Node* node, Quaternion q) {
+    memcpy(node->orientation, q, sizeof(Quaternion));
+    node->changedFlags |= ORIENTATION_CHANGED;
+}
+
 void node_rescale(struct Node* node, const Vec3 s) {
     node->scale[0] *= s[0];
     node->scale[1] *= s[1];

@@ -84,6 +84,7 @@ struct OgexContext {
     struct SharedData* shared;
 };
 
+int extract_scale(Vec3 scale, Mat4 t);
 void swap_yz(Mat4 mat);
 
 enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st);

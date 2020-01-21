@@ -22,10 +22,6 @@ int anim_track_init(struct Track* track, enum TrackCurve timeCurve,
     return 1;
 }
 
-struct Track* anim_new_track_set() {
-    return calloc(TRACK_NB_TYPES, sizeof(struct Track));
-}
-
 void anim_clip_init(struct Clip* clip) {
     clip->duration = 0;
     clip->mode = CLIP_FORWARD;
@@ -38,7 +34,33 @@ void anim_clip_init(struct Clip* clip) {
     clip->rev = 0;
 }
 
-int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode, struct Track* trackSet) {
+struct Track* anim_new_track_set() {
+    return calloc(TRACK_NB_TYPES, sizeof(struct Track));
+}
+
+void anim_track_pos(struct Animation* anim) {
+    anim->flags |= TRACKING_POS;
+}
+
+void anim_track_scale(struct Animation* anim) {
+    anim->flags |= TRACKING_SCALE;
+}
+
+void anim_track_rot(struct Animation* anim) {
+    anim->flags |= TRACKING_ROT;
+}
+
+void anim_track_quat(struct Animation* anim) {
+    anim->flags |= TRACKING_QUAT;
+}
+
+void anim_track_transform(struct Animation* anim) {
+    anim_track_pos(anim);
+    anim_track_scale(anim);
+    anim_track_quat(anim);
+}
+
+int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode) {
     void* tmp;
     struct Animation* newAnim = NULL;
 
@@ -49,14 +71,11 @@ int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode, struct Track*
     clip->animations = tmp;
     newAnim = clip->animations + clip->nbAnimations;
     newAnim->targetNode = targetNode;
-    if (trackSet) {
-        newAnim->tracks = trackSet;
-    } else {
-        if (!(newAnim->tracks = anim_new_track_set())) {
-            fprintf(stderr, "Error: clip_new_anim: cuod not allocate new track set\n");
-            return -1;
-        }
+    if (!(newAnim->tracks = anim_new_track_set())) {
+        fprintf(stderr, "Error: clip_new_anim: could not allocate memory for track set\n");
+        return -1;
     }
+    newAnim->flags = 0;
     return clip->nbAnimations++;
 }
 
@@ -125,7 +144,7 @@ void anim_free_animation(struct Animation* anim) {
     if (anim->tracks) {
         unsigned int i;
         for (i = 0; i < TRACK_NB_TYPES; i++) {
-            anim_free_track(anim->tracks + i);
+            anim_free_track(&anim->tracks[i]);
         }
         free(anim->tracks);
     }
