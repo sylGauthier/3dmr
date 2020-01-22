@@ -99,14 +99,13 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_camera_object(struct OgexContext* context, struct ODDLStructure* cur);
 int ogex_parse_light_object(struct OgexContext* context, struct ODDLStructure* cur);
-int ogex_parse_transform(struct OgexContext* context, struct ODDLStructure* cur, Mat4 transform);
-int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4** transforms, unsigned int* nbTransforms);
+int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4* transforms, unsigned int numTransforms);
 
 int ogex_parse_node(struct OgexContext* context, struct Node* root, struct ODDLStructure* cur);
 int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 int ogex_parse_light_node(struct OgexContext* context, struct Node* newNode, struct ODDLStructure* cur);
-int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur);
+int ogex_parse_skin(struct OgexContext* context, struct ODDLStructure* cur, struct Skin** skin, unsigned int** indices, float** weights, unsigned int* numVertices);
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
 
 #endif

@@ -14,7 +14,6 @@ struct Mesh {
     float* vertices;
     unsigned int* indices;
     unsigned int numVertices, numIndices;
-    struct Skin* skin;
     enum MeshFlags flags;
 };
 

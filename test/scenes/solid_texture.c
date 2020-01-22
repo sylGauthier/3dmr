@@ -39,5 +39,5 @@ int solid_texture_setup(struct Scene* scene) {
 }
 
 void solid_texture_teardown(struct Scene* scene) {
-    glDeleteTextures(1, &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->material->params)->color.value.texture);
+    glDeleteTextures(1, &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->material->fparams)->color.value.texture);
 }

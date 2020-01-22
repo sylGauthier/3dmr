@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <game/material/phong.h>
+#include <game/render/vertex_shader.h>
 
 #include "opengex_common.h"
 
@@ -64,6 +65,10 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
     if (!(mat = phong_material_new(va->flags, matParams))) {
         fprintf(stderr, "Error: GeometryNode: failed to create material\n");
         return 0;
+    }
+    if (va->flags & MESH_SKIN) {
+        mat->vertex_load = vertex_standard_load_skinned;
+        mat->vparams = va->_skin_;
     }
     if (context->shared) {
         if (!import_add_shared_item(&context->shared->mats, &context->shared->nbMat, mat)) {

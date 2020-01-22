@@ -10,7 +10,7 @@ static int parse_node_transform(struct OgexContext* context, struct Node* node, 
     Vec3 scale;
     Quaternion quat;
 
-    if (!ogex_parse_transform(context, cur, transform)) {
+    if (!ogex_parse_transforms(context, cur, &transform, 1)) {
         return 0;
     }
     if (!extract_scale(scale, transform)) {

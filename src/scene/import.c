@@ -40,7 +40,6 @@ void import_free_shared_data(struct SharedData* shared) {
     }
     for (i = 0; i < shared->nbSkins; i++) {
         skin_free(shared->skins[i]);
-        free(shared->skins[i]);
     }
     free(shared->mats);
     free(shared->matParams);

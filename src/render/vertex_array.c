@@ -31,7 +31,6 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
     va->numIndices = mesh->numIndices;
     va->flags = mesh->flags;
     gen_bounding_box(mesh, va);
-    va->skin = mesh->skin;
 
     /* VBO */
     glGenBuffers(1, &va->vbo);

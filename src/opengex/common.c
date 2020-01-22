@@ -153,30 +153,7 @@ void swap_yz(Mat4 mat) {
     mat[3][2] *= -1.0;
 }
 
-int ogex_parse_transform(struct OgexContext* context, struct ODDLStructure* cur, Mat4 transform) {
-    struct ODDLStructure* tmp;
-
-    if (cur->nbStructures != 1) {
-        fprintf(stderr, "Error: parse_transform: invalid number of sub structures in Transform\n");
-        return 0;
-    }
-    tmp = cur->structures[0];
-    if (tmp->type != TYPE_FLOAT32) {
-        fprintf(stderr, "Error: parse_transform: invalid type of Transform data: %s\n", typeName[tmp->type]);
-        return 0;
-    }
-    if (tmp->vecSize != 16 || tmp->nbVec != 1) {
-        fprintf(stderr, "Error: parse_transform: invalid Transform data layout, expected float[16]\n");
-        return 0;
-    }
-    memcpy(transform, tmp->dataList, sizeof(Mat4));
-    if (context->up == AXIS_Z) {
-        swap_yz(transform);
-    }
-    return 1;
-}
-
-int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4** transforms, unsigned int* nbTransforms) {
+int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur, Mat4* transforms, unsigned int numTransforms) {
     struct ODDLStructure* tmp;
     unsigned int i;
     Mat4* list;
@@ -190,21 +167,16 @@ int ogex_parse_transforms(struct OgexContext* context, struct ODDLStructure* cur
         fprintf(stderr, "Error: parse_transforms: invalid type of Transform data: %s\n", typeName[tmp->type]);
         return 0;
     }
-    if (tmp->vecSize != 16) {
+    if (tmp->vecSize != 16 || tmp->nbVec != numTransforms) {
         fprintf(stderr, "Error: parse_transforms: invalid Transform data layout, expected float[16]\n");
-        return 0;
-    }
-    if (!(*transforms = malloc(tmp->nbVec * sizeof(Mat4)))) {
-        fprintf(stderr, "Error: parse_transforms: could not allocate memory for transforms\n");
         return 0;
     }
     list = tmp->dataList;
     for (i = 0; i < tmp->nbVec; i++) {
-        memcpy((*transforms)[i], list[i], sizeof(Mat4));
+        memcpy(transforms[i], list[i], sizeof(Mat4));
         if (context->up == AXIS_Z) {
-            swap_yz((*transforms)[i]);
+            swap_yz(transforms[i]);
         }
     }
-    *nbTransforms = tmp->nbVec;
     return 1;
 }

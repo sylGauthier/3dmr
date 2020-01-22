@@ -43,25 +43,24 @@ void uniform_buffer_free(struct UniformBuffer* u) {
     }
 }
 
-void uniform_buffer_update(struct UniformBuffer* u, unsigned int offset, unsigned int size, const void* data) {
+void uniform_buffer_invalidate(struct UniformBuffer* u, unsigned int offset, unsigned int size) {
     if (u->dStart > offset) {
         u->dStart = offset;
     }
     if (u->dEnd < offset + size) {
         u->dEnd = offset + size;
     }
-    memcpy(u->cache + offset, data, size);
 }
 
-void uniform_buffer_invalidate_cache(struct UniformBuffer* u) {
-    u->dStart = 0;
-    u->dEnd = u->size;
+void uniform_buffer_update(struct UniformBuffer* u, unsigned int offset, unsigned int size, const void* data) {
+    uniform_buffer_invalidate(u, offset, size);
+    memcpy(((char*)u->cache) + offset, data, size);
 }
 
 void uniform_buffer_send(struct UniformBuffer* u) {
     if (u->dStart >= u->dEnd) return;
     glBindBuffer(GL_UNIFORM_BUFFER, u->ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, u->dStart, u->dEnd - u->dStart, u->cache + u->dStart);
+    glBufferSubData(GL_UNIFORM_BUFFER, u->dStart, u->dEnd - u->dStart, ((char*)u->cache) + u->dStart);
     u->dStart = u->size;
     u->dEnd = 0;
 }

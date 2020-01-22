@@ -3,15 +3,11 @@
 
 #include "opengex_common.h"
 
-static int parse_bone_ref_array(struct OgexContext* context, struct ODDLStructure* cur, struct Skin* skin) {
+static int parse_bone_ref_array(struct OgexContext* context, struct ODDLStructure* cur, struct Node** bones, unsigned int numBones) {
     struct ODDLStructure* tmp;
     struct ODDLRef* refs;
     unsigned int i;
 
-    if (skin->bones) {
-        fprintf(stderr, "Error: BoneRefArray: Skin already has an array of bones?\n");
-        return 0;
-    }
     if (cur->nbStructures != 1) {
         fprintf(stderr, "Error: BoneRefArray: must contain exactly one substructure\n");
         return 0;
@@ -21,12 +17,8 @@ static int parse_bone_ref_array(struct OgexContext* context, struct ODDLStructur
         fprintf(stderr, "Error: BoneRefArray: substructure must be an array of single refs\n");
         return 0;
     }
-    if (skin->nbBones && tmp->nbVec != skin->nbBones) {
+    if (tmp->nbVec != numBones) {
         fprintf(stderr, "Error: BoneRefArray: inconsistent number of bones\n");
-        return 0;
-    }
-    if (!(skin->bones = malloc(tmp->nbVec * sizeof(void*)))) {
-        fprintf(stderr, "Error: BoneRefArray: could not allocate memory for bone array\n");
         return 0;
     }
     refs = tmp->dataList;
@@ -34,55 +26,65 @@ static int parse_bone_ref_array(struct OgexContext* context, struct ODDLStructur
         struct ODDLStructure* ref = refs[i].ref;
         if (!(ogex_get_identifier(ref) == OGEX_BONE_NODE)) {
             fprintf(stderr, "Error: BoneRefArray: a ref points to an object that isn't a bone\n");
-            free(skin->bones);
             return 0;
         }
-        if (!(skin->bones[i] = ogex_get_shared_object(context, ref))) {
+        if (!(bones[i] = ogex_get_shared_object(context, ref))) {
             fprintf(stderr, "Error: BoneRefArray: a ref points to a bone node that doesn't exist, make sure the skeleton is declared after all bone nodes\n");
-            free(skin->bones);
             return 0;
         }
     }
-    skin->nbBones = tmp->nbVec;
     return 1;
 }
 
-static int parse_bind_pose(struct OgexContext* context, struct ODDLStructure* cur, struct Skin* skin) {
-    Mat4* tmp;
-    unsigned int nbTransforms;
-
-    if (!(ogex_parse_transforms(context, cur, &tmp, &nbTransforms))) {
-        return 0;
-    }
-    if (skin->nbBones && nbTransforms != skin->nbBones) {
-        fprintf(stderr, "Error: Skeleton: inconsistent number of bind pose transforms (nbBones=%d, nbTransforms=%d)\n", skin->nbBones, nbTransforms);
-        free(tmp);
-        return 0;
-    }
-    skin->nbBones = nbTransforms;
-    skin->bindPose = tmp;
-    return 1;
+static int parse_bind_pose(struct OgexContext* context, struct ODDLStructure* cur, Mat4* transforms, unsigned int numTransforms) {
+    return ogex_parse_transforms(context, cur, transforms, numTransforms);
 }
 
-static int parse_skeleton(struct OgexContext* context, struct ODDLStructure* cur, struct Skin* skin) {
-    unsigned int i;
+static int parse_skeleton(struct OgexContext* context, struct ODDLStructure* cur, struct Skin** skin) {
+    unsigned int i, *n, numBones = 0, numTransforms = 0;
 
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
         switch (ogex_get_identifier(tmp)) {
+            case OGEX_BONE_REF_ARRAY: n = &numBones; break;
+            case OGEX_TRANSFORM: n = &numTransforms; break;
+            default: continue;
+        }
+        if (tmp->nbStructures != 1) {
+            fprintf(stderr, "Error: BoneRefArray/Transform: must contain exactly one substructure\n");
+        } else if (*n) {
+            fprintf(stderr, "Error: Skeleton: must contain only one BoneRefArray/Transform\n");
+        } else if (!(*n = tmp->structures[0]->nbVec)) {
+            fprintf(stderr, "Error: BoneRefArray/Transform: need at least one\n");
+        } else {
+            continue;
+        }
+        return 0;
+    }
+    if (numBones != numTransforms) {;
+        fprintf(stderr, "Error: Skeleton: inconsistent number of bind pose transforms\n");
+        return 0;
+    }
+    if (!(*skin = skin_new(numBones))) {
+        fprintf(stderr, "Error: Mesh: could not allocate memory for Skin\n");
+        return 0;
+    }
+    if (!import_add_shared_item(&context->shared->skins, &context->shared->nbSkins, *skin)) {
+        skin_free(*skin);
+        return 0;
+    }
+    for (i = 0; i < cur->nbStructures; i++) {
+        struct ODDLStructure* tmp = cur->structures[i];
+
+        switch (ogex_get_identifier(tmp)) {
             case OGEX_BONE_REF_ARRAY:
-                if (!parse_bone_ref_array(context, tmp, skin)) {
-                    return 0;
-                }
+                if (!parse_bone_ref_array(context, tmp, (*skin)->bones, numBones)) return 0;
                 break;
             case OGEX_TRANSFORM:
-                if (!parse_bind_pose(context, tmp, skin)) {
-                    return 0;
-                }
+                if (!parse_bind_pose(context, tmp, (*skin)->bindPose, numBones)) return 0;
                 break;
-            default:
-                break;
+            default:;
         }
     }
     return 1;
@@ -152,7 +154,7 @@ static int parse_float_array(struct ODDLStructure* cur, float** array, unsigned 
     return 1;
 }
 
-static int load_skin_arrays(struct Skin* skin, unsigned int* countArray, unsigned int countLen, unsigned int* indexArray, unsigned int idxLen, float* weightArray, unsigned int weightLen) {
+static int load_skin_arrays(const unsigned int* countArray, unsigned int countLen, const unsigned int* indexArray, unsigned int idxLen, const float* weightArray, unsigned int weightLen, unsigned int* indices, float* weights) {
     unsigned int cntPos;
     unsigned int idxPos = 0;
 
@@ -178,33 +180,34 @@ static int load_skin_arrays(struct Skin* skin, unsigned int* countArray, unsigne
                 }
             }
         }
-        skin->indexArray[2 * cntPos] = topIndices[0];
-        skin->indexArray[2 * cntPos + 1] = topIndices[1];
-        skin->weightArray[2 * cntPos] = topWeights[0];
-        skin->weightArray[2 * cntPos + 1] = topWeights[1];
+        indices[2 * cntPos] = topIndices[0];
+        indices[2 * cntPos + 1] = topIndices[1];
+        weights[2 * cntPos] = topWeights[0];
+        weights[2 * cntPos + 1] = topWeights[1];
         idxPos += offset;
     }
     return 1;
 }
 
-int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur) {
+int ogex_parse_skin(struct OgexContext* context, struct ODDLStructure* cur, struct Skin** skin, unsigned int** indices, float** weights, unsigned int* numVertices) {
+    Mat4 skinTransform;
     unsigned int i, countLen = 0, idxLen = 0, weightLen = 0;
     unsigned int* countArray = NULL;
     unsigned int* indexArray = NULL;
     float* weightArray = NULL;
     int success = 1;
 
-    memset(skin, 0, sizeof(*skin));
-    load_id4(skin->skinTransform);
+    *skin = NULL;
+    load_id4(skinTransform);
     for (i = 0; i < cur->nbStructures && success; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
         switch (ogex_get_identifier(tmp)) {
             case OGEX_TRANSFORM:
-                success = ogex_parse_transform(context, tmp, skin->skinTransform);
+                success = ogex_parse_transforms(context, tmp, &skinTransform, 1);
                 break;
             case OGEX_SKELETON:
-                success = parse_skeleton(context, tmp, skin);
+                success = !*skin && parse_skeleton(context, tmp, skin);
                 break;
             case OGEX_BONE_COUNT_ARRAY:
                 success = !countArray && parse_int_array(tmp, &countArray, &countLen);
@@ -220,25 +223,27 @@ int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLS
     }
     if (success) {
         success = 0;
-        if (!skin->bones || !countArray || !indexArray || !weightArray) {
+        if (!*skin || !(*skin)->bones || !countArray || !indexArray || !weightArray) {
             fprintf(stderr, "Error: Skin: missing substructure (Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray)\n");
         } else {
-            skin->nbVertices = countLen;
-            skin->indexArray = malloc(2 * countLen * sizeof(*skin->indexArray));
-            skin->weightArray = malloc(2 * countLen * sizeof(*skin->weightArray));
-            if (!skin->indexArray || !skin->weightArray) {
+            *indices = malloc(2 * countLen * sizeof(*indices));
+            *weights = malloc(2 * countLen * sizeof(*weights));
+            *numVertices = countLen;
+            if (!*indices || !*weights) {
                 fprintf(stderr, "Error: Skin: couldn't allocate memory for index or weight array\n");
             } else {
-                load_skin_arrays(skin, countArray, countLen, indexArray, idxLen, weightArray, weightLen);
-                success = import_add_shared_item(&context->shared->skins, &context->shared->nbSkins, skin);
+                load_skin_arrays(countArray, countLen, indexArray, idxLen, weightArray, weightLen, *indices, *weights);
+                memcpy((*skin)->skinTransform, skinTransform, sizeof(Mat4));
+                success = 1;
+            }
+            if (!success) {
+                free(*indices);
+                free(*weights);
             }
         }
     }
     free(countArray);
     free(indexArray);
     free(weightArray);
-    if (!success) {
-        skin_free(skin);
-    }
     return success;
 }

@@ -7,21 +7,21 @@
 #define MAX_NB_BONES 100
 
 struct Skin {
-    struct Node** bones;
     Mat4* bindPose;
     Mat4 skinTransform;
 
-    struct UniformBuffer* transforms;
-    unsigned int nbBones;
+    struct Node** bones;
+    unsigned int numBones;
 
-    unsigned int* indexArray;
-    float* weightArray;
-    unsigned int nbVertices;
+    struct UniformBuffer transforms;
 };
 
-int skin_gen(struct Skin* skin);
+int skin_gen(struct Skin* skin, unsigned int numBones);
+struct Skin* skin_new(unsigned int numBones);
+
 void skin_update_node(struct Skin* skin, unsigned int boneIdx);
 void skin_load(struct Skin* skin);
+void skin_del(struct Skin* skin);
 void skin_free(struct Skin* skin);
 
 #endif

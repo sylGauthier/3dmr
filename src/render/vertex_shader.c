@@ -2,6 +2,7 @@
 #include <game/render/vertex_shader.h>
 #include <game/render/shader.h>
 #include <game/render/vertex_array.h>
+#include <game/scene/skin.h>
 
 #define _STR(n) #n
 #define NB_STR(n) _STR(n)
@@ -36,10 +37,8 @@ GLuint vertex_shader_standard_(enum MeshFlags flags, int overlay) {
     return shader_find_compile("standard.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, defines, numDefines);
 }
 
-void vertex_standard_load(const struct VertexArray* va) {
-    if (va->skin) {
-        skin_load(va->skin);
-    }
+void vertex_standard_load_skinned(void* params) {
+    skin_load(params);
 }
 
 GLuint vertex_shader_standard(enum MeshFlags flags) {
