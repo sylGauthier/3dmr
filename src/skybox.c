@@ -142,8 +142,6 @@ int skybox_create(GLuint texture, struct Skybox* skybox) {
     }
     skybox->material.vertex_load = 0;
     skybox->material.frag_load = skybox_load;
-    skybox->material.vparams = NULL;
-    skybox->material.fparams = &skybox->texture;
     skybox->material.program = prog;
     skybox->material.polygonMode = GL_FILL;
     skybox->texture = texture;
@@ -179,7 +177,7 @@ void skybox_render(struct Skybox* skybox) {
     GLint dfunc;
     glGetIntegerv(GL_DEPTH_FUNC, &dfunc);
     glDepthFunc(GL_LEQUAL);
-    material_use(&skybox->material);
+    material_use(&skybox->material, NULL, &skybox->texture);
     vertex_array_render(&skybox->vertexArray);
     glDepthFunc(dfunc);
 }

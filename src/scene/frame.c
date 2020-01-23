@@ -51,10 +51,10 @@ struct Node* make_frame(void) {
     for (i = 0; i < 3; i++) {
         geometry[i].vertexArray = va;
         geometry[i].material = materials + i;
+        geometry[i].vertParams = NULL;
+        geometry[i].fragParams = matParams + i;
         materials[i].vertex_load = 0;
         materials[i].frag_load = solid_load;
-        materials[i].vparams = NULL;
-        materials[i].fparams = matParams + i;
         materials[i].polygonMode = GL_FILL;
         materials[i].program = prog;
         node_init(node + i + 1);

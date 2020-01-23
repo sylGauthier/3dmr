@@ -60,7 +60,7 @@ static int cd_test(const char* prog) {
     return r;
 }
 
-struct Node* create_node(const struct Mesh* mesh, void* material) {
+struct Node* create_node(const struct Mesh* mesh, struct Material* material, void* vp, void* fp) {
     struct Node* n;
     struct VertexArray* va;
     struct Geometry* geom;
@@ -72,6 +72,8 @@ struct Node* create_node(const struct Mesh* mesh, void* material) {
     vertex_array_gen(mesh, va);
     geom->vertexArray = va;
     geom->material = material;
+    geom->vertParams = vp;
+    geom->fragParams = fp;
     node_init(n);
     node_set_geometry(n, geom);
     return n;
@@ -80,7 +82,7 @@ struct Node* create_node(const struct Mesh* mesh, void* material) {
 void free_node(struct Node* node) {
     if (node->type == NODE_GEOMETRY) {
         vertex_array_del(node->data.geometry->vertexArray);
-        free(node->data.geometry->material->fparams);
+        free(node->data.geometry->fragParams);
         free(node->data.geometry->material);
         free(node);
     }

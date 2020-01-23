@@ -19,7 +19,7 @@ int solid_texture_setup(struct Scene* scene) {
         if ((tex = texture_load_from_png("assets/rgb_tux.png"))) {
             material_param_set_vec3_texture(&params->color, tex);
             if ((mat = solid_material_new(mesh.flags, params))) {
-                if ((n = create_node(&mesh, mat))) {
+                if ((n = create_node(&mesh, mat, 0, params))) {
                     if (scene_add(scene, n)) {
                         mesh_free(&mesh);
                         return 1;
@@ -39,5 +39,5 @@ int solid_texture_setup(struct Scene* scene) {
 }
 
 void solid_texture_teardown(struct Scene* scene) {
-    glDeleteTextures(1, &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->material->fparams)->color.value.texture);
+    glDeleteTextures(1, &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->fragParams)->color.value.texture);
 }

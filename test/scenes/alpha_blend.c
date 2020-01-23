@@ -6,6 +6,6 @@ int alpha_blend_setup(struct Scene* scene) {
 }
 
 void alpha_blend_teardown(struct Scene* scene) {
-    struct AlphaParams* params = &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->material->fparams)->alpha;
+    struct AlphaParams* params = &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->fragParams)->alpha;
     glDeleteTextures(1, &params->alpha.value.texture);
 }

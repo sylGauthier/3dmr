@@ -32,7 +32,7 @@ static int solid_color_setup(struct Scene* scene, float size, enum AlphaMode alp
         if (alpha_setup(alphaMode, &params->alpha)) {
             if (alphaMode) alphamap = params->alpha.alpha.value.texture;
             if ((mat = solid_material_new(mesh.flags, params))) {
-                if ((n = create_node(&mesh, mat))) {
+                if ((n = create_node(&mesh, mat, 0, params))) {
                     if (scene_add(scene, n)) {
                         mesh_free(&mesh);
                         return 1;

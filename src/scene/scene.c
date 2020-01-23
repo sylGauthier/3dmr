@@ -111,7 +111,7 @@ void scene_render(struct Scene* scene) {
     unsigned int i;
     for (i = 0; i < scene->nRender; i++) {
         struct Node* n = scene->renderQueue[i];
-        material_use(n->data.geometry->material);
+        material_use(n->data.geometry->material, n->data.geometry->vertParams, n->data.geometry->fragParams);
         material_set_matrices(n->data.geometry->material, n->model, n->inverseNormal);
         vertex_array_render(n->data.geometry->vertexArray);
     }

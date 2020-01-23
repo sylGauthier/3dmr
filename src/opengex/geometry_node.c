@@ -66,9 +66,13 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
         fprintf(stderr, "Error: GeometryNode: failed to create material\n");
         return 0;
     }
+    glObject->vertexArray = va;
+    glObject->material = mat;
+    glObject->vertParams = NULL;
+    glObject->fragParams = matParams;
     if (va->flags & MESH_SKIN) {
         mat->vertex_load = vertex_standard_load_skinned;
-        mat->vparams = va->_skin_;
+        glObject->vertParams = va->_skin_;
     }
     if (context->shared) {
         if (!import_add_shared_item(&context->shared->mats, &context->shared->nbMat, mat)) {
@@ -76,8 +80,6 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
             return 0;
         }
     }
-    glObject->vertexArray = va;
-    glObject->material = mat;
     node_set_geometry(node, glObject);
     return 1;
 }

@@ -41,7 +41,7 @@ struct Material* solid_material_new(enum MeshFlags mflags, const struct SolidMat
     GLuint shaders[2];
     shaders[0] = vertex_shader_standard(mflags);
     shaders[1] = solid_shader_new(params);
-    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, 0, solid_load, 0, params, GL_FILL);
+    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, 0, solid_load, GL_FILL);
     if (shaders[0]) glDeleteShader(shaders[0]);
     if (shaders[1]) glDeleteShader(shaders[1]);
     return m;
@@ -52,7 +52,7 @@ struct Material* solid_overlay_material_new(enum MeshFlags mflags, const struct 
     GLuint shaders[2];
     shaders[0] = vertex_shader_overlay(mflags);
     shaders[1] = solid_shader_new(params);
-    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, 0, solid_load, 0, params, GL_FILL);
+    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, 0, solid_load, GL_FILL);
     if (shaders[0]) glDeleteShader(shaders[0]);
     if (shaders[1]) glDeleteShader(shaders[1]);
     return m;
