@@ -158,8 +158,9 @@ static int parse_morph(struct OgexContext* context, struct ODDLStructure* cur) {
 int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure* cur) {
     unsigned int i, nbMeshes = 0;
     struct Mesh mesh;
-    struct Skin* skin;
-    struct VertexArray* tmpVA;
+    struct Skin* skin = NULL;
+    struct VertexArray* tmpVA = NULL;
+    int ok;
 
     mesh.vertices = NULL;
     mesh.indices = NULL;
@@ -193,13 +194,21 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
                 break;
         }
     }
+    ok = 0;
     if (!nbMeshes) {
         fprintf(stderr, "Error: GeometryObject: no valid mesh parsed?\n");
+    } else if (!(tmpVA = malloc(sizeof(*tmpVA) + sizeof(struct Skin*)))) {
+        fprintf(stderr, "Error: GeometryObject: couldn't allocate memory for vertex array\n");
+    } else {
+        vertex_array_gen(&mesh, tmpVA);
+        ok = 1;
+    }
+    mesh_free(&mesh);
+    if (!ok) {
+        free(tmpVA);
         return 0;
     }
-    tmpVA = vertex_array_new(&mesh);
-    tmpVA->_skin_ = skin;
-    mesh_free(&mesh);
+    *(struct Skin**)(tmpVA + 1) = skin;
     if (!(ogex_add_shared_object(context, cur, tmpVA, 1))) {
         fprintf(stderr, "Error: GeometryObject: couldn't reallocate memory for opengex context\n");
         vertex_array_free(tmpVA);

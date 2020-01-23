@@ -72,7 +72,7 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
     glObject->fragParams = matParams;
     if (va->flags & MESH_SKIN) {
         mat->vertex_load = vertex_standard_load_skinned;
-        glObject->vertParams = va->_skin_;
+        glObject->vertParams = *(struct Skin**)(va + 1);
     }
     if (context->shared) {
         if (!import_add_shared_item(&context->shared->mats, &context->shared->nbMat, mat)) {

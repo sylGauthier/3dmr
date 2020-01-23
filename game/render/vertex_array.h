@@ -8,7 +8,6 @@ struct VertexArray {
     GLuint vbo, ibo, vao;
     unsigned int numVertices, numIndices, flags;
     Vec3 boundingBox[2];
-    struct Skin* _skin_;
 };
 
 void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va);
