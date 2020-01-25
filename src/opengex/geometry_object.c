@@ -170,9 +170,6 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
     mesh.flags = 0;
     mesh.skin = NULL;
 
-    /* Geometry object has already been parsed and loaded in the context */
-    if (ogex_get_shared_object(context, cur)) return 1;
-
     if (!(cur->structures)) {
         return 0;
     }
@@ -202,10 +199,6 @@ int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure
     }
     tmpVA = vertex_array_new(&mesh);
     mesh_free(&mesh);
-    if (tmpVA->skin) {
-        if (!skin_gen(tmpVA->skin))
-            return 0;
-    }
     if (!(ogex_add_shared_object(context, cur, tmpVA, 1))) {
         fprintf(stderr, "Error: GeometryObject: couldn't reallocate memory for opengex context\n");
         vertex_array_free(tmpVA);

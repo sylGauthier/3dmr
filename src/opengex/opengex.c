@@ -93,13 +93,6 @@ static int parse_root(struct OgexContext* context, struct Node* root) {
             case OGEX_GEOMETRY_OBJECT:
                 if (!(ogex_parse_geometry_object(context, cur))) return 0;
                 break;
-            case OGEX_NODE:
-            case OGEX_BONE_NODE:
-            case OGEX_CAMERA_NODE:
-            case OGEX_GEOMETRY_NODE:
-            case OGEX_LIGHT_NODE:
-                if (!(ogex_parse_node(context, root, cur))) return 0;
-                break;
             case OGEX_MATERIAL:
                 if (!(ogex_parse_material(context, cur))) return 0;
                 break;
@@ -110,6 +103,24 @@ static int parse_root(struct OgexContext* context, struct Node* root) {
                 break;
         }
     }
+    for (i = 0; i < docRoot->nbStructures; i++) {
+        struct ODDLStructure* cur = docRoot->structures[i];
+
+        switch (ogex_get_identifier(cur)) {
+            case OGEX_NONE:
+                break;
+            case OGEX_NODE:
+            case OGEX_BONE_NODE:
+            case OGEX_CAMERA_NODE:
+            case OGEX_GEOMETRY_NODE:
+            case OGEX_LIGHT_NODE:
+                if (!(ogex_parse_node(context, root, cur))) return 0;
+                break;
+            default:
+                break;
+        }
+    }
+    if (!ogex_post_parse_skeletons(context)) return 0;
     return 1;
 }
 
@@ -124,6 +135,8 @@ int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct Shared
     context.forward = AXIS_X;
     context.nbSharedObjects = 0;
     context.sharedObjs = NULL;
+    context.nbSkeletons = 0;
+    context.skeletons = NULL;
     context.root = root;
     context.path = path;
     context.metadata = metadata;

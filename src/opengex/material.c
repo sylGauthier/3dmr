@@ -122,8 +122,6 @@ int ogex_parse_material(struct OgexContext* context, struct ODDLStructure* cur) 
     struct MatParamVec3* params[PHONG_NB_PARAMS];
     struct PhongMaterialParams* phongParams;
 
-    if (ogex_get_shared_object(context, cur)) return 1;
-
     if (!(phongParams = phong_material_params_new())) return 0;
     params[PHONG_AMBIENT] = &phongParams->ambient;
     params[PHONG_DIFFUSE] = &phongParams->diffuse;

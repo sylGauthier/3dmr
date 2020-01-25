@@ -8,9 +8,6 @@ int ogex_parse_camera_object(struct OgexContext* context, struct ODDLStructure* 
     struct Camera* cam;
     float fov = 80.0 / 360.0 * (2.0 * M_PI), zNear = 0.001, zFar = 1000.0;
 
-    /* If the camera is already in context, we skip and return success */
-    if (ogex_get_shared_object(context, cur)) return 1;
-
     if (!(cam = malloc(sizeof(struct Camera)))) {
         fprintf(stderr, "Error: CameraObject: can't allocate memory for camera\n");
         return 0;

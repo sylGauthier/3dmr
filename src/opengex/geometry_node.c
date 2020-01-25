@@ -6,25 +6,19 @@
 
 static struct VertexArray* parse_object_ref(struct OgexContext* context, struct ODDLStructure* cur) {
     struct ODDLStructure* goPtr;
+    struct VertexArray* ret;
 
     if (!ogex_parse_ref(cur, &goPtr)) {
         return NULL;
     }
-    if (!ogex_parse_geometry_object(context, goPtr)) {
-        fprintf(stderr, "Error: parsing GeometryObject failed\n");
-        return NULL;
-    }
-    return ogex_get_shared_object(context, goPtr);
+    ret = ogex_get_shared_object(context, goPtr);
+    return ret;
 }
 
 static struct PhongMaterialParams* parse_material_ref(struct OgexContext* context, struct ODDLStructure* cur) {
     struct ODDLStructure* matPtr;
 
     if (!ogex_parse_ref(cur, &matPtr)) {
-        return NULL;
-    }
-    if (!ogex_parse_material(context, matPtr)) {
-        fprintf(stderr, "Error: parsing Material failed\n");
         return NULL;
     }
     return ogex_get_shared_object(context, matPtr);
@@ -58,6 +52,8 @@ int ogex_parse_geometry_node(struct OgexContext* context, struct Node* node, str
         }
     }
     if (!(va && matParams)) {
+        if (!va) printf("VA\n");
+        if (!matParams) printf("Mat\n");
         fprintf(stderr, "Error: GeometryNode: missing vertex array or material, aborting\n");
         return 0;
     }

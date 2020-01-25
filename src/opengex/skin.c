@@ -191,12 +191,27 @@ static int load_skin_arrays(struct Skin* skin, unsigned int* countArray, unsigne
     return 1;
 }
 
+int ogex_post_parse_skeletons(struct OgexContext* context) {
+    unsigned int i;
+    for ( i = 0; i < context->nbSkeletons; i++) {
+        if (context->skeletons[i].skin->nbBones) {
+            fprintf(stderr, "Error: Skin has multiple skeletons\n");
+            return 0;
+        }
+        if (!parse_skeleton(context, context->skeletons[i].skeleton, context->skeletons[i].skin))
+            return 0;
+        skin_gen(context->skeletons[i].skin);
+    }
+    return 1;
+}
+
 int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur) {
     unsigned int i, countLen = 0, idxLen = 0, weightLen = 0;
     unsigned int* countArray = NULL;
     unsigned int* indexArray = NULL;
     float* weightArray = NULL;
     int success = 1;
+    int skeleton = 0;
 
     load_id4(skin->skinTransform);
     for (i = 0; i < cur->nbStructures && success; i++) {
@@ -210,10 +225,11 @@ int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLS
                 }
                 break;
             case OGEX_SKELETON:
-                if (!parse_skeleton(context, tmp, skin)) {
+                if (!ogex_add_skeleton(context, tmp, skin)) {
                     success = 0;
                     goto exit;
                 }
+                skeleton = 1;
                 break;
             case OGEX_BONE_COUNT_ARRAY:
                 if (!parse_int_array(tmp, &countArray, &countLen)) {
@@ -237,7 +253,7 @@ int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLS
                 break;
         }
     }
-    if (!skin->bones || !countArray || !indexArray || !weightArray) {
+    if (!skeleton || !countArray || !indexArray || !weightArray) {
         fprintf(stderr, "Error: Skin: missing substructure (Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray)\n");
         success = 0;
         goto exit;

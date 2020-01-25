@@ -51,6 +51,7 @@ void ogex_free_context(struct OgexContext* context) {
         }
     }
     free(context->sharedObjs);
+    free(context->skeletons);
 }
 
 int ogex_add_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct, void* object, int persistent) {
@@ -64,6 +65,19 @@ int ogex_add_shared_object(struct OgexContext* context, struct ODDLStructure* od
     tmp[context->nbSharedObjects].oddlPtr = oddlStruct;
     tmp[context->nbSharedObjects].persistent = persistent;
     tmp[context->nbSharedObjects++].object = object;
+    return 1;
+}
+
+int ogex_add_skeleton(struct OgexContext* context, struct ODDLStructure* skeleton, struct Skin* skin) {
+    struct OgexSkeleton* tmp;
+
+    if (!(tmp = realloc(context->skeletons, (context->nbSkeletons + 1) * sizeof(struct OgexSkeleton)))) {
+        fprintf(stderr, "Error: OpenGEX import: can't allocate memory for skeletons\n");
+        return 0;
+    }
+    context->skeletons = tmp;
+    tmp[context->nbSkeletons].skeleton = skeleton;
+    tmp[context->nbSkeletons++].skin = skin;
     return 1;
 }
 

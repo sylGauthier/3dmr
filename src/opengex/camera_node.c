@@ -9,10 +9,6 @@ static struct Camera* parse_object_ref(struct OgexContext* context, struct ODDLS
     if (!ogex_parse_ref(cur, &camPtr)) {
         return NULL;
     }
-    if (!ogex_parse_camera_object(context, camPtr)) {
-        fprintf(stderr, "Warning: ObjectRef: parse_camera_object failed\n");
-        return NULL;
-    }
     return ogex_get_shared_object(context, camPtr);
 }
 

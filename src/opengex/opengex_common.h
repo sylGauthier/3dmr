@@ -70,6 +70,11 @@ struct OgexSharedObject {
     int persistent;
 };
 
+struct OgexSkeleton {
+    struct ODDLStructure* skeleton;
+    struct Skin* skin;
+};
+
 struct OgexContext {
     float scale, angle, time;
     enum Axis up, forward;
@@ -78,6 +83,9 @@ struct OgexContext {
 
     unsigned nbSharedObjects;
     struct OgexSharedObject* sharedObjs;
+
+    unsigned nbSkeletons;
+    struct OgexSkeleton* skeletons;
 
     struct Node* root;
     struct ImportMetadata* metadata;
@@ -89,6 +97,7 @@ void swap_yz(Mat4 mat);
 
 enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st);
 int ogex_add_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct, void* object, int persistent);
+int ogex_add_skeleton(struct OgexContext* context, struct ODDLStructure* skeleton, struct Skin* skin);
 void* ogex_get_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct);
 void ogex_free_context(struct OgexContext* context);
 
@@ -108,5 +117,7 @@ int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struc
 int ogex_parse_light_node(struct OgexContext* context, struct Node* newNode, struct ODDLStructure* cur);
 int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur);
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
+
+int ogex_post_parse_skeletons(struct OgexContext* context);
 
 #endif
