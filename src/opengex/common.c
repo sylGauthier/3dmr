@@ -14,6 +14,7 @@ enum OgexIdentifier ogex_get_identifier(struct ODDLStructure* st) {
     if (!strcmp(st->identifier, "BoneWeightArray")) return OGEX_BONE_WEIGHT_ARRAY;
     if (!strcmp(st->identifier, "CameraNode"))      return OGEX_CAMERA_NODE;
     if (!strcmp(st->identifier, "CameraObject"))    return OGEX_CAMERA_OBJECT;
+    if (!strcmp(st->identifier, "Clip"))            return OGEX_CLIP;
     if (!strcmp(st->identifier, "Color"))           return OGEX_COLOR;
     if (!strcmp(st->identifier, "GeometryNode"))    return OGEX_GEOMETRY_NODE;
     if (!strcmp(st->identifier, "GeometryObject"))  return OGEX_GEOMETRY_OBJECT;
@@ -52,6 +53,12 @@ void ogex_free_context(struct OgexContext* context) {
     }
     free(context->sharedObjs);
     free(context->skeletons);
+    /* If the user didn't want to save metadata including animation data, we free it all */
+    if (!context->metadata) {
+        for (i = 0; i < OGEX_MAX_NB_CLIP; i++) {
+            anim_free_clip(context->clips[i]);
+        }
+    }
 }
 
 int ogex_add_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct, void* object, int persistent) {
@@ -90,6 +97,35 @@ void* ogex_get_shared_object(struct OgexContext* context, struct ODDLStructure* 
         }
     }
     return NULL;
+}
+
+static char* strcopy(const char* src) {
+    char* ret;
+    if ((ret = malloc(strlen(src) + 1))) {
+        memcpy(ret, src, strlen(src) + 1);
+    }
+    return ret;
+}
+
+char* ogex_parse_name(struct ODDLStructure* cur) {
+    struct ODDLStructure* oddlString;
+    char* str;
+
+    if (cur->nbStructures != 1) {
+        fprintf(stderr, "Error: Name: must contain exactly one substructure\n");
+        return NULL;
+    }
+    oddlString = cur->structures[0];
+    if (oddlString->type != TYPE_STRING) {
+        fprintf(stderr, "Error: Name: substructure must ne of type string\n");
+        return NULL;
+    }
+    if (oddlString->nbVec != 1 || oddlString->vecSize != 1) {
+        fprintf(stderr, "Error: Name: string structure should have exactly one string\n");
+        return NULL;
+    }
+    str = *((char**)oddlString->dataList);
+    return strcopy(str);
 }
 
 int ogex_parse_ref(struct ODDLStructure* cur, struct ODDLStructure** res) {

@@ -156,6 +156,7 @@ void anim_free_clip(struct Clip* clip) {
         anim_free_animation(clip->animations + i);
     }
     free(clip->animations);
+    free(clip->name);
 }
 
 void anim_free_engine(struct AnimationEngine* engine) {

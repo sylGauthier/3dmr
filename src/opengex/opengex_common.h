@@ -5,6 +5,8 @@
 #include <game/scene/opengex.h>
 #include <game/scene/skin.h>
 
+#define OGEX_MAX_NB_CLIP 32
+
 #ifndef OGEX_COMMON_H
 #define OGEX_COMMON_H
 
@@ -28,6 +30,7 @@ enum OgexIdentifier {
     OGEX_BONE_WEIGHT_ARRAY,
     OGEX_CAMERA_NODE,
     OGEX_CAMERA_OBJECT,
+    OGEX_CLIP,
     OGEX_COLOR,
     OGEX_GEOMETRY_NODE,
     OGEX_GEOMETRY_OBJECT,
@@ -87,6 +90,8 @@ struct OgexContext {
     unsigned nbSkeletons;
     struct OgexSkeleton* skeletons;
 
+    struct Clip* clips[OGEX_MAX_NB_CLIP];
+
     struct Node* root;
     struct ImportMetadata* metadata;
     struct SharedData* shared;
@@ -101,6 +106,7 @@ int ogex_add_skeleton(struct OgexContext* context, struct ODDLStructure* skeleto
 void* ogex_get_shared_object(struct OgexContext* context, struct ODDLStructure* oddlStruct);
 void ogex_free_context(struct OgexContext* context);
 
+char* ogex_parse_name(struct ODDLStructure* cur);
 int ogex_parse_ref(struct ODDLStructure* cur, struct ODDLStructure** res);
 int ogex_parse_param(struct ODDLStructure* cur, char** attrib, float* value);
 int ogex_parse_color(struct ODDLStructure* cur, char** attrib, Vec3 color);
@@ -117,6 +123,7 @@ int ogex_parse_camera_node(struct OgexContext* context, struct Node* node, struc
 int ogex_parse_light_node(struct OgexContext* context, struct Node* newNode, struct ODDLStructure* cur);
 int ogex_parse_skin(struct OgexContext* context, struct Skin* skin, struct ODDLStructure* cur);
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur);
+int ogex_parse_clip(struct OgexContext* context, struct ODDLStructure* cur);
 
 int ogex_post_parse_skeletons(struct OgexContext* context);
 

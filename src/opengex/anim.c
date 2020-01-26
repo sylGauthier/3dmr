@@ -434,20 +434,56 @@ static int parse_track(struct OgexContext* context, struct Animation* anim, stru
     return 1;
 }
 
+static struct Clip* get_clip(struct OgexContext* context, unsigned int index) {
+    if (index >= OGEX_MAX_NB_CLIP) {
+        fprintf(stderr, "Error: invalid clip index (must be between 0 and %d (OGEX_MAX_NB_CLIP))\n", OGEX_MAX_NB_CLIP);
+        return 0;
+    }
+    return context->clips[index];
+}
+
+static struct Clip* create_new_clip(struct OgexContext* context, unsigned int index) {
+    if (index >= OGEX_MAX_NB_CLIP) {
+        fprintf(stderr, "Error: invalid clip index (must be between 0 and %d (OGEX_MAX_NB_CLIP))\n", OGEX_MAX_NB_CLIP);
+        return NULL;
+    }
+    if (context->clips[index]) {
+        fprintf(stderr, "Error: Clip: clip #%d already exists\n", index);
+        return NULL;
+    }
+    if (!(context->clips[index] = calloc(1, sizeof(struct Clip)))) {
+        fprintf(stderr, "Error: could not reallocate memory for clips\n");
+        return NULL;
+    }
+    if (context->metadata) {
+        struct Clip** tmp;
+        if ((tmp = realloc(context->metadata->clips, (context->metadata->nbClips + 1) * sizeof(void*)))) {
+            context->metadata->clips = tmp;
+            context->metadata->clips[context->metadata->nbClips++] = context->clips[index];
+        }
+    }
+    return context->clips[index];
+}
+
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
     unsigned int i, nbTracks = 0, duration = 0;
     struct Clip* clip = NULL;
     struct Animation* newAnim = NULL;
+    struct ODDLProperty* prop;
 
-    if (!context->metadata->nbClips) {
-        if (!(context->metadata->clips = malloc(sizeof(struct Clip)))) {
-            fprintf(stderr, "Error: Animation: could not allocate memory for new Clip\n");
+    if ((prop = oddl_get_property(cur, "clip"))) {
+        if (!(clip = get_clip(context, prop->llint))) {
+            fprintf(stderr, "Error: Animation: undefined reference to Clip %d\n", (unsigned int)prop->llint);
             return 0;
         }
-        context->metadata->nbClips++;
-        memset(context->metadata->clips, 0, sizeof(struct Clip));
+    } else {
+        if (!context->clips[0] && !create_new_clip(context, 0))
+            return 0;
+        if (!(clip = get_clip(context, 0))) {
+            fprintf(stderr, "Error: Animation: no clip index property and no Clip with index 0\n");
+            return 0;
+        }
     }
-    clip = context->metadata->clips;
     if (anim_clip_new_anim(clip, node) < 0) {
         fprintf(stderr, "Error: Animation: could not allocate memory for new Animation\n");
         return 0;
@@ -475,5 +511,40 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct 
     }
     duration = 1000 * anim_duration(newAnim);
     clip->duration = duration > clip->duration ? duration : clip->duration;
+    return 1;
+}
+
+/* Clips are allocated within the ImportMetadata structure, and the OgexContext.clips array keeps track
+ * of clip index assignment by storing pointers to the clips in ImportMetadata, indexed by their own index.
+ */
+int ogex_parse_clip(struct OgexContext* context, struct ODDLStructure* cur) {
+    struct Clip* clip;
+    struct ODDLProperty* prop;
+    unsigned int clipIdx = 0, i;
+    char* name = NULL;
+
+    if ((prop = oddl_get_property(cur, "index"))) {
+        clipIdx = prop->llint;
+    }
+
+    for (i = 0; i < cur->nbStructures; i++) {
+        switch (ogex_get_identifier(cur->structures[i])) {
+            case OGEX_PARAM:
+                fprintf(stderr, "Warning: Clip: Params are not supported\n");
+                break;
+            case OGEX_NAME:
+                if (!(name = ogex_parse_name(cur->structures[i])))
+                    fprintf(stderr, "Warning: Clip: could not parse name\n");
+                break;
+            default:
+                break;
+        }
+    }
+    if (!(clip = create_new_clip(context, clipIdx))) {
+        free(name);
+        return 0;
+    }
+    clip = get_clip(context, clipIdx);
+    clip->name = name;
     return 1;
 }

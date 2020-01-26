@@ -72,6 +72,7 @@ struct Clip {
 
     unsigned int curPos;
     char rev;
+    char* name;
 };
 
 struct AnimStack {

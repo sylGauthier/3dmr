@@ -57,7 +57,7 @@ void import_free_metadata(struct ImportMetadata* metadata) {
     free(metadata->cameraNodes);
     free(metadata->lightNodes);
     for (i = 0; i < metadata->nbClips; i++) {
-        anim_free_clip(metadata->clips + i);
+        anim_free_clip(metadata->clips[i]);
     }
     free(metadata->clips);
 }

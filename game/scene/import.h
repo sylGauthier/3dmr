@@ -19,7 +19,7 @@ struct SharedData {
 struct ImportMetadata {
     struct Node** cameraNodes;
     struct Node** lightNodes;
-    struct Clip* clips;
+    struct Clip** clips;
 
     unsigned int nbCameraNodes;
     unsigned int nbLightNodes;

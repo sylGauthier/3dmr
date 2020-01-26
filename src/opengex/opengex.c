@@ -90,6 +90,9 @@ static int parse_root(struct OgexContext* context, struct Node* root) {
             case OGEX_CAMERA_OBJECT:
                 if (!(ogex_parse_camera_object(context, cur))) return 0;
                 break;
+            case OGEX_CLIP:
+                if (!(ogex_parse_clip(context, cur))) return 0;
+                break;
             case OGEX_GEOMETRY_OBJECT:
                 if (!(ogex_parse_geometry_object(context, cur))) return 0;
                 break;
@@ -124,19 +127,28 @@ static int parse_root(struct OgexContext* context, struct Node* root) {
     return 1;
 }
 
+static void init_context(struct OgexContext* context) {
+    context->scale = 1.0;
+    context->angle = 1.0;
+    context->time = 1.0;
+    context->up = AXIS_Z;
+    context->forward = AXIS_X;
+    context->nbSharedObjects = 0;
+    context->sharedObjs = NULL;
+    context->nbSkeletons = 0;
+    context->skeletons = NULL;
+    memset(context->clips, 0, sizeof(context->clips));
+    context->root = NULL;
+    context->path = NULL;
+    context->metadata = NULL;
+    context->shared = NULL;
+}
+
 int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct SharedData* shared, struct ImportMetadata* metadata) {
     struct OgexContext context;
     int success;
 
-    context.scale = 1.0;
-    context.angle = 1.0;
-    context.time = 1.0;
-    context.up = AXIS_Z;
-    context.forward = AXIS_X;
-    context.nbSharedObjects = 0;
-    context.sharedObjs = NULL;
-    context.nbSkeletons = 0;
-    context.skeletons = NULL;
+    init_context(&context);
     context.root = root;
     context.path = path;
     context.metadata = metadata;

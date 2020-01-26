@@ -10,7 +10,7 @@
 struct Prog {
     struct Scene scene;
     struct ImportMetadata metadata;
-    unsigned int activeCam, numDirectionalLights, numPointLights;
+    unsigned int activeCam, activeClip, numDirectionalLights, numPointLights;
     struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS];
     int running;
 };
@@ -60,6 +60,9 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
         case GLFW_KEY_RIGHT: case GLFW_KEY_DOWN:
             prog->activeCam = (prog->activeCam + 1) % prog->metadata.nbCameraNodes;
             update_cam(viewer, prog);
+            break;
+        case GLFW_KEY_SPACE:
+            prog->activeClip = (prog->activeClip + 1) % prog->metadata.nbClips;
             break;
     }
 }
@@ -141,6 +144,7 @@ int main(int argc, char** argv) {
     } else {
         err = 0;
         prog.activeCam = 0;
+        prog.activeClip = 0;
         prog.running = 1;
         viewer->callbackData = &prog;
         viewer->resize_callback = resize_callback;
@@ -170,8 +174,13 @@ int main(int argc, char** argv) {
             }
         }
         for (i = 0; i < prog.metadata.nbClips; i++) {
-            prog.metadata.clips[i].loop = 1;
-            prog.metadata.clips[i].mode = CLIP_FORWARD;
+            prog.metadata.clips[i]->loop = 1;
+            prog.metadata.clips[i]->mode = CLIP_FORWARD;
+            printf("Found Clip #%d", i);
+            if (prog.metadata.clips[i]->name) {
+                printf("(%s)", prog.metadata.clips[i]->name);
+            }
+            printf("\n");
         }
         {
             struct AmbientLight ambient = {0};
@@ -190,8 +199,8 @@ int main(int argc, char** argv) {
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
             if (prog.metadata.nbClips) {
-                for (i = 0; i < prog.metadata.nbClips; i++) {
-                    anim_play_clip(prog.metadata.clips + i, dt * 1000);
+                if (prog.metadata.nbClips) {
+                    anim_play_clip(prog.metadata.clips[prog.activeClip], dt * 1000);
                 }
                 scene_update_nodes(&prog.scene, update_node, &prog);
                 uniform_buffer_send(&prog.scene.lights);
