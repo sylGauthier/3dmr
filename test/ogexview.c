@@ -63,6 +63,10 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             break;
         case GLFW_KEY_SPACE:
             prog->activeClip = (prog->activeClip + 1) % prog->metadata.nbClips;
+            if (prog->metadata.clips[prog->activeClip]->name)
+                printf("Current clip: %s\n", prog->metadata.clips[prog->activeClip]->name);
+            else
+                printf("Current clip: #%d\n", prog->activeClip);
             break;
     }
 }
@@ -178,7 +182,7 @@ int main(int argc, char** argv) {
             prog.metadata.clips[i]->mode = CLIP_FORWARD;
             printf("Found Clip #%d", i);
             if (prog.metadata.clips[i]->name) {
-                printf("(%s)", prog.metadata.clips[i]->name);
+                printf(" (%s)", prog.metadata.clips[i]->name);
             }
             printf("\n");
         }
