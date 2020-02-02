@@ -70,52 +70,58 @@ int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct Import
 
     ogex_init_context(&context);
     context.path = path;
-    if ((context.metadata = metadata)) {
-        import_init_metadata(metadata);
-    }
+    context.metadata = metadata;
     if (!(oddl_parse(&doc, ogexFile))) {
         return 0;
     }
     success = ogex_parse_all(&doc, &context, root);
     if (success && shared) {
-        import_init_shared_data(shared);
-        if (!(shared->va = malloc(context.geometries.num * sizeof(*shared->va)))
-         || !(shared->matParams = malloc(context.matParams.num * sizeof(*shared->matParams)))
-         || !(shared->skins = malloc(context.skins.num * sizeof(*shared->skins)))) {
+        struct VertexArray** newVA = NULL;
+        void** newMP = NULL;
+        struct Skin** newSk = NULL;
+        if (context.geometries.num < ((unsigned int)-1) - shared->numVA) {
+            if ((newVA = realloc(shared->va, (shared->numVA + context.geometries.num) * sizeof(*shared->va)))) shared->va = newVA;
+        }
+        if (context.matParams.num < ((unsigned int)-1) - shared->numMatParams) {
+            if ((newMP = realloc(shared->matParams, (shared->numMatParams + context.matParams.num) * sizeof(*shared->matParams)))) shared->matParams = newMP;
+        }
+        if (context.skins.num < ((unsigned int)-1) - shared->numSkins) {
+            if ((newSk = realloc(shared->skins, (shared->numSkins + context.skins.num) * sizeof(*shared->skins)))) shared->skins = newSk;
+        }
+        if (!newVA || !newMP || !newSk) {
             fprintf(stderr, "Error: failed to allocate imported shared data arrays\n");
-            import_free_shared_data(shared);
             success = 0;
         }
-        shared->numVA = context.geometries.num;
-        shared->numMatParams = context.matParams.num;
-        shared->numSkins = context.skins.num;
+    }
+    if (success && metadata) {
+        struct Clip** newClips = NULL;
+        if (context.numClips < ((unsigned int)-1) - metadata->numClips) {
+            if ((newClips = realloc(metadata->clips, (metadata->numClips + context.numClips) * sizeof(*metadata->clips)))) metadata->clips = newClips;
+        }
     }
     if (success) {
         for (i = 0; i < context.geometries.num; i++) {
             struct Geometry* g = context.geometries.objects[i];
-            if (shared) shared->va[i] = g->vertexArray;
+            if (shared) shared->va[shared->numVA++] = g->vertexArray;
             g->vertexArray = NULL;
         }
         for (i = 0; i < context.matParams.num; i++) {
-            if (shared) shared->matParams[i] = context.matParams.objects[i];
+            if (shared) shared->matParams[shared->numMatParams++] = context.matParams.objects[i];
             context.matParams.objects[i] = NULL;
         }
         context.matParams.num = 0;
         for (i = 0; i < context.skins.num; i++) {
-            if (shared) shared->skins[i] = context.skins.objects[i];
+            if (shared) shared->skins[shared->numSkins++] = context.skins.objects[i];
             context.skins.objects[i] = NULL;
         }
         context.skins.num = 0;
         if (metadata) {
-            metadata->clips = context.clips;
-            metadata->numClips = 0;
             for (i = 0; i < context.numClips; i++) {
-                if (metadata->clips[i]) {
-                    metadata->clips[metadata->numClips++] = metadata->clips[i];
+                if (context.clips[i]) {
+                    metadata->clips[metadata->numClips++] = context.clips[i];
+                    context.clips[i] = NULL;
                 }
             }
-            context.clips = NULL;
-            context.numClips = 0;
         }
     } else {
         if (metadata) import_free_metadata(metadata);

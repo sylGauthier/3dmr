@@ -16,7 +16,7 @@ struct Prog {
 };
 
 static void usage(const char* prog) {
-    printf("Usage: %s file\n", prog);
+    printf("Usage: %s file [file2 [file3 ...]]\n", prog);
 }
 
 static void resize_callback(struct Viewer* viewer, void* data) {
@@ -111,6 +111,26 @@ static char* dirname(char* path) {
     return NULL;
 }
 
+static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int argc, char** argv) {
+    FILE* file;
+    unsigned int i;
+
+    for (i = 0; i < argc; i++) {
+        printf("Appending scene: %s\n", argv[i]);
+        if (!(file = fopen(argv[i], "r"))) {
+            fprintf(stderr, "Error: could not open file: %s\n", argv[i]);
+            return 0;
+        }
+        if (!ogex_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata)) {
+            fprintf(stderr, "Error: failed to load ogex file\n");
+            fclose(file);
+            return 0;
+        }
+        fclose(file);
+    }
+    return 1;
+}
+
 int main(int argc, char** argv) {
     FILE* f = NULL;
     struct Prog prog;
@@ -121,7 +141,7 @@ int main(int argc, char** argv) {
     int sceneInit = 0, ogexInit = 0, err = 1;
     double dt;
 
-    if (argc != 2) {
+    if (argc < 2) {
         usage(argv[0]);
         return 1;
     }
@@ -132,16 +152,16 @@ int main(int argc, char** argv) {
 
     prog.numDirectionalLights = 0;
     prog.numPointLights = 0;
+    import_init_metadata(&prog.metadata);
+    import_init_shared_data(&shared);
     if (!(viewer = viewer_new(1024, 768, argv[1]))) {
         fprintf(stderr, "Error: failed to start viewer\n");
-    } else if (!(f = fopen(argv[1], "r"))) {
-        fprintf(stderr, "Error: failed to open '%s'\n", argv[1]);
     } else if (!(sceneInit = scene_init(&prog.scene, NULL))) {
         fprintf(stderr, "Error: failed to init scene\n");
-    } else if (!(ogexInit = ogex_load(&prog.scene.root, f, dirname(argv[1]), &shared, &prog.metadata))) {
-        fprintf(stderr, "Error: failed to load scene '%s'\n", argv[1]);
+    } else if (!(ogexInit = load_scenes(&prog, &shared, argc - 1, argv + 1))) {
+        fprintf(stderr, "Error: failed to load scenes\n");
     } else if (!prog.metadata.numCameraNodes) {
-        fprintf(stderr, "Error: no camera node in '%s'\n", argv[1]);
+        fprintf(stderr, "Error: no camera node in any of the scenes\n");
     } else {
         err = 0;
         prog.activeCam = 0;
