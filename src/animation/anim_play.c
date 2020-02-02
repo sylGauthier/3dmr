@@ -204,6 +204,8 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
     unsigned int i;
     int running;
 
+    if (!clip->duration) return 1;
+
     running = update_clip_cur_time(clip, dt);
 
     for (i = 0; i < clip->numAnimations; i++) {

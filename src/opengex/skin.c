@@ -20,6 +20,10 @@ static int parse_bone_ref_array(const struct OgexContext* context, const struct 
     refs = tmp->dataList;
     for (i = 0; i < numBones; i++) {
         struct ODDLStructure* ref = refs[i].ref;
+        if (!ref) {
+            fprintf(stderr, "Error: BoneRefArray: bone ref can't be null\n");
+            return 0;
+        }
         if (!ref->identifier || strcmp(ref->identifier, "BoneNode")) {
             fprintf(stderr, "Error: BoneRefArray: a ref points to an object that isn't a bone\n");
             return 0;
