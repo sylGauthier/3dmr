@@ -1,9 +1,13 @@
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "opengex_common.h"
+#include "common.h"
+#include "context.h"
+#include "geometry_object.h"
+#include "skin.h"
 
-static void import_vec3(struct OgexContext* context, Vec3 dest, const Vec3 src) {
+static void import_vec3(const struct OgexContext* context, Vec3 dest, const Vec3 src) {
     if (context->up == AXIS_Z) {
         dest[0] = src[0];
         dest[1] = src[2];
@@ -13,88 +17,90 @@ static void import_vec3(struct OgexContext* context, Vec3 dest, const Vec3 src) 
     }
 }
 
-static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Skin** skin,  struct ODDLStructure* cur) {
+static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Skin** skin, const struct ODDLStructure* cur) {
     float *positions = NULL, *normals = NULL, *texCoords = NULL, *tangents = NULL, *boneWeights = NULL;
     uint32_t* indices = NULL;
     unsigned int* boneIndices = NULL;
     unsigned int i, numPos = 0, numNorm = 0, numTex = 0, numTan = 0, numIndices = 0, numVerticesSkin = 0;
-
-    if (!(cur->structures)) {
-        return 0;
-    }
+    int ok = 1;
 
     mesh->flags = 0;
-    for (i = 0; i < cur->nbStructures; i++) {
+    for (i = 0; ok && i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
         struct ODDLStructure* subTmp;
         struct ODDLProperty* prop;
 
-        switch (ogex_get_identifier(tmp)) {
-            case OGEX_VERTEX_ARRAY:
-                if (!(prop = oddl_get_property(tmp, "attrib"))) {
-                    fprintf(stderr, "Error: VertexArray: missing property: \"attrib\"\n");
-                    return 0;
-                }
-                if (tmp->nbStructures != 1) {
-                    fprintf(stderr, "Error: VertexArray: invalid number of substructures (expected 1)\n");
-                    return 0;
-                }
+        if (!tmp->identifier) {
+            continue;
+        } else if (!strcmp(tmp->identifier, "VertexArray")) {
+            if (!(prop = oddl_get_property(tmp, "attrib"))) {
+                fprintf(stderr, "Error: VertexArray: missing property: \"attrib\"\n");
+                ok = 0;
+            } else if (tmp->nbStructures != 1) {
+                fprintf(stderr, "Error: VertexArray: invalid type/number of substructures (expected 1)\n");
+                ok = 0;
+            } else {
                 subTmp = tmp->structures[0];
                 if (!strcmp(prop->str, "position")) {
                     positions = subTmp->dataList;
                     numPos = subTmp->nbVec;
+                    ok = ogex_check_struct(subTmp, "VertexArray", TYPE_FLOAT32, subTmp->nbVec, 3);
                 } else if (!strcmp(prop->str, "normal")) {
                     normals = subTmp->dataList;
                     numNorm = subTmp->nbVec;
                     mesh->flags |= MESH_NORMALS;
+                    ok = ogex_check_struct(subTmp, "VertexArray", TYPE_FLOAT32, subTmp->nbVec, 3);
                 } else if (!strcmp(prop->str, "texcoord")) {
                     texCoords = subTmp->dataList;
                     numTex = subTmp->nbVec;
                     mesh->flags |= MESH_TEXCOORDS;
+                    ok = ogex_check_struct(subTmp, "VertexArray", TYPE_FLOAT32, subTmp->nbVec, 2);
                 } else if (!strcmp(prop->str, "tangent")) {
                     tangents = subTmp->dataList;
                     numTan = subTmp->nbVec;
                     mesh->flags |= MESH_TANGENTS;
+                    ok = ogex_check_struct(subTmp, "VertexArray", TYPE_FLOAT32, subTmp->nbVec, 3);
                 } else {
                     fprintf(stderr, "Warning: VertexArray: unhandled attribute: %s\n", prop->str);
                 }
-                break;
-            case OGEX_INDEX_ARRAY: /* TODO: Remove code duplication with skinning */
-                if (tmp->nbStructures != 1) {
-                    fprintf(stderr, "Error: VertexArray: invalid number of substructures in (expected 1)\n");
-                    return 0;
-                }
-                subTmp = tmp->structures[0];
-                if (!(subTmp->type == TYPE_UINT32 && subTmp->vecSize == 3)) {
-                    fprintf(stderr, "Error: IndexArray: unsupported data format: %s[%d]\n", typeName[subTmp->type], subTmp->vecSize);
-                    return 0;
-                }
+            }
+        } else if (!strcmp(tmp->identifier, "IndexArray")) {
+            if (tmp->nbStructures != 1) {
+                fprintf(stderr, "Error: IndexArray: invalid number of substructures in (expected 1)\n");
+                ok = 0;
+            } else if (!((subTmp = tmp->structures[0])->type == TYPE_UINT32 && subTmp->vecSize == 3)) {
+                fprintf(stderr, "Error: IndexArray: unsupported data format: %s[%d]\n", typeName[subTmp->type], subTmp->vecSize);
+                ok = 0;
+            } else {
                 indices = subTmp->dataList;
                 numIndices = 3 * subTmp->nbVec;
-                break;
-            case OGEX_SKIN:
-                if (!(ogex_parse_skin(context, tmp, skin, &boneIndices, &boneWeights, &numVerticesSkin))) return 0;
-                mesh->flags |= MESH_SKIN;
-                break;
-            default:;
+            }
+        } else if (!strcmp(tmp->identifier, "Skin")) {
+            ok = ogex_parse_skin(context, tmp, skin, &boneIndices, &boneWeights, &numVerticesSkin);
+            mesh->flags |= MESH_SKIN;
         }
     }
     if (!positions) {
         fprintf(stderr, "Error: Mesh: must have positions\n");
-        return 0;
+        ok = 0;
     }
     if ((numNorm && numNorm != numPos) || (numTex && numTex != numPos) || (numTan && numTan != numPos)) {
         fprintf(stderr, "Error: Mesh: invalid number of normals or texcoords or tangents\n");
-        return 0;
+        ok = 0;
     }
     mesh->numVertices = numPos;
     mesh->numIndices = numIndices;
     if ((mesh->flags & MESH_SKIN) && mesh->numVertices != numVerticesSkin) {
         fprintf(stderr, "Error: Mesh: Skin has inconsistent number of vertices (Mesh has %d, Skin has %d)\n", mesh->numVertices, numVerticesSkin);
-        return 0;
+        ok = 0;
     }
-    if (!(mesh->vertices = malloc(MESH_SIZEOF_VERTICES(mesh)))) {
+    if (ok && !(mesh->vertices = malloc(MESH_SIZEOF_VERTICES(mesh)))) {
         fprintf(stderr, "Error: Mesh: could not allocate memory for vertices\n");
+        ok = 0;
+    }
+    if (!ok) {
+        free(boneIndices);
+        free(boneWeights);
         return 0;
     }
     for (i = 0; i < mesh->numVertices; i++) {
@@ -134,6 +140,8 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Ski
             mesh->vertices[i * stride + offset + 3] = boneWeights[i * 2 + 1];
         }
     }
+    free(boneIndices);
+    free(boneWeights);
     if (numIndices) {
         if (!(mesh->indices = malloc(numIndices * sizeof(*mesh->indices)))) {
             fprintf(stderr, "Error: Mesh: could not allocate memory for indices\n");
@@ -150,75 +158,63 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Ski
     return 1;
 }
 
-static int parse_morph(struct OgexContext* context, struct ODDLStructure* cur) {
+static int parse_morph(const struct OgexContext* context, const struct ODDLStructure* cur) {
     fprintf(stderr, "Warning: Morph: not implemented\n");
     return 1;
 }
 
-int ogex_parse_geometry_object(struct OgexContext* context, struct ODDLStructure* cur) {
+struct Geometry* ogex_parse_geometry_object(struct OgexContext* context, const struct ODDLStructure* cur) {
     unsigned int i, nbMeshes = 0;
     struct Mesh mesh;
     struct Skin* skin = NULL;
     struct VertexArray* tmpVA = NULL;
-    int ok;
+    struct Geometry* geom;
+    int ok = 1;
 
-    mesh.vertices = NULL;
-    mesh.indices = NULL;
-    mesh.numVertices = 0;
-    mesh.numIndices = 0;
-    mesh.flags = 0;
-
-    /* Geometry object has already been parsed and loaded in the context */
-    if (ogex_get_shared_object(context, cur)) return 1;
-
-    if (!(cur->structures)) {
-        return 0;
-    }
-
-    for (i = 0; i < cur->nbStructures; i++) {
+    for (i = 0; ok && i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
-        switch (ogex_get_identifier(tmp)) {
-            case OGEX_MESH:
-                if (nbMeshes) {
-                    fprintf(stderr, "Warning: GeometryObject: multiple meshes is not supported\n");
+        if (!tmp->identifier) {
+            continue;
+        } else if (!strcmp(tmp->identifier, "Mesh")) {
+            if (nbMeshes) {
+                fprintf(stderr, "Warning: GeometryObject: multiple meshes is not supported\n");
+            } else {
+                if (!(parse_mesh(context, &mesh, &skin, tmp))) {
+                    ok = 0;
                 } else {
-                    if (!(parse_mesh(context, &mesh, &skin, tmp))) return 0;
+                    nbMeshes++;
                 }
-                nbMeshes++;
-                break;
-            case OGEX_MORPH:
-                if (!(parse_morph(context, tmp))) return 0;
-                break;
-            default:
-                break;
+            }
+        } else if (!strcmp(tmp->identifier, "Morph")) {
+            if (!(parse_morph(context, tmp))) ok = 0;
         }
     }
-    ok = 0;
     if (!nbMeshes) {
         fprintf(stderr, "Error: GeometryObject: no valid mesh parsed?\n");
-    } else if (!(tmpVA = malloc(sizeof(*tmpVA) + sizeof(struct Skin*)))) {
+        ok = 0;
+    } else if (!(tmpVA = vertex_array_new(&mesh))) {
         fprintf(stderr, "Error: GeometryObject: couldn't allocate memory for vertex array\n");
-    } else {
-        vertex_array_gen(&mesh, tmpVA);
-        ok = 1;
+        ok = 0;
     }
-    mesh_free(&mesh);
-    if (!ok) {
-        free(tmpVA);
-        return 0;
-    }
-    *(struct Skin**)(tmpVA + 1) = skin;
-    if (!(ogex_add_shared_object(context, cur, tmpVA, 1))) {
-        fprintf(stderr, "Error: GeometryObject: couldn't reallocate memory for opengex context\n");
+    if (nbMeshes) mesh_free(&mesh);
+    if (!ok) return NULL;
+    if (!(geom = malloc(sizeof(*geom)))) {
+        fprintf(stderr, "Error: GeometryObject: couldn't allocate memory for vertex array\n");
         vertex_array_free(tmpVA);
-        return 0;
+        return NULL;
     }
-    if (context->shared) {
-        if (!import_add_shared_item(&context->shared->va, &context->shared->nbVA, tmpVA)) {
-            vertex_array_free(tmpVA);
-            return 0;
-        }
+    geom->vertexArray = tmpVA;
+    geom->material = NULL;
+    geom->vertParams = skin;
+    geom->fragParams = NULL;
+    return geom;
+}
+
+void ogex_free_geometry(void* p) {
+    struct Geometry* g = p;
+    if (g) {
+        vertex_array_free(g->vertexArray);
+        free(g);
     }
-    return 1;
 }

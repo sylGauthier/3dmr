@@ -4,14 +4,15 @@
 
 #include <game/animation/animation.h>
 
-int anim_track_init(struct Track* track, enum TrackCurve timeCurve,
-                    enum TrackCurve valCurve, unsigned int nbKeys) {
+int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int nbKeys) {
     unsigned int timeSize = nbKeys * (timeCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
     unsigned int valSize = nbKeys * (valCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
     track->times.values = NULL;
     track->values.values = NULL;
     track->times.curveType = timeCurve;
     track->values.curveType = valCurve;
+    track->times.sharedValues = 0;
+    track->values.sharedValues = 0;
     if (!(track->times.values = malloc(timeSize)) || !(track->values.values = malloc(valSize))) {
         fprintf(stderr, "Error: anim_track_init: could not allocate memory for keys\n");
         free(track->times.values);
@@ -28,10 +29,11 @@ void anim_clip_init(struct Clip* clip) {
     clip->loop = 0;
 
     clip->nbAnimations = 0;
-    clip->animations = 0;
+    clip->animations = NULL;
 
     clip->curPos = 0;
     clip->rev = 0;
+    clip->name = NULL;
 }
 
 struct Track* anim_new_track_set() {
@@ -156,6 +158,7 @@ void anim_free_clip(struct Clip* clip) {
         anim_free_animation(clip->animations + i);
     }
     free(clip->animations);
+    free(clip->name);
 }
 
 void anim_free_engine(struct AnimationEngine* engine) {

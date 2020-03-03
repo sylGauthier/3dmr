@@ -4,9 +4,13 @@
 
 #include <game/animation/animation.h>
 
-#include "opengex_common.h"
+#include "anim.h"
+#include "clip.h"
+#include "common.h"
+#include "context.h"
+#include "transform.h"
 
-static float track_duration(struct Track* track) {
+static float track_duration(const struct Track* track) {
     float* flVal = track->times.values;
     Vec3* vec3Val = track->times.values;
 
@@ -22,7 +26,7 @@ static float track_duration(struct Track* track) {
     }
 }
 
-static float anim_duration(struct Animation* anim) {
+static float anim_duration(const struct Animation* anim) {
     unsigned int i;
     float duration = 0.;
 
@@ -35,39 +39,32 @@ static float anim_duration(struct Animation* anim) {
     return duration;
 }
 
-static int infer_target_type(struct ODDLStructure* target, enum TrackTargetType* type) {
+static int infer_target_type(const struct ODDLStructure* target, enum TrackTargetType* type) {
     struct ODDLProperty* prop;
 
     if (!(prop = oddl_get_property(target, "kind")) || !prop->str) {
-        if (ogex_get_identifier(target) != OGEX_TRANSFORM) {
+        if (!target->identifier || strcmp(target->identifier, "Transform")) {
             fprintf(stderr, "Error: could not infer target type, invalid target type or missing 'kind' property\n");
             return 0;
         }
         *type = TRACK_TRANSFORM;
         return 1;
     }
-    switch (ogex_get_identifier(target)) {
-        case OGEX_TRANSLATION:
-            if (!strcmp(prop->str, "x"))        *type = TRACK_X_POS;
-            else if (!strcmp(prop->str, "y"))   *type = TRACK_Y_POS;
-            else if (!strcmp(prop->str, "z"))   *type = TRACK_Z_POS;
-            else return 0;
-            break;
-        case OGEX_SCALE:
-            if (!strcmp(prop->str, "x"))        *type = TRACK_X_SCALE;
-            else if (!strcmp(prop->str, "y"))   *type = TRACK_Y_SCALE;
-            else if (!strcmp(prop->str, "z"))   *type = TRACK_Z_SCALE;
-            else return 0;
-            break;
-        case OGEX_ROTATION:
-            if (!strcmp(prop->str, "x"))        *type = TRACK_X_ROT;
-            else if (!strcmp(prop->str, "y"))   *type = TRACK_Y_ROT;
-            else if (!strcmp(prop->str, "z"))   *type = TRACK_Z_ROT;
-            else return 0;
-            break;
-        default:
-            fprintf(stderr, "Error: can't infer target type, invalid target structure\n");
-            return 0;
+    if (prop->str[0] < 'x' || prop->str[0] > 'z' || prop->str[1]) {
+        fprintf(stderr, "Error: can't infer target type, invalid 'kind' property\n");
+        return 0;
+    } else if (!target->identifier) {
+        fprintf(stderr, "Error: can't infer target type, invalid target structure\n");
+        return 0;
+    } else if (!strcmp(target->identifier, "Translation")) {
+        *type = TRACK_X_POS + (prop->str[0] - 'x');
+    } else if (!strcmp(target->identifier, "Scale")) {
+        *type = TRACK_X_SCALE + (prop->str[0] - 'x');
+    } else if (!strcmp(target->identifier, "Rotation")) {
+        *type = TRACK_X_ROT + (prop->str[0] - 'x');
+    } else {
+        fprintf(stderr, "Error: can't infer target type, invalid target structure\n");
+        return 0;
     }
     return 1;
 }
@@ -81,7 +78,7 @@ enum TrackKeyType {
  * we simply convert every single transform key into the regular (pos,scale,rot) channels and we animate all of
  * them simultaneously.
  */
-static int parse_m4_track(struct OgexContext* context, struct Animation* anim, struct ODDLStructure* cur) {
+static int parse_m4_track(const struct OgexContext* context, struct Animation* anim, const struct ODDLStructure* cur) {
     unsigned int i;
     Mat4* mat = cur->dataList;
 
@@ -93,6 +90,7 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
         anim->tracks[i].values.curveType = TRACK_LINEAR;
         if (anim->tracks[i].nbKeys && anim->tracks[i].nbKeys != cur->nbVec) {
             fprintf(stderr, "Error: Key: invalid number of key values\n");
+            while (i) free(anim->tracks[--i].values.values);
             return 0;
         }
         anim->tracks[i].nbKeys = cur->nbVec;
@@ -105,7 +103,7 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
     for (i = 0; i < cur->nbVec; i++) {
         Vec3 pos, scale;
         Quaternion quat;
-        if (context->up == AXIS_Z) swap_yz(mat[i]);
+        if (context->up == AXIS_Z) ogex_swap_yz_mat(mat[i]);
         if (!extract_scale(scale, mat[i])) {
             fprintf(stderr, "Error: Key: invalid Transform (null scale)\n");
             for (i = 0; i < TRACK_NB_TYPES; i++) free(anim->tracks[i].values.values);
@@ -127,31 +125,20 @@ static int parse_m4_track(struct OgexContext* context, struct Animation* anim, s
     return 1;
 }
 
-static int parse_linear_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
+static int parse_linear_key(const struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, const struct ODDLStructure* cur) {
     struct ODDLStructure* sub;
     float* array = NULL;
-    unsigned int i;
+    unsigned int i, expectedNumVecs;
 
     if (cur->nbStructures != 1) {
         fprintf(stderr, "Error: Key: must contain exactly one substructure\n");
         return 0;
     }
     sub = cur->structures[0];
-    if (sub->type != TYPE_FLOAT32) {
-        fprintf(stderr, "Error: Key: substructure must be of type float\n");
-        return 0;
-    }
-    if (type != TRACK_TRANSFORM && sub->vecSize != 1) {
-        fprintf(stderr, "Error: Key: multidimensional values not supported\n");
-        return 0;
-    }
+    expectedNumVecs = (type != TRACK_TRANSFORM && anim->tracks[type].nbKeys) ? anim->tracks[type].nbKeys : sub->nbVec;
+    if (!ogex_check_struct(sub, "Key", TYPE_FLOAT32, expectedNumVecs, (keyType == TRACK_KEY_TIME) ? 1 : (type != TRACK_TRANSFORM) ? 1 : 16)) return 0;
     if (sub->nbVec < 1) {
         fprintf(stderr, "Error: Key: must have at least one float value\n");
-        return 0;
-    }
-    if (type != TRACK_TRANSFORM && anim->tracks[type].nbKeys && anim->tracks[type].nbKeys != sub->nbVec) {
-        fprintf(stderr, "Error: Key: inconsistent nb of key values, expected %d but got %d\n",
-                anim->tracks[type].nbKeys, sub->nbVec);
         return 0;
     }
     if (!(array = malloc(sub->nbVec * sizeof(float)))) {
@@ -172,10 +159,15 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
                 for (i = 0; i < sub->nbVec; i++) array[i] = -array[i];
             }
             type = TRACK_Z_ROT;
-        } else if (type == TRACK_Y_SCALE) type = TRACK_Z_SCALE;
-        else if (type == TRACK_Z_POS) type = TRACK_Y_POS;
-        else if (type == TRACK_Z_ROT) type = TRACK_Y_ROT;
-        else if (type == TRACK_Z_SCALE) type = TRACK_Y_SCALE;
+        } else if (type == TRACK_Y_SCALE) {
+            type = TRACK_Z_SCALE;
+        } else if (type == TRACK_Z_POS) {
+            type = TRACK_Y_POS;
+        } else if (type == TRACK_Z_ROT) {
+            type = TRACK_Y_ROT;
+        } else if (type == TRACK_Z_SCALE) {
+            type = TRACK_Y_SCALE;
+        }
     }
     switch (keyType) {
         case TRACK_KEY_TIME:
@@ -189,20 +181,18 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
             } else {
                 anim->tracks[type].times.values = array;
                 anim->tracks[type].times.curveType = TRACK_LINEAR;
+                anim->tracks[type].times.sharedValues = 0;
                 anim->tracks[type].nbKeys = sub->nbVec;
             }
             return 1;
         case TRACK_KEY_VALUE:
             if (type == TRACK_TRANSFORM) {
-                if (!parse_m4_track(context, anim, sub)) {
-                    free(array);
-                    return 0;
-                }
                 free(array);
-                return 1;
+                return parse_m4_track(context, anim, sub);
             } else {
                 anim->tracks[type].values.values = array;
                 anim->tracks[type].values.curveType = TRACK_LINEAR;
+                anim->tracks[type].values.sharedValues = 0;
                 anim->tracks[type].nbKeys = sub->nbVec;
                 return 1;
             }
@@ -213,9 +203,9 @@ static int parse_linear_key(struct OgexContext* context, struct Animation* anim,
     return 0;
 }
 
-static int parse_bezier_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* vals, struct ODDLStructure* mControl, struct ODDLStructure* pControl) {
+static int parse_bezier_key(const struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, const struct ODDLStructure* vals, const struct ODDLStructure* mControl, const struct ODDLStructure* pControl) {
     struct ODDLStructure *subVal, *subPCtrl, *subMCtrl;
-    unsigned int i;
+    unsigned int i, expectedNumVecs;
     float *valArray, *mCtrlArray, *pCtrlArray;
     Vec3* bezierArray;
 
@@ -226,26 +216,14 @@ static int parse_bezier_key(struct OgexContext* context, struct Animation* anim,
     subVal = vals->structures[0];
     subMCtrl = mControl->structures[0];
     subPCtrl = pControl->structures[0];
-    if (subVal->type != TYPE_FLOAT32 || subMCtrl->type != TYPE_FLOAT32 || subPCtrl->type != TYPE_FLOAT32) {
-        fprintf(stderr, "Error: Bezier Key: substructure must be of type float\n");
-        return 0;
-    }
-    if (subVal->vecSize != 1 || subMCtrl->vecSize != 1 || subPCtrl->vecSize != 1) {
-        fprintf(stderr, "Error: Bezier Key: multidimensional values not supported\n");
+    expectedNumVecs = anim->tracks[type].nbKeys ? anim->tracks[type].nbKeys : subVal->nbVec;
+    if (!ogex_check_struct(subVal, "Bezier Key", TYPE_FLOAT32, expectedNumVecs, 1)
+     || !ogex_check_struct(subMCtrl, "Bezier Key", TYPE_FLOAT32, expectedNumVecs, 1)
+     || !ogex_check_struct(subPCtrl, "Bezier Key", TYPE_FLOAT32, expectedNumVecs, 1)) {
         return 0;
     }
     if (subVal->nbVec < 1 || subMCtrl->nbVec < 1 || subPCtrl->nbVec < 1) {
         fprintf(stderr, "Error: Bezier Key: must have at least one float value\n");
-        return 0;
-    }
-    if (anim->tracks[type].nbKeys && (subVal->nbVec != anim->tracks[type].nbKeys
-                                   || subMCtrl->nbVec != anim->tracks[type].nbKeys
-                                   || subPCtrl->nbVec != anim->tracks[type].nbKeys)) {
-        fprintf(stderr, "Error: Bezier Key: inconsistent nb of key values, expected %d\n", anim->tracks[type].nbKeys);
-        return 0;
-    }
-    if (subVal->nbVec != subMCtrl->nbVec || subVal->nbVec != subPCtrl->nbVec) {
-        fprintf(stderr, "Error: Bezier Key: inconsistent nb of key values\n");
         return 0;
     }
     if (!(bezierArray = malloc(3 * subVal->nbVec * sizeof(float)))) {
@@ -273,20 +251,27 @@ static int parse_bezier_key(struct OgexContext* context, struct Animation* anim,
                 for (i = 0; i < subVal->nbVec; i++) scale3v(bezierArray[i], -1);
             }
             type = TRACK_Z_ROT;
-        } else if (type == TRACK_Y_SCALE) type = TRACK_Z_SCALE;
-        else if (type == TRACK_Z_POS) type = TRACK_Y_POS;
-        else if (type == TRACK_Z_ROT) type = TRACK_Y_ROT;
-        else if (type == TRACK_Z_SCALE) type = TRACK_Y_SCALE;
+        } else if (type == TRACK_Y_SCALE) {
+            type = TRACK_Z_SCALE;
+        } else if (type == TRACK_Z_POS) {
+            type = TRACK_Y_POS;
+        } else if (type == TRACK_Z_ROT) {
+            type = TRACK_Y_ROT;
+        } else if (type == TRACK_Z_SCALE) {
+            type = TRACK_Y_SCALE;
+        }
     }
     switch (keyType) {
         case TRACK_KEY_TIME:
             anim->tracks[type].times.values = bezierArray;
             anim->tracks[type].times.curveType = TRACK_BEZIER;
+            anim->tracks[type].times.sharedValues = 0;
             anim->tracks[type].nbKeys = subVal->nbVec;
             return 1;
         case TRACK_KEY_VALUE:
             anim->tracks[type].values.values = bezierArray;
             anim->tracks[type].values.curveType = TRACK_BEZIER;
+            anim->tracks[type].values.sharedValues = 0;
             anim->tracks[type].nbKeys = subVal->nbVec;
             return 1;
         default:
@@ -296,7 +281,7 @@ static int parse_bezier_key(struct OgexContext* context, struct Animation* anim,
     return 0;
 }
 
-static int parse_key(struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, struct ODDLStructure* cur) {
+static int parse_key(const struct OgexContext* context, struct Animation* anim, enum TrackTargetType type, enum TrackKeyType keyType, const struct ODDLStructure* cur) {
     struct ODDLStructure *valKey = NULL, *mControlKey = NULL, *pControlKey = NULL;
     struct ODDLProperty* prop;
     enum TrackCurve curve = TRACK_LINEAR;
@@ -311,49 +296,44 @@ static int parse_key(struct OgexContext* context, struct Animation* anim, enum T
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
-        switch (ogex_get_identifier(tmp)) {
-            case OGEX_KEY:
-                if ((prop = oddl_get_property(tmp, "kind"))) {
-                    if (!strcmp(prop->str, "-control")) mControlKey = tmp;
-                    if (!strcmp(prop->str, "+control")) pControlKey = tmp;
-                } else {
-                    valKey = tmp;
-                }
-                break;
-            default:
-                break;
+        if (tmp->identifier && !strcmp(tmp->identifier, "Key")) {
+            if ((prop = oddl_get_property(tmp, "kind"))) {
+                if (!strcmp(prop->str, "-control")) mControlKey = tmp;
+                if (!strcmp(prop->str, "+control")) pControlKey = tmp;
+                if (!strcmp(prop->str, "value")) valKey = tmp;
+            } else {
+                valKey = tmp;
+            }
         }
     }
     switch (curve) {
         case TRACK_LINEAR:
-            if (valKey) {
-                if (!parse_linear_key(context, anim, type, keyType, valKey)) {
-                    return 0;
-                }
-            } else {
+            if (!valKey) {
                 fprintf(stderr, "Error: Track: missing Key\n");
                 return 0;
             }
-            break;
+            return parse_linear_key(context, anim, type, keyType, valKey);
         case TRACK_BEZIER:
-            if (valKey && mControlKey && pControlKey) {
-                if (!parse_bezier_key(context, anim, type, keyType, valKey, mControlKey, pControlKey)) {
-                    return 0;
-                }
-            } else {
+            if (!(valKey && mControlKey && pControlKey)) {
                 fprintf(stderr, "Error: Track: missing Key, Bezier requires 3 Keys\n");
                 return 0;
             }
-            break;
-        default:
-            fprintf(stderr, "Error: Track: unknown curve type\n");
-            return 0;
-
+            return parse_bezier_key(context, anim, type, keyType, valKey, mControlKey, pControlKey);
     }
+    fprintf(stderr, "Error: Track: unknown curve type\n");
+    return 0;
+}
+
+static int track_check_unique(unsigned int* p, const char* t) {
+    if (*p) {
+        fprintf(stderr, "Error: Track: multiple %s key arrays\n", t);
+        return 0;
+    }
+    *p = 1;
     return 1;
 }
 
-static int parse_track(struct OgexContext* context, struct Animation* anim, struct ODDLStructure* cur) {
+static int parse_track(const struct OgexContext* context, struct Animation* anim, const struct ODDLStructure* cur) {
     unsigned int hasTime = 0, hasValue = 0, i;
     enum TrackTargetType tgtType;
     struct ODDLProperty* prop;
@@ -403,47 +383,29 @@ static int parse_track(struct OgexContext* context, struct Animation* anim, stru
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
-        switch (ogex_get_identifier(tmp)) {
-            case OGEX_TIME:
-                if (hasTime) {
-                    fprintf(stderr, "Error: Track: multiple time key arrays\n");
-                    return 0;
-                }
-                if (!(parse_key(context, anim, tgtType, TRACK_KEY_TIME, tmp))) {
-                    return 0;
-                }
-                hasTime = 1;
-                break;
-            case OGEX_VALUE:
-                if (hasValue) {
-                    fprintf(stderr, "Error: Track: multiple value key arrays\n");
-                    return 0;
-                }
-                if (!(parse_key(context, anim, tgtType, TRACK_KEY_VALUE, tmp))) {
-                    return 0;
-                }
-                hasValue = 1;
-            default:
-                break;
+        if (!tmp->identifier) {
+            continue;
+        } else if (!strcmp(tmp->identifier, "Time")) {
+            if (!track_check_unique(&hasTime, "time") || !parse_key(context, anim, tgtType, TRACK_KEY_TIME, tmp)) return 0;
+        } else if (!strcmp(tmp->identifier, "Value")) {
+            if (!track_check_unique(&hasValue, "value") || !parse_key(context, anim, tgtType, TRACK_KEY_VALUE, tmp)) return 0;
         }
     }
     return 1;
 }
 
-int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct ODDLStructure* cur) {
-    unsigned int i, nbTracks = 0, duration = 0;
+int ogex_parse_animation(struct OgexContext* context, struct Node* node, const struct ODDLStructure* cur) {
+    unsigned int i, nbTracks = 0, duration = 0, clipIdx = 0;
     struct Clip* clip = NULL;
     struct Animation* newAnim = NULL;
+    struct ODDLProperty* prop;
 
-    if (!context->metadata->nbClips) {
-        if (!(context->metadata->clips = malloc(sizeof(struct Clip)))) {
-            fprintf(stderr, "Error: Animation: could not allocate memory for new Clip\n");
-            return 0;
-        }
-        context->metadata->nbClips++;
-        memset(context->metadata->clips, 0, sizeof(struct Clip));
+    if ((prop = oddl_get_property(cur, "clip"))) {
+        clipIdx = prop->llint;
     }
-    clip = context->metadata->clips;
+    if (context->numClips <= clipIdx || !(clip = context->clips[clipIdx])) {
+        if (!(clip = ogex_create_new_clip(context, clipIdx))) return 0;
+    }
     if (anim_clip_new_anim(clip, node) < 0) {
         fprintf(stderr, "Error: Animation: could not allocate memory for new Animation\n");
         return 0;
@@ -453,15 +415,9 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, struct 
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
 
-        switch (ogex_get_identifier(tmp)) {
-            case OGEX_TRACK:
-                if (!parse_track(context, newAnim, tmp)) {
-                    return 0;
-                }
-                nbTracks++;
-                break;
-            default:
-                break;
+        if (tmp->identifier && !strcmp(tmp->identifier, "Track")) {
+            if (!parse_track(context, newAnim, tmp)) return 0;
+            nbTracks++;
         }
     }
 

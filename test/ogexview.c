@@ -10,22 +10,13 @@
 struct Prog {
     struct Scene scene;
     struct ImportMetadata metadata;
-    unsigned int activeCam, numDirectionalLights, numPointLights;
+    unsigned int activeCam, activeClip, numDirectionalLights, numPointLights;
     struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS];
     int running;
 };
 
 static void usage(const char* prog) {
     printf("Usage: %s file\n", prog);
-}
-
-static void free_node_callback(struct Node* node) {
-    if (node->type == NODE_GEOMETRY) {
-        free(node->data.geometry);
-    }
-    if (node->father) {
-        free(node);
-    }
 }
 
 static void resize_callback(struct Viewer* viewer, void* data) {
@@ -54,12 +45,20 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             prog->running = 0;
             break;
         case GLFW_KEY_LEFT: case GLFW_KEY_UP:
-            prog->activeCam = (prog->activeCam + prog->metadata.nbCameraNodes - 1) % prog->metadata.nbCameraNodes;
+            prog->activeCam = (prog->activeCam + prog->metadata.numCameraNodes - 1) % prog->metadata.numCameraNodes;
             update_cam(viewer, prog);
             break;
         case GLFW_KEY_RIGHT: case GLFW_KEY_DOWN:
-            prog->activeCam = (prog->activeCam + 1) % prog->metadata.nbCameraNodes;
+            prog->activeCam = (prog->activeCam + 1) % prog->metadata.numCameraNodes;
             update_cam(viewer, prog);
+            break;
+        case GLFW_KEY_SPACE:
+            prog->activeClip = (prog->activeClip + 1) % prog->metadata.numClips;
+            if (prog->metadata.clips[prog->activeClip]->name) {
+                printf("Current clip: %s\n", prog->metadata.clips[prog->activeClip]->name);
+            } else {
+                printf("Current clip: #%d\n", prog->activeClip);
+            }
             break;
     }
 }
@@ -110,7 +109,7 @@ static char* dirname(char* path) {
 int main(int argc, char** argv) {
     FILE* f = NULL;
     struct Prog prog;
-    struct SharedData shared;
+    struct ImportSharedData shared;
     struct Viewer* viewer = NULL;
     struct Camera* camera;
     unsigned int i;
@@ -136,18 +135,19 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to init scene\n");
     } else if (!(ogexInit = ogex_load(&prog.scene.root, f, dirname(argv[1]), &shared, &prog.metadata))) {
         fprintf(stderr, "Error: failed to load scene '%s'\n", argv[1]);
-    } else if (!prog.metadata.nbCameraNodes) {
+    } else if (!prog.metadata.numCameraNodes) {
         fprintf(stderr, "Error: no camera node in '%s'\n", argv[1]);
     } else {
         err = 0;
         prog.activeCam = 0;
+        prog.activeClip = 0;
         prog.running = 1;
         viewer->callbackData = &prog;
         viewer->resize_callback = resize_callback;
         viewer->key_callback = key_callback;
         viewer->close_callback = close_callback;
         scene_update_nodes(&prog.scene, NULL, NULL);
-        for (i = 0; i < prog.metadata.nbLightNodes; i++) {
+        for (i = 0; i < prog.metadata.numLightNodes; i++) {
             struct Node* n = prog.metadata.lightNodes[i];
             switch (n->type) {
                 case NODE_DLIGHT:
@@ -169,9 +169,14 @@ int main(int argc, char** argv) {
                 default:;
             }
         }
-        for (i = 0; i < prog.metadata.nbClips; i++) {
-            prog.metadata.clips[i].loop = 1;
-            prog.metadata.clips[i].mode = CLIP_FORWARD;
+        for (i = 0; i < prog.metadata.numClips; i++) {
+            prog.metadata.clips[i]->loop = 1;
+            prog.metadata.clips[i]->mode = CLIP_FORWARD;
+            printf("Found Clip #%d", i);
+            if (prog.metadata.clips[i]->name) {
+                printf(" (%s)", prog.metadata.clips[i]->name);
+            }
+            printf("\n");
         }
         {
             struct AmbientLight ambient = {0};
@@ -189,9 +194,9 @@ int main(int argc, char** argv) {
         while (prog.running) {
             viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
-            if (prog.metadata.nbClips) {
-                for (i = 0; i < prog.metadata.nbClips; i++) {
-                    anim_play_clip(prog.metadata.clips + i, dt * 1000);
+            if (prog.metadata.numClips) {
+                if (prog.metadata.numClips) {
+                    anim_play_clip(prog.metadata.clips[prog.activeClip], dt * 1000);
                 }
                 scene_update_nodes(&prog.scene, update_node, &prog);
                 uniform_buffer_send(&prog.scene.lights);
@@ -204,7 +209,13 @@ int main(int argc, char** argv) {
     }
 
     if (f) fclose(f);
-    if (sceneInit) scene_free(&prog.scene, free_node_callback);
+    if (sceneInit) {
+        for (i = 0; i < prog.scene.root.nbChildren; i++) {
+            nodes_free(prog.scene.root.children[i], imported_node_free);
+        }
+        prog.scene.root.nbChildren = 0;
+        scene_free(&prog.scene, NULL);
+    }
     if (ogexInit) {
         import_free_shared_data(&shared);
         import_free_metadata(&prog.metadata);
