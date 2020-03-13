@@ -3,8 +3,14 @@
 
 #include <game/animation/animation.h>
 
-#define GET_TIME_KEY(track, idx) ((track)->times.curveType == TRACK_LINEAR ? ((float*)(track)->times.values)[(idx)] \
-                                                                           : ((Vec3*)(track)->times.values)[(idx)][0])
+static float get_time_key(const struct Track* track, unsigned int idx) {
+    switch (track->times.curveType) {
+        case TRACK_LINEAR: return track->times.values.linear[idx];
+        case TRACK_BEZIER: return track->times.values.bezier[idx][0];
+        default:;
+    }
+    return 0;
+}
 
 static int update_clip_cur_time(struct Clip* clip, unsigned int dt) {
     if (!clip->rev) {
@@ -100,12 +106,12 @@ static int get_cur_frame(struct Track* track, unsigned int curPos) {
     unsigned int a;
     float x = (float)curPos / 1000;
 
-    if (x <= GET_TIME_KEY(track, 0)) return 0;
-    if (x >= GET_TIME_KEY(track, track->nbKeys - 1)) return track->nbKeys - 1;
-    if (track->lastIdx >= track->nbKeys - 1) {
+    if (x <= get_time_key(track, 0)) return 0;
+    if (x >= get_time_key(track, track->numKeys - 1)) return track->numKeys - 1;
+    if (track->lastIdx >= track->numKeys - 1) {
         track->lastIdx = 0;
     }
-    for (a = track->lastIdx; !(GET_TIME_KEY(track, a) <= x && x <= GET_TIME_KEY(track, a + 1)); a = (a + 1) % track->nbKeys);
+    for (a = track->lastIdx; !(get_time_key(track, a) <= x && x <= get_time_key(track, a + 1)); a = (a + 1) % track->numKeys);
     track->lastIdx = a;
     return a;
 }
@@ -119,19 +125,19 @@ static float interp_track(struct Track* track, unsigned int curPos) {
 
     switch (track->times.curveType) {
         case TRACK_LINEAR:
-            s = time_linear_interp(curFrame, time, track->times.values, track->nbKeys);
+            s = time_linear_interp(curFrame, time, track->times.values.linear, track->numKeys);
             break;
         case TRACK_BEZIER:
-            s = time_bezier_interp(curFrame, time, track->times.values, track->nbKeys);
+            s = time_bezier_interp(curFrame, time, track->times.values.bezier, track->numKeys);
             break;
         default:
             s = 0.;
     }
     switch (track->values.curveType) {
         case TRACK_LINEAR:
-            return value_linear_interp(curFrame, s, track->values.values, track->nbKeys);
+            return value_linear_interp(curFrame, s, track->values.values.linear, track->numKeys);
         case TRACK_BEZIER:
-            return value_bezier_interp(curFrame, s, track->values.values, track->nbKeys);
+            return value_bezier_interp(curFrame, s, track->values.values.bezier, track->numKeys);
         default:
             return 0.;
     }
@@ -141,53 +147,53 @@ void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags f
     Vec3 rot;
 
     if (flags & TRACKING_POS) {
-        if (tracks[TRACK_X_POS].nbKeys) {
+        if (tracks[TRACK_X_POS].numKeys) {
             n->position[0] = interp_track(&tracks[TRACK_X_POS], curPos);
         }
-        if (tracks[TRACK_Y_POS].nbKeys) {
+        if (tracks[TRACK_Y_POS].numKeys) {
             n->position[1] = interp_track(&tracks[TRACK_Y_POS], curPos);
         }
-        if (tracks[TRACK_Z_POS].nbKeys) {
+        if (tracks[TRACK_Z_POS].numKeys) {
             n->position[2] = interp_track(&tracks[TRACK_Z_POS], curPos);
         }
         n->changedFlags |= POSITION_CHANGED;
     }
     if (flags & TRACKING_SCALE) {
-        if (tracks[TRACK_X_SCALE].nbKeys) {
+        if (tracks[TRACK_X_SCALE].numKeys) {
             n->scale[0] = interp_track(&tracks[TRACK_X_SCALE], curPos);
         }
-        if (tracks[TRACK_Y_SCALE].nbKeys) {
+        if (tracks[TRACK_Y_SCALE].numKeys) {
             n->scale[1] = interp_track(&tracks[TRACK_Y_SCALE], curPos);
         }
-        if (tracks[TRACK_Z_SCALE].nbKeys) {
+        if (tracks[TRACK_Z_SCALE].numKeys) {
             n->scale[2] = interp_track(&tracks[TRACK_Z_SCALE], curPos);
         }
         n->changedFlags |= SCALE_CHANGED;
     }
     if (flags & TRACKING_ROT) {
-        if (tracks[TRACK_X_ROT].nbKeys) {
+        if (tracks[TRACK_X_ROT].numKeys) {
             rot[0] = interp_track(&tracks[TRACK_X_ROT], curPos);
         }
-        if (tracks[TRACK_Y_ROT].nbKeys) {
+        if (tracks[TRACK_Y_ROT].numKeys) {
             rot[1] = interp_track(&tracks[TRACK_Y_ROT], curPos);
         }
-        if (tracks[TRACK_Z_ROT].nbKeys) {
+        if (tracks[TRACK_Z_ROT].numKeys) {
             rot[2] = interp_track(&tracks[TRACK_Z_ROT], curPos);
         }
         quaternion_from_xyz(n->orientation, rot);
         n->changedFlags |= ORIENTATION_CHANGED;
     }
     if (flags & TRACKING_QUAT) {
-        if (tracks[TRACK_W_QUAT].nbKeys) {
+        if (tracks[TRACK_W_QUAT].numKeys) {
             n->orientation[0] = interp_track(&tracks[TRACK_W_QUAT], curPos);
         }
-        if (tracks[TRACK_X_QUAT].nbKeys) {
+        if (tracks[TRACK_X_QUAT].numKeys) {
             n->orientation[1] = interp_track(&tracks[TRACK_X_QUAT], curPos);
         }
-        if (tracks[TRACK_Y_QUAT].nbKeys) {
+        if (tracks[TRACK_Y_QUAT].numKeys) {
             n->orientation[2] = interp_track(&tracks[TRACK_Y_QUAT], curPos);
         }
-        if (tracks[TRACK_Z_QUAT].nbKeys) {
+        if (tracks[TRACK_Z_QUAT].numKeys) {
             n->orientation[3] = interp_track(&tracks[TRACK_Z_QUAT], curPos);
         }
         n->changedFlags |= ORIENTATION_CHANGED;
@@ -200,7 +206,7 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
 
     running = update_clip_cur_time(clip, dt);
 
-    for (i = 0; i < clip->nbAnimations; i++) {
+    for (i = 0; i < clip->numAnimations; i++) {
         anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode,
                             clip->animations[i].flags, clip->curPos);
     }
@@ -216,7 +222,7 @@ static void pop_anim_stack(struct AnimationEngine* engine, unsigned int slot) {
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt) {
     unsigned int i;
 
-    for (i = 0; i < engine->nbAnimSlots; i++) {
+    for (i = 0; i < engine->numAnimSlots; i++) {
         struct AnimStack* cur = engine->animQueue[i];
 
         if (cur && cur->delay < dt) {

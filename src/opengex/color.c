@@ -24,4 +24,3 @@ int ogex_parse_color(const struct ODDLStructure* cur, char** attrib, Vec3 col) {
     memcpy(col, sub->dataList, sizeof(Vec3));
     return 1;
 }
-

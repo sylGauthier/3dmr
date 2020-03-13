@@ -18,7 +18,7 @@ static int parse_bone_ref_array(const struct OgexContext* context, const struct 
     }
     if (!ogex_check_struct(tmp = cur->structures[0], "BoneRefArray", TYPE_REF, numBones, 1)) return 0;
     refs = tmp->dataList;
-    for (i = 0; i < tmp->nbVec; i++) {
+    for (i = 0; i < numBones; i++) {
         struct ODDLStructure* ref = refs[i].ref;
         if (!ref->identifier || strcmp(ref->identifier, "BoneNode")) {
             fprintf(stderr, "Error: BoneRefArray: a ref points to an object that isn't a bone\n");

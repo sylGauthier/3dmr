@@ -65,7 +65,7 @@ static int ogex_parse_all(struct ODDLDoc* doc, struct OgexContext* context, stru
 int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct ImportSharedData* shared, struct ImportMetadata* metadata) {
     struct OgexContext context;
     struct ODDLDoc doc;
-    unsigned int i;
+    unsigned int i, numRootChildren = root->nbChildren;
     int success;
 
     ogex_init_context(&context);
@@ -119,6 +119,9 @@ int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct Import
         }
     } else {
         if (metadata) import_free_metadata(metadata);
+        while (root->nbChildren > numRootChildren) {
+            nodes_free(root->children[--(root->nbChildren)], imported_node_free);
+        }
     }
 #if 0
     if (success) {

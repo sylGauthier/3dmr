@@ -4,23 +4,73 @@
 
 #include <game/animation/animation.h>
 
-int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int nbKeys) {
-    unsigned int timeSize = nbKeys * (timeCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
-    unsigned int valSize = nbKeys * (valCurve == TRACK_LINEAR ? sizeof(float) : sizeof(Vec3));
-    track->times.values = NULL;
-    track->values.values = NULL;
-    track->times.curveType = timeCurve;
-    track->values.curveType = valCurve;
-    track->times.sharedValues = 0;
-    track->values.sharedValues = 0;
-    if (!(track->times.values = malloc(timeSize)) || !(track->values.values = malloc(valSize))) {
-        fprintf(stderr, "Error: anim_track_init: could not allocate memory for keys\n");
-        free(track->times.values);
+int anim_curve_init(struct AnimCurve* curve, enum TrackCurve type, unsigned int n) {
+    curve->sharedValues = 0;
+    switch (curve->curveType = type) {
+        case TRACK_CURVE_NONE: return 1;
+        case TRACK_LINEAR: return n < ((unsigned int)-1) / sizeof(float) && (curve->values.linear = malloc(n * sizeof(float)));
+        case TRACK_BEZIER: return n < ((unsigned int)-1) / sizeof(Vec3) && (curve->values.bezier = malloc(n * sizeof(Vec3)));
+    }
+    return 0;
+}
+
+void anim_curve_free(struct AnimCurve* curve) {
+    if (curve->sharedValues) return;
+    switch (curve->curveType) {
+        case TRACK_LINEAR: free(curve->values.linear); break;
+        case TRACK_BEZIER: free(curve->values.linear); break;
+        default:;
+    }
+}
+
+void anim_curve_copy(struct AnimCurve* dest, const struct AnimCurve* src) {
+    dest->sharedValues = 1;
+    dest->curveType = src->curveType;
+    dest->values = src->values;
+}
+
+int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int numKeys) {
+    if (!anim_curve_init(&track->times, timeCurve, numKeys)) return 0;
+    if (!anim_curve_init(&track->values, valCurve, numKeys)) {
+        anim_curve_free(&track->times);
         return 0;
     }
-    track->nbKeys = nbKeys;
+    track->numKeys = numKeys;
     track->lastIdx = 0;
     return 1;
+}
+
+void anim_track_free(struct Track* track) {
+    anim_curve_free(&track->times);
+    anim_curve_free(&track->values);
+}
+
+struct Track* anim_new_track_set(void) {
+    struct Track* t;
+    unsigned int i;
+
+    if (!(t = malloc(TRACK_NB_TYPES * sizeof(*t)))) return 0;
+    for (i = 0; i < TRACK_NB_TYPES; i++) {
+        anim_track_init(t + i, TRACK_CURVE_NONE, TRACK_CURVE_NONE, 0); /* cannot fail with TRACK_CURVE_NONE */
+    }
+    return t;
+}
+
+int anim_animation_init(struct Animation* anim, struct Node* targetNode) {
+    anim->targetNode = targetNode;
+    if (!(anim->tracks = anim_new_track_set())) return 0;
+    anim->flags = 0;
+    return 1;
+}
+
+void anim_animation_free(struct Animation* anim) {
+    if (anim->tracks) {
+        unsigned int i;
+        for (i = 0; i < TRACK_NB_TYPES; i++) {
+            anim_track_free(&anim->tracks[i]);
+        }
+        free(anim->tracks);
+    }
 }
 
 void anim_clip_init(struct Clip* clip) {
@@ -28,7 +78,7 @@ void anim_clip_init(struct Clip* clip) {
     clip->mode = CLIP_FORWARD;
     clip->loop = 0;
 
-    clip->nbAnimations = 0;
+    clip->numAnimations = 0;
     clip->animations = NULL;
 
     clip->curPos = 0;
@@ -36,61 +86,62 @@ void anim_clip_init(struct Clip* clip) {
     clip->name = NULL;
 }
 
-struct Track* anim_new_track_set() {
-    return calloc(TRACK_NB_TYPES, sizeof(struct Track));
-}
-
-void anim_track_pos(struct Animation* anim) {
-    anim->flags |= TRACKING_POS;
-}
-
-void anim_track_scale(struct Animation* anim) {
-    anim->flags |= TRACKING_SCALE;
-}
-
-void anim_track_rot(struct Animation* anim) {
-    anim->flags |= TRACKING_ROT;
-}
-
-void anim_track_quat(struct Animation* anim) {
-    anim->flags |= TRACKING_QUAT;
-}
-
-void anim_track_transform(struct Animation* anim) {
-    anim_track_pos(anim);
-    anim_track_scale(anim);
-    anim_track_quat(anim);
+void anim_clip_free(struct Clip* clip) {
+    unsigned int i;
+    for (i = 0; i < clip->numAnimations; i++) {
+        anim_animation_free(clip->animations + i);
+    }
+    free(clip->animations);
+    free(clip->name);
 }
 
 int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode) {
-    void* tmp;
     struct Animation* newAnim = NULL;
 
-    if (!(tmp = realloc(clip->animations, (clip->nbAnimations + 1) * sizeof(struct Animation)))) {
+    if (clip->numAnimations >= ((unsigned int)-1)
+     || !(newAnim = realloc(clip->animations, (clip->numAnimations + 1) * sizeof(struct Animation)))) {
         fprintf(stderr, "Error: clip_new_anim: could not reallocate memory for new animation\n");
-        return -1;
+        return 0;
     }
-    clip->animations = tmp;
-    newAnim = clip->animations + clip->nbAnimations;
-    newAnim->targetNode = targetNode;
-    if (!(newAnim->tracks = anim_new_track_set())) {
+    clip->animations = newAnim;
+    newAnim = clip->animations + clip->numAnimations;
+    if (!anim_animation_init(newAnim, targetNode)) {
         fprintf(stderr, "Error: clip_new_anim: could not allocate memory for track set\n");
-        return -1;
+        return 0;
     }
-    newAnim->flags = 0;
-    return clip->nbAnimations++;
+    clip->numAnimations++;
+    return 1;
+}
+
+int anim_engine_init(struct AnimationEngine* engine) {
+    engine->animQueue = NULL;
+    engine->numAnimSlots = 0;
+    return 1;
+}
+
+void anim_engine_free(struct AnimationEngine* engine) {
+    unsigned int i;
+    for (i = 0; i < engine->numAnimSlots; i++) {
+        struct AnimStack* tmp;
+        while ((tmp = engine->animQueue[i])) {
+            engine->animQueue[i] = tmp->nextInStack;
+            free(tmp);
+        }
+    }
+    free(engine->animQueue);
 }
 
 int anim_new_slot(struct AnimationEngine* engine) {
-    void* tmp;
+    struct AnimStack** tmp;
 
-    if (!(tmp = realloc(engine->animQueue, (engine->nbAnimSlots + 1) * sizeof(struct AnimStack)))) {
+    if (engine->numAnimSlots >= ((unsigned int)-1)
+     || !(tmp = realloc(engine->animQueue, (engine->numAnimSlots + 1) * sizeof(struct AnimStack)))) {
         fprintf(stderr, "Error: anim_new_slot: could not reallocate memory for new anim slot\n");
-        return -1;
+        return 0;
     }
     engine->animQueue = tmp;
-    engine->animQueue[engine->nbAnimSlots] = NULL;
-    return engine->nbAnimSlots++;
+    engine->animQueue[engine->numAnimSlots++] = NULL;
+    return 1;
 }
 
 static void init_anim_stack(struct AnimStack* stack) {
@@ -135,40 +186,4 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
     newElem->nextInStack = engine->animQueue[slot];
     engine->animQueue[slot] = newElem;
     return 1;
-}
-
-void anim_free_track(struct Track* track) {
-    if (!track->times.sharedValues) free(track->times.values);
-    if (!track->values.sharedValues) free(track->values.values);
-}
-
-void anim_free_animation(struct Animation* anim) {
-    if (anim->tracks) {
-        unsigned int i;
-        for (i = 0; i < TRACK_NB_TYPES; i++) {
-            anim_free_track(&anim->tracks[i]);
-        }
-        free(anim->tracks);
-    }
-}
-
-void anim_free_clip(struct Clip* clip) {
-    unsigned int i;
-    for (i = 0; i < clip->nbAnimations; i++) {
-        anim_free_animation(clip->animations + i);
-    }
-    free(clip->animations);
-    free(clip->name);
-}
-
-void anim_free_engine(struct AnimationEngine* engine) {
-    unsigned int i;
-    for (i = 0; i < engine->nbAnimSlots; i++) {
-        struct AnimStack* tmp;
-        while ((tmp = engine->animQueue[i])) {
-            engine->animQueue[i] = tmp->nextInStack;
-            free(tmp);
-        }
-    }
-    free(engine->animQueue);
 }

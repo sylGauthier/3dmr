@@ -56,7 +56,7 @@ void ogex_free_context(struct OgexContext* context) {
     ogex_free_object_list(&context->skins, skin_free_);
     for (i = 0; i < context->numClips; i++) {
         if (context->clips[i]) {
-            anim_free_clip(context->clips[i]);
+            anim_clip_free(context->clips[i]);
             free(context->clips[i]);
         }
     }

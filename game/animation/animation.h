@@ -36,20 +36,33 @@ enum TrackTargetType {
 
 struct AnimCurve {
     enum TrackCurve {
+        TRACK_CURVE_NONE,
         TRACK_LINEAR,
         TRACK_BEZIER
     } curveType;
-    void* values;
+    union TrackCurveData {
+        float* linear;
+        Vec3* bezier;
+    } values;
     char sharedValues;
 };
+
+int anim_curve_init(struct AnimCurve* curve, enum TrackCurve type, unsigned int n);
+void anim_curve_free(struct AnimCurve* curve);
+void anim_curve_copy(struct AnimCurve* dest, const struct AnimCurve* src);
 
 struct Track {
     struct AnimCurve times;
     struct AnimCurve values;
 
-    unsigned int nbKeys;
+    unsigned int numKeys;
     unsigned int lastIdx;
 };
+
+int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int numKeys);
+void anim_track_free(struct Track* track);
+
+struct Track* anim_new_track_set(void);
 
 struct Animation {
     struct Node* targetNode;
@@ -57,23 +70,29 @@ struct Animation {
     enum TrackFlags flags;
 };
 
-enum ClipPlayMode {
-    CLIP_FORWARD,
-    CLIP_BACKWARD,
-    CLIP_BACK_FORTH
-};
+int anim_animation_init(struct Animation* anim, struct Node* targetNode);
+void anim_animation_free(struct Animation* anim);
 
 struct Clip {
     unsigned int duration;
-    char mode, loop;
+    enum ClipPlayMode {
+        CLIP_FORWARD,
+        CLIP_BACKWARD,
+        CLIP_BACK_FORTH
+    } mode;
+    int loop;
 
-    unsigned int nbAnimations;
+    unsigned int numAnimations;
     struct Animation* animations;
 
     unsigned int curPos;
     char rev;
     char* name;
 };
+
+void anim_clip_init(struct Clip* clip);
+void anim_clip_free(struct Clip* clip);
+int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode);
 
 struct AnimStack {
     struct Clip* clip;
@@ -84,21 +103,11 @@ struct AnimStack {
 
 struct AnimationEngine {
     struct AnimStack** animQueue;
-    unsigned int nbAnimSlots;
+    unsigned int numAnimSlots;
 };
 
-int anim_track_init(struct Track* track, enum TrackCurve timeCurve,
-                    enum TrackCurve valCurve, unsigned int nbKeys);
-struct Track* anim_new_track_set();
-
-void anim_track_pos(struct Animation* anim);
-void anim_track_scale(struct Animation* anim);
-void anim_track_rot(struct Animation* anim);
-void anim_track_quat(struct Animation* anim);
-void anim_track_transform(struct Animation* anim);
-
-void anim_clip_init(struct Clip* clip);
-int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode);
+int anim_engine_init(struct AnimationEngine* engine);
+void anim_engine_free(struct AnimationEngine* engine);
 
 int anim_new_slot(struct AnimationEngine* engine);
 int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
@@ -107,10 +116,5 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
 void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos);
 int anim_play_clip(struct Clip* clip, unsigned int dt);
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
-
-void anim_free_track(struct Track* track);
-void anim_free_animation(struct Animation* anim);
-void anim_free_clip(struct Clip* clip);
-void anim_free_engine(struct AnimationEngine* engine);
 
 #endif

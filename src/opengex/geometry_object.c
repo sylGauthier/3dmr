@@ -76,7 +76,13 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Ski
                 numIndices = 3 * subTmp->nbVec;
             }
         } else if (!strcmp(tmp->identifier, "Skin")) {
-            ok = ogex_parse_skin(context, tmp, skin, &boneIndices, &boneWeights, &numVerticesSkin);
+            if (mesh->flags & MESH_SKIN) {
+                fprintf(stderr, "Error: Mesh: cannot have multiple Skin\n");
+                ok = 0;
+            } else if (!(ok = ogex_parse_skin(context, tmp, skin, &boneIndices, &boneWeights, &numVerticesSkin))) {
+                boneIndices = NULL;
+                boneWeights = NULL;
+            }
             mesh->flags |= MESH_SKIN;
         }
     }
@@ -90,7 +96,7 @@ static int parse_mesh(struct OgexContext* context, struct Mesh* mesh, struct Ski
     }
     mesh->numVertices = numPos;
     mesh->numIndices = numIndices;
-    if ((mesh->flags & MESH_SKIN) && mesh->numVertices != numVerticesSkin) {
+    if (ok && (mesh->flags & MESH_SKIN) && mesh->numVertices != numVerticesSkin) {
         fprintf(stderr, "Error: Mesh: Skin has inconsistent number of vertices (Mesh has %d, Skin has %d)\n", mesh->numVertices, numVerticesSkin);
         ok = 0;
     }
