@@ -20,6 +20,7 @@ void node_init(struct Node* node) {
     zero3v(node->boundingBox[1]);
 
     node->type = NODE_EMPTY;
+    node->name = NULL;
     node->alwaysDraw = 0;
 }
 
@@ -85,6 +86,7 @@ void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
         } else {
             next = (cur == root) ? NULL : cur->father;
             free(cur->children);
+            free(cur->name);
             if (free_node) free_node(cur);
             if (next) {
                 next->children[0] = next->children[--(next->nbChildren)];

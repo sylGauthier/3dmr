@@ -57,6 +57,7 @@ struct Node {
         struct Camera* camera;
     } data;
 
+    char* name;
     int alwaysDraw;
 };
 

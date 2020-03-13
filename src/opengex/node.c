@@ -8,6 +8,7 @@
 #include "camera_node.h"
 #include "geometry_node.h"
 #include "light_node.h"
+#include "name.h"
 #include "node.h"
 #include "transform.h"
 
@@ -60,6 +61,9 @@ static struct Node* ogex_parse_node(struct OgexContext* context, struct Node* pa
             if (!ogex_parse_scale(context, newNode, tmp)) return 0;
         } else if (!strcmp(tmp->identifier, "Animation")) {
             if (!ogex_parse_animation(context, newNode, tmp)) return 0;
+        } else if (!strcmp(tmp->identifier, "Name")) {
+            free(newNode->name);
+            newNode->name = ogex_parse_name(tmp);
         }
     }
     return newNode;

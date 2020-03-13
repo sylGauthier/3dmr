@@ -35,6 +35,11 @@ static void update_cam(struct Viewer* viewer, struct Prog* prog) {
     camera_buffer_object_update_projection(&prog->scene.camera, MAT_CONST_CAST(activeCam->projection));
     camera_buffer_object_update_view_and_position(&prog->scene.camera, MAT_CONST_CAST(activeCam->view));
     uniform_buffer_send(&prog->scene.camera);
+    if (prog->metadata.cameraNodes[prog->activeCam]->name) {
+        printf("Current camera: %s\n", prog->metadata.cameraNodes[prog->activeCam]->name);
+    } else {
+        printf("Current camera: #%u\n", prog->activeCam);
+    }
 }
 
 static void key_callback(struct Viewer* viewer, int key, int scancode, int action, int mods, void* data) {
@@ -57,7 +62,7 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             if (prog->metadata.clips[prog->activeClip]->name) {
                 printf("Current clip: %s\n", prog->metadata.clips[prog->activeClip]->name);
             } else {
-                printf("Current clip: #%d\n", prog->activeClip);
+                printf("Current clip: #%u\n", prog->activeClip);
             }
             break;
     }
