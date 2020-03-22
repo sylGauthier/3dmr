@@ -1,8 +1,4 @@
-CFLAGS ?= -fPIC -std=c89 -pedantic -march=native -Wall -O3
-PREFIX ?= $(HOME)/.local
-INCLUDEDIR ?= include
-LIBDIR ?= lib
-DATADIR ?= share/$(NAME)-$(VERSION)
+include config.mk
 
 DEPS := glfw3 glew libpng $(if $(OPENGEX),liboddl)
 NAME := game
