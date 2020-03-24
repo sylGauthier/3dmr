@@ -18,7 +18,7 @@ void anim_curve_free(struct AnimCurve* curve) {
     if (curve->sharedValues) return;
     switch (curve->curveType) {
         case TRACK_LINEAR: free(curve->values.linear); break;
-        case TRACK_BEZIER: free(curve->values.linear); break;
+        case TRACK_BEZIER: free(curve->values.bezier); break;
         default:;
     }
 }
