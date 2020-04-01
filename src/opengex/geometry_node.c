@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <game/material/phong.h>
-#include <game/render/vertex_shader.h>
 
 #include "context.h"
 #include "object_ref.h"
@@ -46,10 +45,6 @@ int ogex_parse_geometry_node(const struct OgexContext* context, struct Node* nod
         fprintf(stderr, "Error: GeometryNode: failed to create material\n");
         free(geom);
         return 0;
-    }
-    geom->fragParams = matParams;
-    if (geom->vertexArray->flags & MESH_SKIN) {
-        geom->material->vertex_load = vertex_standard_load_skinned;
     }
     node_set_geometry(node, geom);
     return 1;

@@ -63,12 +63,12 @@ struct Material* pbr_material_new(enum MeshFlags mflags, const struct PBRMateria
     GLuint shaders[2];
     shaders[0] = vertex_shader_standard(mflags);
     shaders[1] = pbr_shader_new(params);
-    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, 0, pbr_load, GL_FILL);
+    if (shaders[0] && shaders[1]) m = material_new_from_shaders(shaders, 2, pbr_load, (void*)params, GL_FILL);
     if (shaders[0]) glDeleteShader(shaders[0]);
     if (shaders[1]) glDeleteShader(shaders[1]);
     return m;
 }
 
 int material_is_pbr(const struct Material* material) {
-    return material->frag_load == pbr_load;
+    return material->load == pbr_load;
 }

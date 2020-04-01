@@ -64,3 +64,12 @@ void skin_free(struct Skin* skin) {
         free(skin);
     }
 }
+
+static void _skin_load(void* p) {
+    skin_load(p);
+}
+
+void vertex_array_set_skin(struct VertexArray* va, const struct Skin* skin) {
+    va->load = _skin_load;
+    va->params = (void*)skin;
+}

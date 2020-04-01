@@ -89,6 +89,9 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, va->ibo);
     }
     glBindVertexArray(0);
+
+    va->load = 0;
+    va->params = 0;
 }
 
 void vertex_array_del(struct VertexArray* va) {
@@ -124,6 +127,9 @@ void vertex_array_free(struct VertexArray* va) {
 }
 
 void vertex_array_render(const struct VertexArray* vertexArray) {
+    if (vertexArray->load) {
+        vertexArray->load(vertexArray->params);
+    }
     glBindVertexArray(vertexArray->vao);
     if (vertexArray->numIndices) {
         glDrawElements(GL_TRIANGLES, vertexArray->numIndices, GL_UNSIGNED_INT, 0);

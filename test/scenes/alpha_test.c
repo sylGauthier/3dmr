@@ -6,6 +6,6 @@ int alpha_test_setup(struct Scene* scene) {
 }
 
 void alpha_test_teardown(struct Scene* scene) {
-    struct AlphaParams* params = &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->fragParams)->alpha;
+    struct AlphaParams* params = &((struct SolidMaterialParams*)scene->root.children[0]->data.geometry->material->params)->alpha;
     glDeleteTextures(1, &params->alpha.value.texture);
 }

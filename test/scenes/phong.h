@@ -18,7 +18,7 @@ static int phong_setup(struct Scene* scene, int withSpecular) {
         material_param_set_vec3_elems(&params->specular, withSpecular ? 0.1 : 0.0, 0.0, withSpecular ? 0.1 : 0.0);
         material_param_set_float_constant(&params->shininess, 1.0);
         if ((mat = phong_material_new(mesh.flags, params))) {
-            if ((n = create_node(&mesh, mat, 0, params))) {
+            if ((n = create_node(&mesh, mat, params))) {
                 if (scene_add(scene, n)) {
                     mesh_free(&mesh);
                     return 1;

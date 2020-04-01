@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <game/render/vertex_shader.h>
 
 #include "common.h"
 #include "context.h"
@@ -203,6 +204,9 @@ struct Geometry* ogex_parse_geometry_object(struct OgexContext* context, const s
         fprintf(stderr, "Error: GeometryObject: couldn't allocate memory for vertex array\n");
         ok = 0;
     }
+    if (mesh.flags & MESH_SKIN) {
+        vertex_array_set_skin(tmpVA, skin);
+    }
     if (nbMeshes) mesh_free(&mesh);
     if (!ok) return NULL;
     if (!(geom = malloc(sizeof(*geom)))) {
@@ -212,8 +216,6 @@ struct Geometry* ogex_parse_geometry_object(struct OgexContext* context, const s
     }
     geom->vertexArray = tmpVA;
     geom->material = NULL;
-    geom->vertParams = skin;
-    geom->fragParams = NULL;
     return geom;
 }
 

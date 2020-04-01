@@ -9,7 +9,6 @@
 struct Geometry {
     struct VertexArray* vertexArray;
     struct Material* material;
-    void *vertParams, *fragParams;
 };
 
 struct Camera {

@@ -24,4 +24,6 @@ void skin_load(struct Skin* skin);
 void skin_del(struct Skin* skin);
 void skin_free(struct Skin* skin);
 
+void vertex_array_set_skin(struct VertexArray* va, const struct Skin* skin);
+
 #endif

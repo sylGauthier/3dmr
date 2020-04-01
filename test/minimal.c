@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
         lights_buffer_object_zero_init(&lights);
         uniform_buffer_send(&camera);
         uniform_buffer_send(&lights);
-        material_use(mat, NULL, &matParams);
+        material_use(mat);
         material_set_matrices(mat, model, inv);
         while (p.running) {
             viewer_next_frame(viewer);

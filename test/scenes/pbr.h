@@ -17,7 +17,7 @@ static int pbr_setup(struct Scene* scene) {
         material_param_set_float_constant(&params->metalness, 0.0);
         material_param_set_float_constant(&params->roughness, 0.3);
         if ((mat = pbr_material_new(mesh.flags, params))) {
-            if ((n = create_node(&mesh, mat, 0, params))) {
+            if ((n = create_node(&mesh, mat, params))) {
                 if (scene_add(scene, n)) {
                     mesh_free(&mesh);
                     return 1;

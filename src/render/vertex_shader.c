@@ -37,10 +37,6 @@ GLuint vertex_shader_standard_(enum MeshFlags flags, int overlay) {
     return shader_find_compile("standard.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, defines, numDefines);
 }
 
-void vertex_standard_load_skinned(GLuint program, void* params) {
-    skin_load(params);
-}
-
 GLuint vertex_shader_standard(enum MeshFlags flags) {
     return vertex_shader_standard_(flags, 0);
 }
