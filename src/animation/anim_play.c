@@ -207,7 +207,6 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
     if (!clip->duration) return 1;
 
     running = update_clip_cur_time(clip, dt);
-
     for (i = 0; i < clip->numAnimations; i++) {
         anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode,
                             clip->animations[i].flags, clip->curPos);
@@ -215,25 +214,26 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
     return running;
 }
 
-static void pop_anim_stack(struct AnimationEngine* engine, unsigned int slot) {
-    void* tmp = engine->animQueue[slot];
-    engine->animQueue[slot] = engine->animQueue[slot]->nextInStack;
-    free(tmp);
+int anim_run_stack(struct AnimStack** stack, unsigned int dt) {
+    struct AnimStack* cur = *stack;
+
+    if (cur && cur->delay < dt) {
+        cur->delay = 0;
+        if (!anim_play_clip(cur->clip, dt)) {
+            anim_stack_pop(stack);
+        }
+    } else if (cur) {
+        cur->delay -= dt;
+    } else {
+        return 0;
+    }
+    return 1;
 }
 
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt) {
     unsigned int i;
 
     for (i = 0; i < engine->numAnimSlots; i++) {
-        struct AnimStack* cur = engine->animQueue[i];
-
-        if (cur && cur->delay < dt) {
-            cur->delay = 0;
-            if (!anim_play_clip(cur->clip, dt)) {
-                pop_anim_stack(engine, i);
-            }
-        } else if (cur) {
-            cur->delay -= dt;
-        }
+        anim_run_stack(engine->animQueue + i, dt);
     }
 }

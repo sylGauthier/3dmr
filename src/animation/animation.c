@@ -83,6 +83,7 @@ void anim_clip_init(struct Clip* clip) {
 
     clip->curPos = 0;
     clip->rev = 0;
+    clip->oneShot = 0;
     clip->name = NULL;
 }
 
@@ -144,10 +145,57 @@ int anim_new_slot(struct AnimationEngine* engine) {
     return 1;
 }
 
-static void init_anim_stack(struct AnimStack* stack) {
+void anim_stack_init(struct AnimStack* stack) {
     stack->clip = NULL;
     stack->delay = 0;
     stack->nextInStack = NULL;
+}
+
+int anim_stack_append(struct AnimStack* stack, struct Clip* clip, unsigned int delay) {
+    struct AnimStack* newElem;
+
+    if (!(newElem = malloc(sizeof(*newElem)))) {
+        fprintf(stderr, "Error: anim_append_clip: could not allocate memory for new animStack elem\n");
+        return 0;
+    }
+
+    anim_stack_init(newElem);
+    newElem->clip = clip;
+    newElem->delay = delay;
+
+    while (stack->nextInStack) stack = stack->nextInStack;
+    stack->nextInStack = newElem;
+    return 1;
+}
+
+int anim_stack_push(struct AnimStack** stack, struct Clip* clip, unsigned int delay) {
+    struct AnimStack* newElem;
+
+    if (!(newElem = malloc(sizeof(*newElem)))) {
+        fprintf(stderr, "Error: anim_append_clip: could not allocate memory for new animStack elem\n");
+        return 0;
+    }
+
+    anim_stack_init(newElem);
+    newElem->clip = clip;
+    newElem->delay = delay;
+    newElem->nextInStack = *stack;
+    *stack = newElem;
+    return 1;
+}
+
+void anim_stack_pop(struct AnimStack** stack) {
+    struct AnimStack* tmp = *stack;
+    *stack = (*stack)->nextInStack;
+    if (tmp->clip->oneShot) {
+        anim_clip_free(tmp->clip);
+        free(tmp->clip);
+    }
+    free(tmp);
+}
+
+void anim_stack_flush(struct AnimStack** stack) {
+    while (*stack) anim_stack_pop(stack);
 }
 
 int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay) {
@@ -159,7 +207,7 @@ int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned
         return 0;
     }
 
-    init_anim_stack(newElem);
+    anim_stack_init(newElem);
     newElem->clip = clip;
     newElem->delay = delay;
 
@@ -180,7 +228,7 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
         return 0;
     }
 
-    init_anim_stack(newElem);
+    anim_stack_init(newElem);
     newElem->clip = clip;
     newElem->delay = delay;
     newElem->nextInStack = engine->animQueue[slot];

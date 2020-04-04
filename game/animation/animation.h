@@ -87,12 +87,14 @@ struct Clip {
 
     unsigned int curPos;
     char rev;
+    char oneShot;
     char* name;
 };
 
 void anim_clip_init(struct Clip* clip);
 void anim_clip_free(struct Clip* clip);
 int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode);
+struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duration);
 
 struct AnimStack {
     struct Clip* clip;
@@ -100,6 +102,13 @@ struct AnimStack {
 
     struct AnimStack* nextInStack;
 };
+
+void anim_stack_init(struct AnimStack* stack);
+int anim_stack_append(struct AnimStack* stack, struct Clip* clip, unsigned int delay);
+int anim_stack_push(struct AnimStack** stack, struct Clip* clip, unsigned int delay);
+void anim_stack_pop(struct AnimStack** stack);
+void anim_stack_flush(struct AnimStack** stack);
+int anim_run_stack(struct AnimStack** stack, unsigned int dt);
 
 struct AnimationEngine {
     struct AnimStack** animQueue;
@@ -116,5 +125,7 @@ int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned i
 void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos);
 int anim_play_clip(struct Clip* clip, unsigned int dt);
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
+
+struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duration);
 
 #endif
