@@ -134,6 +134,21 @@ void viewer_set_title(struct Viewer* viewer, const char* title) {
     glfwSetWindowTitle(((struct ViewerImpl*)viewer)->window, title);
 }
 
+void viewer_set_cursor_mode(struct Viewer* viewer, enum ViewerCursorMode mode) {
+    GLFWwindow* win = ((struct ViewerImpl*)viewer)->window;
+    switch (mode) {
+        case VIEWER_CURSOR_NORMAL:
+            glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            break;
+        case VIEWER_CURSOR_HIDDEN:
+            glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            break;
+        case VIEWER_CURSOR_DISABLED:
+            glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            break;
+    }
+}
+
 void viewer_make_current(struct Viewer* viewer) {
     glfwMakeContextCurrent(viewer ? (((struct ViewerImpl*)viewer)->window) : ((GLFWwindow*)NULL));
     currentViewer = viewer;
