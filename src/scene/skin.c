@@ -4,18 +4,35 @@
 #include <game/scene/skin.h>
 #include <game/render/shader.h>
 
+static void find_skin_root(struct Skin* skin) {
+    unsigned int minDepth = (unsigned int) -1;
+    unsigned int i;
+    for (i = 0; i < skin->numBones; i++) {
+        struct Node* cur = skin->bones[i];
+        unsigned int curDepth = 0;
+        for (curDepth = 0; (cur = cur->father); curDepth++);
+        if (curDepth < minDepth) {
+            minDepth = curDepth;
+            skin->root = skin->bones[i]->father ? skin->bones[i]->father : skin->bones[i];
+        }
+    }
+}
+
 static void compute_transforms(struct Skin* skin) {
     unsigned int i;
-    Mat4 invBindPose, invSkin;
+    Mat4 invBindPose, invGlobalTransform;
     Mat4 tmp, tmp2;
     Mat4* transforms = skin->transforms.cache;
 
-    invert4m(invSkin, MAT_CONST_CAST(skin->skinTransform));
+    if (!skin->root) {
+        find_skin_root(skin);
+    }
+    invert4m(invGlobalTransform, MAT_CONST_CAST(skin->root->model));
     for (i = 0; i < skin->numBones; i++) {
         invert4m(invBindPose, MAT_CONST_CAST(skin->bindPose[i]));
         mul4mm(tmp, MAT_CONST_CAST(skin->bones[i]->model), MAT_CONST_CAST(invBindPose));
         mul4mm(tmp2, MAT_CONST_CAST(tmp), MAT_CONST_CAST(skin->skinTransform));
-        mul4mm(transforms[i], MAT_CONST_CAST(invSkin), MAT_CONST_CAST(tmp2));
+        mul4mm(transforms[i], MAT_CONST_CAST(invGlobalTransform), MAT_CONST_CAST(tmp2));
     }
     uniform_buffer_invalidate(&skin->transforms, 0, skin->numBones * sizeof(Mat4));
 }
@@ -31,6 +48,7 @@ int skin_gen(struct Skin* skin, unsigned int numBones) {
         return 0;
     }
     skin->numBones = numBones;
+    skin->root = NULL;
     return 1;
 }
 

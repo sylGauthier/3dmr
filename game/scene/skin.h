@@ -12,6 +12,7 @@ struct Skin {
 
     struct Node** bones;
     unsigned int numBones;
+    struct Node* root;
 
     struct UniformBuffer transforms;
 };
