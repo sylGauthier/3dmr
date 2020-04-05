@@ -10,8 +10,8 @@
 struct Prog {
     struct Scene scene;
     struct ImportMetadata metadata;
-    unsigned int activeCam, activeClip, numDirectionalLights, numPointLights;
-    struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS];
+    unsigned int activeCam, activeClip, numDirectionalLights, numPointLights, numSpotLights;
+    struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS], *slights[MAX_SPOT_LIGHTS];
     int running;
 };
 
@@ -92,6 +92,13 @@ static void update_node(struct Scene* scene, struct Node* n, void* data) {
                 }
             }
             break;
+        case NODE_SLIGHT:
+            for (i = 0; i < prog->numSpotLights; i++) {
+                if (n == prog->slights[i]) {
+                    lights_buffer_object_update_slight(&scene->lights, n->data.slight, i);
+                }
+            }
+            break;
         case NODE_CAMERA:
             if (n == prog->metadata.cameraNodes[prog->activeCam]) {
                 camera_buffer_object_update_view(&scene->camera, MAT_CONST_CAST(n->data.camera->view));
@@ -152,6 +159,7 @@ int main(int argc, char** argv) {
 
     prog.numDirectionalLights = 0;
     prog.numPointLights = 0;
+    prog.numSpotLights = 0;
     import_init_metadata(&prog.metadata);
     import_init_shared_data(&shared);
     if (!(viewer = viewer_new(1024, 768, argv[1]))) {
@@ -191,6 +199,14 @@ int main(int argc, char** argv) {
                         fprintf(stderr, "Warning: point lights limit exceeded\n");
                     }
                     break;
+                case NODE_SLIGHT:
+                    if (prog.numSpotLights < MAX_SPOT_LIGHTS) {
+                        lights_buffer_object_update_slight(&prog.scene.lights, n->data.slight, prog.numSpotLights);
+                        prog.slights[prog.numSpotLights++] = n;
+                    } else {
+                        fprintf(stderr, "Warning: point lights limit exceeded\n");
+                    }
+                    break;
                 default:;
             }
         }
@@ -209,6 +225,7 @@ int main(int argc, char** argv) {
         }
         lights_buffer_object_update_ndlight(&prog.scene.lights, prog.numDirectionalLights);
         lights_buffer_object_update_nplight(&prog.scene.lights, prog.numPointLights);
+        lights_buffer_object_update_nslight(&prog.scene.lights, prog.numSpotLights);
         camera = prog.metadata.cameraNodes[0]->data.camera;
         camera_set_ratio(((float)viewer->width) / ((float)viewer->height), camera->projection);
         camera_buffer_object_update_projection(&prog.scene.camera, MAT_CONST_CAST(camera->projection));
