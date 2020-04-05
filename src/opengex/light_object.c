@@ -21,8 +21,18 @@ static int ogex_parse_atten(const struct ODDLStructure* cur, struct OgexAtten* a
     atten->quadratic = 1.0;
     atten->power = 1.0;
 
-    if ((prop = oddl_get_property(cur, "curve"))) {
-        if (!strcmp(prop->str, "linear")) {
+    if ((prop = oddl_get_property(cur, "kind")) && prop->str) {
+        if (!strcmp(prop->str, "distance")) {
+            atten->kind = ATTEN_K_DIST;
+        } else if (!strcmp(prop->str, "angle")) {
+            atten->kind = ATTEN_K_ANGLE;
+        } else if (!strcmp(prop->str, "cos_angle")) {
+            atten->kind = ATTEN_K_COS;
+        }
+    }
+
+    if ((prop = oddl_get_property(cur, "curve")) && prop->str) {
+        if (strcmp(prop->str, "linear")) {
             atten->type = ATTEN_LINEAR;
         } else if (!strcmp(prop->str, "smooth")) {
             atten->type = ATTEN_SMOOTH;
@@ -93,6 +103,16 @@ struct OgexLight* ogex_parse_light_object(const struct OgexContext* context, con
         return 0;
     }
 
+    if (!(light = malloc(sizeof(*light)))) {
+        fprintf(stderr, "Warning: LightObject: failed to allocate light\n");
+        return 0;
+    }
+    light->numAtten = 0;
+    light->color[0] = 1;
+    light->color[1] = 1;
+    light->color[2] = 1;
+    light->type = OGEX_LIGHT_INFINITE;
+
     for (i = 0; i < cur->nbStructures; i++) {
         struct ODDLStructure* tmp = cur->structures[i];
         float param;
@@ -117,14 +137,18 @@ struct OgexLight* ogex_parse_light_object(const struct OgexContext* context, con
             fprintf(stderr, "Warning: LightObject: light textures are not supported yet (but will be Soon(TM))\n");
         } else if (!strcmp(tmp->identifier, "Atten")) {
             if (!(ogex_parse_atten(tmp, &atten))) return 0;
+            if (light->numAtten < OGEX_LIGHT_MAX_ATTEN) {
+                light->atten[light->numAtten++] = atten;
+            } else {
+                fprintf(stderr, "Warning: LightObject: exceeded max number of attenuations (OGEX_LIGHT_MAX_ATTEN = %d)\n", OGEX_LIGHT_MAX_ATTEN);
+            }
         }
     }
     scale3v(color, intensity);
-    if (!(light = malloc(sizeof(*light)))) {
-        fprintf(stderr, "Warning: LightObject: failed to allocate light\n");
-        return 0;
+    if (light->numAtten == 0) {
+        light->atten[0] = atten;
+        light->numAtten = 1;
     }
-    light->atten = atten;
     memcpy(light->color, color, sizeof(Vec3));
     light->type = type;
     return light;

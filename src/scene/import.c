@@ -24,6 +24,9 @@ void imported_node_free(struct Node* node) {
             case NODE_PLIGHT:
                 free(node->data.plight);
                 break;
+            case NODE_SLIGHT:
+                free(node->data.slight);
+                break;
         }
         free(node);
     }

@@ -47,30 +47,77 @@ int ogex_parse_light_node(const struct OgexContext* context, struct Node* node, 
         case OGEX_LIGHT_POINT:
             {
                 struct PointLight* newLight;
+                unsigned int i;
                 if (!(newLight = malloc(sizeof(*newLight)))) {
                     fprintf(stderr, "Error: LightObject: cannot allocate memory for new light\n");
                     return 0;
                 }
-                switch (light->atten.type) {
-                    case ATTEN_SMOOTH:
-                    case ATTEN_LINEAR:
-                    case ATTEN_INVERSE:
-                        fprintf(stderr, "Warning: LightObject: unsupported attenuation type (only inverse square is supported)\n");
-                    case ATTEN_INVERSE_SQUARE:
+                newLight->radius = 1.;
+                for (i = 0; i < light->numAtten; i++) {
+                    switch (light->atten[i].kind) {
+                        case ATTEN_K_DIST:
+                            switch (light->atten[i].type) {
+                                case ATTEN_SMOOTH:
+                                case ATTEN_LINEAR:
+                                case ATTEN_INVERSE:
+                                    fprintf(stderr, "Warning: LightObject: unsupported attenuation type (only inverse square is supported)\n");
+                                case ATTEN_INVERSE_SQUARE:
+                                    newLight->radius = light->atten[i].scale;
+                                    break;
+                                default:
+                                    fprintf(stderr, "Error: LightObject: unknown attenuation type\n");
+                                    free(newLight);
+                                    return 0;
+                            }
+                            break;
+                        default:
                         break;
-                    default:
-                        fprintf(stderr, "Error: LightObject: unknown attenuation type\n");
-                        free(newLight);
-                        return 0;
+                    }
                 }
                 memcpy(newLight->color, light->color, sizeof(Vec3));
-                newLight->radius = light->atten.scale;
                 node_set_plight(node, newLight);
             }
             break;
         case OGEX_LIGHT_SPOT:
-            fprintf(stderr, "Error: LightObject: unsupported light object: spot\n");
-            return 0;
+            {
+                struct SpotLight* newLight;
+                unsigned int i;
+                if (!(newLight = malloc(sizeof(*newLight)))) {
+                    fprintf(stderr, "Error: LightObject: cannot allocate memory for new light\n");
+                    return 0;
+                }
+                newLight->intensity = 1.;
+                newLight->innerAngle = 0.;
+                newLight->outerAngle = M_PI / 4.;
+                for (i = 0; i < light->numAtten; i++) {
+                    switch (light->atten[i].kind) {
+                        case ATTEN_K_DIST:
+                            switch (light->atten[i].type) {
+                                case ATTEN_SMOOTH:
+                                case ATTEN_LINEAR:
+                                case ATTEN_INVERSE:
+                                    fprintf(stderr, "Warning: LightObject: unsupported attenuation type (only inverse square is supported)\n");
+                                case ATTEN_INVERSE_SQUARE:
+                                    newLight->intensity = light->atten[i].scale;
+                                    break;
+                                default:
+                                    fprintf(stderr, "Error: LightObject: unknown attenuation type\n");
+                                    free(newLight);
+                                    return 0;
+                            }
+                            break;
+                        case ATTEN_K_ANGLE:
+                            newLight->innerAngle = light->atten[i].begin;
+                            newLight->outerAngle = light->atten[i].end;
+                            break;
+                        default:
+                        break;
+                    }
+                }
+                memcpy(newLight->color, light->color, sizeof(Vec3));
+                node_set_slight(node, newLight);
+            }
+            break;
         default:
             fprintf(stderr, "Error: LightNode: unsupported light type\n");
             return 0;

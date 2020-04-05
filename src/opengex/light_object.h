@@ -4,6 +4,8 @@
 #ifndef GAME_OPENGEX_LIGHT_OBJECT_H
 #define GAME_OPENGEX_LIGHT_OBJECT_H
 
+#define OGEX_LIGHT_MAX_ATTEN 5
+
 enum OgexLightType {
     OGEX_LIGHT_INFINITE,
     OGEX_LIGHT_POINT,
@@ -30,7 +32,8 @@ struct OgexAtten {
 };
 
 struct OgexLight {
-    struct OgexAtten atten;
+    struct OgexAtten atten[OGEX_LIGHT_MAX_ATTEN];
+    unsigned int numAtten;
     Vec3 color;
     enum OgexLightType type;
 };
