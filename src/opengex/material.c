@@ -13,6 +13,12 @@ enum PhongModes {
     PHONG_NB_PARAMS
 };
 
+enum PhongFlags {
+    PHONG_AMBIENT_SET = 1 << PHONG_AMBIENT,
+    PHONG_DIFFUSE_SET = 1 << PHONG_DIFFUSE,
+    PHONG_SPECULAR_SET = 1 << PHONG_SPECULAR
+};
+
 static enum PhongModes get_phong_mode(const char* attrib) {
     if (!strcmp(attrib, "diffuse")) return PHONG_DIFFUSE;
     if (!strcmp(attrib, "specular")) return PHONG_SPECULAR;
@@ -23,7 +29,7 @@ static enum PhongModes get_phong_mode(const char* attrib) {
 struct PhongMaterialParams* ogex_parse_material(const struct OgexContext* context, const struct ODDLStructure* cur) {
     struct MatParamVec3* params[PHONG_NB_PARAMS];
     struct PhongMaterialParams* phongParams;
-    unsigned int i;
+    unsigned int i, phongFlags = 0;
     int ok = 1;
 
     if (!(phongParams = phong_material_params_new())) return NULL;
@@ -48,6 +54,7 @@ struct PhongMaterialParams* ogex_parse_material(const struct OgexContext* contex
                 case PHONG_DIFFUSE:
                 case PHONG_SPECULAR:
                 case PHONG_AMBIENT:
+                    phongFlags |= 1 << mode;
                     if (params[mode]->mode == MAT_PARAM_TEXTURED) break;
                     material_param_set_vec3_constant(params[mode], color);
                     break;
@@ -76,6 +83,7 @@ struct PhongMaterialParams* ogex_parse_material(const struct OgexContext* contex
                 case PHONG_DIFFUSE:
                 case PHONG_SPECULAR:
                 case PHONG_AMBIENT:
+                    phongFlags |= 1 << mode;
                     if (params[mode]->mode == MAT_PARAM_TEXTURED) {
                         fprintf(stderr, "Warning: Material: multiple textures for same phong attribute not supported\n");
                         glDeleteTextures(1, &tex);
@@ -93,6 +101,10 @@ struct PhongMaterialParams* ogex_parse_material(const struct OgexContext* contex
     if (!ok) {
         ogex_free_material(phongParams);
         return NULL;
+    }
+    /* If diffuse is set but not ambient, copy diffuse params to ambient params to make it behave more intuitively */
+    if ((phongFlags & PHONG_DIFFUSE_SET) && !(phongFlags & PHONG_AMBIENT_SET)) {
+        memcpy(params[PHONG_AMBIENT], params[PHONG_DIFFUSE], sizeof(*params[PHONG_AMBIENT]));
     }
     return phongParams;
 }
