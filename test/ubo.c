@@ -87,10 +87,29 @@ unsigned long lights_offset(const char* name) {
         } else if (!strcmp(name, "radius")) {
             return OFFSET_PLIGHT_RADIUS(i);
         }
+    } else if (!strncmp(name, "spotLights[", 11)) {
+        i = strtoul(name + 11, (char**)&name, 10);
+        if (*name++ != ']') return -1;
+        if (*name++ != '.') return -1;
+        if (!strcmp(name, "position")) {
+            return OFFSET_SLIGHT_POSITION(i);
+        } else if (!strcmp(name, "direction")) {
+            return OFFSET_SLIGHT_DIRECTION(i);
+        } else if (!strcmp(name, "color")) {
+            return OFFSET_SLIGHT_COLOR(i);
+        } else if (!strcmp(name, "intensity")) {
+            return OFFSET_SLIGHT_INTENSITY(i);
+        } else if (!strcmp(name, "outerAngle")) {
+            return OFFSET_SLIGHT_OUTER_ANGLE(i);
+        } else if (!strcmp(name, "innerAngle")) {
+            return OFFSET_SLIGHT_INNER_ANGLE(i);
+        }
     } else if (!strcmp(name, "numDirectionalLights")) {
         return OFFSET_NUM_DLIGHTS;
     } else if (!strcmp(name, "numPointLights")) {
         return OFFSET_NUM_PLIGHTS;
+    } else if (!strcmp(name, "numSpotLights")) {
+        return OFFSET_NUM_SLIGHTS;
     }
     return -1;
 }

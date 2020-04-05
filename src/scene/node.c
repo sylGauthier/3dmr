@@ -55,6 +55,12 @@ void node_set_plight(struct Node* node, struct PointLight* plight) {
     node_reset_bounding_box(node, NULL);
 }
 
+void node_set_slight(struct Node* node, struct SpotLight* slight) {
+    node->type = NODE_SLIGHT;
+    node->data.slight = slight;
+    node_reset_bounding_box(node, NULL);
+}
+
 void node_set_camera(struct Node* node, struct Camera* camera) {
     node->type = NODE_CAMERA;
     node->data.camera = camera;
@@ -134,6 +140,17 @@ int node_update_matrices(struct Node* node) {
             case NODE_PLIGHT:
                 if (node->changedFlags & (POSITION_CHANGED | PARENT_MODEL_CHANGED)) {
                     mul3sv(node->data.plight->position, 1.0f / node->model[3][3], node->model[3]);
+                }
+                break;
+            case NODE_SLIGHT:
+                if (node->changedFlags & (ORIENTATION_CHANGED | PARENT_MODEL_CHANGED)) {
+                    Mat3 tmp;
+                    Vec3 down = {0, -1, 0};
+                    mat4to3(tmp, MAT_CONST_CAST(node->model));
+                    mul3mv(node->data.slight->direction, MAT_CONST_CAST(tmp), down);
+                }
+                if (node->changedFlags & (POSITION_CHANGED | PARENT_MODEL_CHANGED)) {
+                    mul3sv(node->data.slight->position, 1.0f / node->model[3][3], node->model[3]);
                 }
                 break;
             case NODE_CAMERA:

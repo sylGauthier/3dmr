@@ -46,6 +46,7 @@ struct Node {
         NODE_GEOMETRY,
         NODE_DLIGHT,
         NODE_PLIGHT,
+        NODE_SLIGHT,
         NODE_CAMERA,
         NODE_BONE
     } type;
@@ -53,6 +54,7 @@ struct Node {
         struct Geometry* geometry;
         struct DirectionalLight* dlight;
         struct PointLight* plight;
+        struct SpotLight* slight;
         struct Camera* camera;
     } data;
 
@@ -64,6 +66,7 @@ void node_init(struct Node* node);
 void node_set_geometry(struct Node* node, struct Geometry* geometry);
 void node_set_dlight(struct Node* node, struct DirectionalLight* dlight);
 void node_set_plight(struct Node* node, struct PointLight* plight);
+void node_set_slight(struct Node* node, struct SpotLight* slight);
 void node_set_camera(struct Node* node, struct Camera* camera);
 
 int node_add_child(struct Node* node, struct Node* child);
