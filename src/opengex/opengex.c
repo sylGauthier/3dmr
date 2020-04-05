@@ -79,23 +79,23 @@ int ogex_load(struct Node* root, FILE* ogexFile, const char* path, struct Import
         struct VertexArray** newVA = NULL;
         void** newMP = NULL;
         struct Skin** newSk = NULL;
-        if (context.geometries.num < ((unsigned int)-1) - shared->numVA) {
+        if (context.geometries.num && context.geometries.num < ((unsigned int)-1) - shared->numVA) {
             if ((newVA = realloc(shared->va, (shared->numVA + context.geometries.num) * sizeof(*shared->va)))) shared->va = newVA;
         }
-        if (context.matParams.num < ((unsigned int)-1) - shared->numMatParams) {
+        if (context.matParams.num && context.matParams.num < ((unsigned int)-1) - shared->numMatParams) {
             if ((newMP = realloc(shared->matParams, (shared->numMatParams + context.matParams.num) * sizeof(*shared->matParams)))) shared->matParams = newMP;
         }
-        if (context.skins.num < ((unsigned int)-1) - shared->numSkins) {
+        if (context.skins.num && context.skins.num < ((unsigned int)-1) - shared->numSkins) {
             if ((newSk = realloc(shared->skins, (shared->numSkins + context.skins.num) * sizeof(*shared->skins)))) shared->skins = newSk;
         }
-        if (!newVA || !newMP || !newSk) {
+        if ((context.geometries.num && !newVA) || (context.matParams.num && !newMP) || (context.skins.num && !newSk)) {
             fprintf(stderr, "Error: failed to allocate imported shared data arrays\n");
             success = 0;
         }
     }
     if (success && metadata) {
         struct Clip** newClips = NULL;
-        if (context.numClips < ((unsigned int)-1) - metadata->numClips) {
+        if (context.numClips && context.numClips < ((unsigned int)-1) - metadata->numClips) {
             if ((newClips = realloc(metadata->clips, (metadata->numClips + context.numClips) * sizeof(*metadata->clips)))) metadata->clips = newClips;
         }
     }
