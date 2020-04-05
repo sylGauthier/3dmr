@@ -2,7 +2,7 @@
 
 #include <game/animation/animation.h>
 
-static void make_curve_transition(struct AnimCurve* dest, struct AnimCurve* targetCurve, struct Node* targetNode, enum TrackTargetType t) {
+static void make_curve_transition(struct AnimCurve* dest, const struct AnimCurve* targetCurve, struct Node* targetNode, enum TrackTargetType t) {
     Vec3 eulerRot;
     if (t == TRACK_X_ROT || t == TRACK_Y_ROT || t == TRACK_Z_ROT) {
         quaternion_to_xyz(eulerRot, targetNode->orientation);
@@ -62,14 +62,17 @@ static void make_curve_transition(struct AnimCurve* dest, struct AnimCurve* targ
     }
 }
 
-static int make_anim_transition(struct Animation* transition, struct Animation* target, unsigned int duration) {
+static int make_anim_transition(struct Animation* transition, const struct Animation* target, unsigned int duration) {
     unsigned int i, f;
 
     if (!anim_animation_init(transition, target->targetNode)) return 0;
     transition->flags = target->flags;
     for (f = 0; f < TRACK_NB_TYPES && !target->tracks[f].numKeys; f++);
     if (f == TRACK_NB_TYPES) return 1;
-    anim_track_init(&transition->tracks[f], TRACK_LINEAR, TRACK_LINEAR, 2);
+    if (!anim_track_init(&transition->tracks[f], TRACK_LINEAR, TRACK_LINEAR, 2)) {
+        anim_animation_free(transition);
+        return 0;
+    }
     transition->tracks[f].times.values.linear[0] = 0;
     transition->tracks[f].times.values.linear[1] = ((double)duration) / 1000;
     make_curve_transition(&transition->tracks[f].values, &target->tracks[f].values, target->targetNode, f);
@@ -77,7 +80,10 @@ static int make_anim_transition(struct Animation* transition, struct Animation* 
         if (target->tracks[i].numKeys) {
             transition->tracks[i].numKeys = 2;
             anim_curve_copy(&transition->tracks[i].times, &transition->tracks[f].times);
-            anim_curve_init(&transition->tracks[i].values, TRACK_LINEAR, 2);
+            if (!anim_curve_init(&transition->tracks[i].values, TRACK_LINEAR, 2)) {
+                anim_animation_free(transition);
+                return 0;
+            }
             make_curve_transition(&transition->tracks[i].values, &target->tracks[i].values, target->targetNode, i);
         }
     }
@@ -97,12 +103,13 @@ struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duratio
             ret->loop = 0;
             ret->oneShot = 1;
             for (i = 0; i < ret->numAnimations; i++) {
-                make_anim_transition(&ret->animations[i], &target->animations[i], duration);
+                if (!make_anim_transition(&ret->animations[i], &target->animations[i], duration)) break;
             }
-        } else {
-            free(ret);
-            return NULL;
+            if (i == ret->numAnimations) return ret;
+            ret->numAnimations = i;
         }
+        anim_clip_free(ret);
+        free(ret);
     }
-    return ret;
+    return NULL;
 }

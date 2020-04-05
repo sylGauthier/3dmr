@@ -104,7 +104,7 @@ struct PhongMaterialParams* ogex_parse_material(const struct OgexContext* contex
     }
     /* If diffuse is set but not ambient, copy diffuse params to ambient params to make it behave more intuitively */
     if ((phongFlags & PHONG_DIFFUSE_SET) && !(phongFlags & PHONG_AMBIENT_SET)) {
-        memcpy(params[PHONG_AMBIENT], params[PHONG_DIFFUSE], sizeof(*params[PHONG_AMBIENT]));
+        *params[PHONG_AMBIENT] = *params[PHONG_DIFFUSE];
     }
     return phongParams;
 }
