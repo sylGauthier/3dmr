@@ -21,7 +21,7 @@ float spot_light_attenuation(SpotLight light, vec3 position) {
     cosMax = cos(light.innerAngle);
     cosMin = cos(light.outerAngle);
     cosCur = dot(normalize(light.direction), lightToPos);
-    if (cosCur <= cosMin) return 0;
+    if (cosCur <= cosMin) return 0.0;
     if (cosCur > cosMin && cosCur < cosMax) factor = (cosCur - cosMin) / (cosMax - cosMin);
     return factor / (1.0 + (2.0 / light.intensity) * distance + (1.0 / (light.intensity * light.intensity)) * distance * distance);
 }
