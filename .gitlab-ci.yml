@@ -13,7 +13,7 @@ coverage:
     - bash -c '[ -n "$OPENGEX" ] && (cd .. && rm -rf liboddl && git clone https://framagit.org/sgauthier/liboddl && make -C liboddl install PREFIX="$(pwd)/deps")'
     - git clone https://github.com/linux-test-project/lcov.git
     - make -C lcov install PREFIX="$(pwd)/lcov/usr" CFG_DIR="$(pwd)/lcov/etc"
-    - xvfb-run -a -s "-screen 0 1024x768x24" bash -c 'export PKG_CONFIG_PATH="$(pwd)/../deps/lib/pkgconfig"; make test'
+    - xvfb-run -a -s "-screen 0 1024x768x24" bash -c 'export PKG_CONFIG_PATH="$(pwd)/../deps/lib/pkgconfig"; make test TEST_VERBOSE=1'
     - ./lcov/usr/bin/lcov -d . -b . --no-external --capture -o "$(git describe --always).coverage"
     - ./lcov/usr/bin/lcov --remove "$(git describe --always).coverage" -o "game-$(git describe --always).coverage" '*/test/*'
     - ./lcov/usr/bin/genhtml --output-directory cov "game-$(git describe --always).coverage"
