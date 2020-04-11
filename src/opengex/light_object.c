@@ -32,7 +32,7 @@ static int ogex_parse_atten(const struct ODDLStructure* cur, struct OgexAtten* a
     }
 
     if ((prop = oddl_get_property(cur, "curve")) && prop->str) {
-        if (strcmp(prop->str, "linear")) {
+        if (!strcmp(prop->str, "linear")) {
             atten->type = ATTEN_LINEAR;
         } else if (!strcmp(prop->str, "smooth")) {
             atten->type = ATTEN_SMOOTH;
