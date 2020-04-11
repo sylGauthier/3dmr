@@ -160,6 +160,9 @@ int node_update_matrices(struct Node* node) {
                 {
                     Mat3 tmp;
                     mat4to3(tmp, MAT_CONST_CAST(node->model));
+                    scale3v(tmp[0], 1. / norm3sq(tmp[0]));
+                    scale3v(tmp[1], 1. / norm3sq(tmp[1]));
+                    scale3v(tmp[2], 1. / norm3sq(tmp[2]));
                     transpose3m(tmp);
                     mat3to4(node->data.camera->view, MAT_CONST_CAST(tmp));
                     mul3mv(node->data.camera->view[3], MAT_CONST_CAST(tmp), node->model[3]);

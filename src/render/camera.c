@@ -8,6 +8,9 @@ void camera_get_position(const Mat4 view, Vec3 position) {
     Mat3 tmp;
     Vec3 vtmp;
     mat4to3(tmp, view);
+    scale3v(tmp[0], 1. / norm3sq(tmp[0]));
+    scale3v(tmp[1], 1. / norm3sq(tmp[1]));
+    scale3v(tmp[2], 1. / norm3sq(tmp[2]));
     transpose3m(tmp);
     mul3sv(vtmp, -1, view[3]);
     mul3mv(position, MAT_CONST_CAST(tmp), vtmp);
