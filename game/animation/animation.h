@@ -70,6 +70,7 @@ struct Animation {
     enum TrackFlags flags;
 };
 
+void anim_animation_zero(struct Animation* anim);
 int anim_animation_init(struct Animation* anim, struct Node* targetNode);
 void anim_animation_free(struct Animation* anim);
 

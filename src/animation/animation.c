@@ -56,6 +56,12 @@ struct Track* anim_new_track_set(void) {
     return t;
 }
 
+void anim_animation_zero(struct Animation* anim) {
+    anim->targetNode = 0;
+    anim->tracks = 0;
+    anim->flags = 0;
+}
+
 int anim_animation_init(struct Animation* anim, struct Node* targetNode) {
     anim->targetNode = targetNode;
     if (!(anim->tracks = anim_new_track_set())) return 0;
