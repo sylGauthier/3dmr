@@ -124,6 +124,7 @@ int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned
 int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 
 void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos);
+void anim_play(struct Animation* anim, unsigned int curPos);
 int anim_play_clip(struct Clip* clip, unsigned int dt);
 void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
 

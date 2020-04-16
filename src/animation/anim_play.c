@@ -200,6 +200,10 @@ void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags f
     }
 }
 
+void anim_play(struct Animation* anim, unsigned int curPos) {
+    anim_play_track_set(anim->tracks, anim->targetNode, anim->flags, curPos);
+}
+
 int anim_play_clip(struct Clip* clip, unsigned int dt) {
     unsigned int i;
     int running;
