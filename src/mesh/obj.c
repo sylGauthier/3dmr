@@ -150,36 +150,52 @@ int make_obj(struct Mesh* dest, const char* filename, int withIndices, int withN
     } else if (!obj_triangulate(&obj)) {
         fprintf(stderr, "Error: failed to triangulate obj file '%s'\n", filename);
     } else {
+        dest->flags = 0;
+        if (withNormals && obj.numNormals) {
+            dest->flags |= MESH_NORMALS;
+        }
+        if (withTexCoords && obj.numTexCoords) {
+            dest->flags |= MESH_TEXCOORDS;
+        }
         if (!withIndices) {
             dest->numVertices = 3 * obj.numFaces;
-            dest->flags = 0;
-            if (withNormals && obj.numNormals) {
-                dest->flags |= MESH_NORMALS;
-            }
-            if (withTexCoords && obj.numTexCoords) {
-                dest->flags |= MESH_TEXCOORDS;
-            }
             dest->numIndices = 0;
             dest->indices = NULL;
             n = MESH_FLOATS_PER_VERTEX(dest);
             if (!(dest->vertices = malloc(n * dest->numVertices * sizeof(float)))) {
                 fprintf(stderr, "Error: failed to allocate mesh buffer for obj file '%s'\n", filename);
             } else {
-                for (i = k = 0; i < obj.numFaces; i++) {
+                ret = 1;
+                for (i = k = 0; ret && i < obj.numFaces; i++) {
                     for (j = 0; j < 3; j++) {
+                        if (obj.faces[i].elems[j].v >= obj.numVertices) {
+                            ret = 0;
+                            break;
+                        }
                         memcpy(dest->vertices + k, obj.vertices + 3 * obj.faces[i].elems[j].v, 3 * sizeof(float));
                         k += 3;
                         if (MESH_HAS_NORMALS(dest)) {
+                            if (obj.faces[i].elems[j].n >= obj.numNormals) {
+                                ret = 0;
+                                break;
+                            }
                             memcpy(dest->vertices + k, obj.normals + 3 * obj.faces[i].elems[j].n, 3 * sizeof(float));
                             k += 3;
                         }
                         if (MESH_HAS_TEXCOORDS(dest)) {
+                            if (obj.faces[i].elems[j].t >= obj.numTexCoords) {
+                                ret = 0;
+                                break;
+                            }
                             memcpy(dest->vertices + k, obj.texCoords + 2 * obj.faces[i].elems[j].t, 2 * sizeof(float));
                             k += 2;
                         }
                     }
                 }
-                ret = 1;
+                if (!ret) {
+                    fprintf(stderr, "Error: invalid index in obj file\n");
+                    free(dest->vertices);
+                }
             }
         } else {
             dest->numIndices = 3 * obj.numFaces;
