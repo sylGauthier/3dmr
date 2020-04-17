@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
             dt = viewer_next_frame(viewer);
             if (prog.metadata.numClips) {
                 if (prog.metadata.numClips) {
-                    anim_play_clip(prog.metadata.clips[prog.activeClip], dt * 1000);
+                    anim_play_clip(prog.metadata.clips[prog.activeClip], dt);
                 }
                 scene_update_nodes(&prog.scene, update_node, &prog);
                 uniform_buffer_send(&prog.scene.lights);

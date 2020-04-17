@@ -75,7 +75,7 @@ int anim_animation_init(struct Animation* anim, struct Node* targetNode);
 void anim_animation_free(struct Animation* anim);
 
 struct Clip {
-    unsigned int duration;
+    float duration;
     enum ClipPlayMode {
         CLIP_FORWARD,
         CLIP_BACKWARD,
@@ -86,7 +86,7 @@ struct Clip {
     unsigned int numAnimations;
     struct Animation* animations;
 
-    unsigned int curPos;
+    float curPos;
     char rev;
     char oneShot;
     char* name;
@@ -95,8 +95,6 @@ struct Clip {
 void anim_clip_init(struct Clip* clip);
 void anim_clip_free(struct Clip* clip);
 int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode);
-struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duration);
-
 struct AnimStack {
     struct Clip* clip;
     unsigned int delay;
@@ -109,7 +107,7 @@ int anim_stack_append(struct AnimStack* stack, struct Clip* clip, unsigned int d
 int anim_stack_push(struct AnimStack** stack, struct Clip* clip, unsigned int delay);
 void anim_stack_pop(struct AnimStack** stack);
 void anim_stack_flush(struct AnimStack** stack);
-int anim_run_stack(struct AnimStack** stack, unsigned int dt);
+int anim_run_stack(struct AnimStack** stack, float dt);
 
 struct AnimationEngine {
     struct AnimStack** animQueue;
@@ -123,11 +121,11 @@ int anim_new_slot(struct AnimationEngine* engine);
 int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 
-void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos);
-void anim_play(struct Animation* anim, unsigned int curPos);
-int anim_play_clip(struct Clip* clip, unsigned int dt);
-void anim_run_engine(struct AnimationEngine* engine, unsigned int dt);
+void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, float curPos);
+void anim_play(struct Animation* anim, float curPos);
+int anim_play_clip(struct Clip* clip, float dt);
+void anim_run_engine(struct AnimationEngine* engine, float dt);
 
-struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duration);
+struct Clip* anim_make_clip_transition(struct Clip* target, float duration);
 
 #endif

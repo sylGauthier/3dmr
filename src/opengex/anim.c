@@ -377,7 +377,8 @@ static int parse_track(const struct OgexContext* context, struct Animation* anim
 }
 
 int ogex_parse_animation(struct OgexContext* context, struct Node* node, const struct ODDLStructure* cur) {
-    unsigned int i, nbTracks = 0, duration = 0, clipIdx = 0;
+    unsigned int i, nbTracks = 0, clipIdx = 0;
+    float duration = 0;
     struct Clip* clip = NULL;
     struct Animation* newAnim = NULL;
     struct ODDLProperty* prop;
@@ -407,7 +408,7 @@ int ogex_parse_animation(struct OgexContext* context, struct Node* node, const s
         fprintf(stderr, "Error: Animation: Animation should contain at least one Track\n");
         return 0;
     }
-    duration = 1000 * anim_duration(newAnim);
+    duration = anim_duration(newAnim);
     clip->duration = duration > clip->duration ? duration : clip->duration;
     return 1;
 }

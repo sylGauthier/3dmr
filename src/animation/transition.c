@@ -62,7 +62,7 @@ static void make_curve_transition(struct AnimCurve* dest, const struct AnimCurve
     }
 }
 
-static int make_anim_transition(struct Animation* transition, const struct Animation* target, unsigned int duration) {
+static int make_anim_transition(struct Animation* transition, const struct Animation* target, float duration) {
     unsigned int i, f;
 
     if (!anim_animation_init(transition, target->targetNode)) return 0;
@@ -74,7 +74,7 @@ static int make_anim_transition(struct Animation* transition, const struct Anima
         return 0;
     }
     transition->tracks[f].times.values.linear[0] = 0;
-    transition->tracks[f].times.values.linear[1] = ((double)duration) / 1000;
+    transition->tracks[f].times.values.linear[1] = duration;
     make_curve_transition(&transition->tracks[f].values, &target->tracks[f].values, target->targetNode, f);
     for (i = f + 1; i < TRACK_NB_TYPES; i++) {
         if (target->tracks[i].numKeys) {
@@ -90,7 +90,7 @@ static int make_anim_transition(struct Animation* transition, const struct Anima
     return 1;
 }
 
-struct Clip* anim_make_clip_transition(struct Clip* target, unsigned int duration) {
+struct Clip* anim_make_clip_transition(struct Clip* target, float duration) {
     struct Clip* ret;
 
     if ((ret = malloc(sizeof(*ret)))) {

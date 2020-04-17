@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include <game/animation/animation.h>
 
@@ -12,7 +13,7 @@ static float get_time_key(const struct Track* track, unsigned int idx) {
     return 0;
 }
 
-static int update_clip_cur_time(struct Clip* clip, unsigned int dt) {
+static int update_clip_cur_time(struct Clip* clip, float dt) {
     if (!clip->rev) {
         if (clip->curPos + dt <= clip->duration) {
             clip->curPos += dt;
@@ -20,14 +21,14 @@ static int update_clip_cur_time(struct Clip* clip, unsigned int dt) {
         } else {
             if (clip->mode == CLIP_FORWARD) {
                 if (clip->loop) {
-                    clip->curPos = (clip->curPos + dt) % clip->duration;
+                    clip->curPos = fmod(clip->curPos + dt, clip->duration);
                     return 1;
                 } else {
                     clip->curPos = clip->duration;
                     return 0;
                 }
             } else if (clip->mode == CLIP_BACK_FORTH) {
-                clip->curPos = (2 * clip->duration - (clip->curPos + dt)) % clip->duration;
+                clip->curPos = fmod(2.0f * clip->duration - (clip->curPos + dt), clip->duration);
                 clip->rev = 1;
                 return 1;
             }
@@ -39,10 +40,10 @@ static int update_clip_cur_time(struct Clip* clip, unsigned int dt) {
         } else {
             if (clip->loop) {
                 if (clip->mode == CLIP_BACKWARD) {
-                    clip->curPos = (clip->duration + clip->curPos - dt) % clip->duration;
+                    clip->curPos = fmod(clip->duration + clip->curPos - dt, clip->duration);
                     return 1;
                 } else if (clip->mode == CLIP_BACK_FORTH) {
-                    clip->curPos = (dt - clip->curPos) % clip->duration;
+                    clip->curPos = fmod(dt - clip->curPos, clip->duration);
                     clip->rev = 0;
                     return 1;
                 }
@@ -55,25 +56,25 @@ static int update_clip_cur_time(struct Clip* clip, unsigned int dt) {
     return 0;
 }
 
-static float time_linear_interp(int curFrame, float x, float* times, unsigned int nbKeys) {
-    if (curFrame >= nbKeys-1) return 1;
+static float time_linear_interp(unsigned int curFrame, float x, float* times, unsigned int nbKeys) {
+    if (curFrame >= nbKeys - 1) return 1;
     if (x <= times[curFrame]) return 0;
     if (x >= times[curFrame + 1]) return 1;
     return (x - times[curFrame]) / (times[curFrame + 1] - times[curFrame]);
 }
 
-static float value_linear_interp(int curFrame, float s, float* values, unsigned int nbKeys) {
-    if (curFrame >= nbKeys-1) return values[nbKeys - 1];
+static float value_linear_interp(unsigned int curFrame, float s, float* values, unsigned int nbKeys) {
+    if (curFrame >= nbKeys - 1) return values[nbKeys - 1];
     if (s <= 0) return values[curFrame];
     if (s >= 1) return values[curFrame + 1];
     return (1 - s) * values[curFrame] + s * values[curFrame + 1];
 }
 
-static float time_bezier_interp(int curFrame, float x, Vec3* times, unsigned int nbKeys) {
+static float time_bezier_interp(unsigned int curFrame, float x, Vec3* times, unsigned int nbKeys) {
     unsigned int a;
     float s = 0, t1, t2, c1, c2;
 
-    if (curFrame >= nbKeys-1) return times[nbKeys - 1][0];
+    if (curFrame >= nbKeys - 1) return times[nbKeys - 1][0];
     if (x <= times[curFrame][0]) return 0;
     if (x >= times[curFrame + 1][0]) return 1;
 
@@ -89,10 +90,10 @@ static float time_bezier_interp(int curFrame, float x, Vec3* times, unsigned int
     return s;
 }
 
-static float value_bezier_interp(int curFrame, float s, Vec3* points, unsigned int nbKeys) {
+static float value_bezier_interp(unsigned int curFrame, float s, Vec3* points, unsigned int nbKeys) {
     float v1, v2, p1, p2;
 
-    if (curFrame >= nbKeys-1) return points[nbKeys - 1][0];
+    if (curFrame >= nbKeys - 1) return points[nbKeys - 1][0];
     if (s <= 0) return points[curFrame][0];
     if (s >= 1) return points[curFrame + 1][0];
 
@@ -102,9 +103,8 @@ static float value_bezier_interp(int curFrame, float s, Vec3* points, unsigned i
     return (1 - s) * (1 - s) * (1 - s) * v1 + 3 * s * (1 - s) * (1 - s) * p1 + 3 * s * s * (1 - s) * p2 + s * s * s * v2;
 }
 
-static int get_cur_frame(struct Track* track, unsigned int curPos) {
+static unsigned int get_cur_frame(struct Track* track, float x) {
     unsigned int a;
-    float x = (float)curPos / 1000;
 
     if (x <= get_time_key(track, 0)) return 0;
     if (x >= get_time_key(track, track->numKeys - 1)) return track->numKeys - 1;
@@ -116,12 +116,11 @@ static int get_cur_frame(struct Track* track, unsigned int curPos) {
     return a;
 }
 
-static float interp_track(struct Track* track, unsigned int curPos) {
-    float time = (float)curPos / 1000.0;
+static float interp_track(struct Track* track, float time) {
     float s;
-    int curFrame;
+    unsigned int curFrame;
 
-    curFrame = get_cur_frame(track, curPos);
+    curFrame = get_cur_frame(track, time);
 
     switch (track->times.curveType) {
         case TRACK_LINEAR:
@@ -143,7 +142,7 @@ static float interp_track(struct Track* track, unsigned int curPos) {
     }
 }
 
-void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos) {
+void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, float curPos) {
     Vec3 rot = {0};
 
     if (flags & TRACKING_POS) {
@@ -200,11 +199,11 @@ void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags f
     }
 }
 
-void anim_play(struct Animation* anim, unsigned int curPos) {
+void anim_play(struct Animation* anim, float curPos) {
     anim_play_track_set(anim->tracks, anim->targetNode, anim->flags, curPos);
 }
 
-int anim_play_clip(struct Clip* clip, unsigned int dt) {
+int anim_play_clip(struct Clip* clip, float dt) {
     unsigned int i;
     int running;
 
@@ -218,7 +217,7 @@ int anim_play_clip(struct Clip* clip, unsigned int dt) {
     return running;
 }
 
-int anim_run_stack(struct AnimStack** stack, unsigned int dt) {
+int anim_run_stack(struct AnimStack** stack, float dt) {
     struct AnimStack* cur = *stack;
 
     if (cur && cur->delay < dt) {
@@ -234,7 +233,7 @@ int anim_run_stack(struct AnimStack** stack, unsigned int dt) {
     return 1;
 }
 
-void anim_run_engine(struct AnimationEngine* engine, unsigned int dt) {
+void anim_run_engine(struct AnimationEngine* engine, float dt) {
     unsigned int i;
 
     for (i = 0; i < engine->numAnimSlots; i++) {
