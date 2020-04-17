@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <game/init.h>
+#include <game/animation/play.h>
 #include <game/render/camera_buffer_object.h>
 #include <game/render/lights_buffer_object.h>
 #include <game/scene/opengex.h>

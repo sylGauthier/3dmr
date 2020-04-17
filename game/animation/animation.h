@@ -1,5 +1,5 @@
-#ifndef ANIMATION_H
-#define ANIMATION_H
+#ifndef GAME_ANIMATION_H
+#define GAME_ANIMATION_H
 
 #include <game/scene/node.h>
 #include <game/math/linear_algebra.h>
@@ -107,7 +107,6 @@ int anim_stack_append(struct AnimStack* stack, struct Clip* clip, unsigned int d
 int anim_stack_push(struct AnimStack** stack, struct Clip* clip, unsigned int delay);
 void anim_stack_pop(struct AnimStack** stack);
 void anim_stack_flush(struct AnimStack** stack);
-int anim_run_stack(struct AnimStack** stack, float dt);
 
 struct AnimationEngine {
     struct AnimStack** animQueue;
@@ -120,12 +119,5 @@ void anim_engine_free(struct AnimationEngine* engine);
 int anim_new_slot(struct AnimationEngine* engine);
 int anim_append_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
 int anim_push_clip(struct AnimationEngine* engine, struct Clip* clip, unsigned int slot, unsigned int delay);
-
-void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, float curPos);
-void anim_play(struct Animation* anim, float curPos);
-int anim_play_clip(struct Clip* clip, float dt);
-void anim_run_engine(struct AnimationEngine* engine, float dt);
-
-struct Clip* anim_make_clip_transition(struct Clip* target, float duration);
 
 #endif
