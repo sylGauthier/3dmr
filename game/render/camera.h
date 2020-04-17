@@ -1,8 +1,8 @@
 #include <game/math/linear_algebra.h>
 #include <game/math/quaternion.h>
 
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef GAME_RENDER_CAMERA_H
+#define GAME_RENDER_CAMERA_H
 
 void camera_get_position(const Mat4 view, Vec3 position);
 void camera_get_orientation(const Mat4 view, Quaternion orientation);

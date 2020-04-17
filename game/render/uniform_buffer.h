@@ -1,7 +1,7 @@
 #include <GL/glew.h>
 
-#ifndef UNIFORM_BUFFER_H
-#define UNIFORM_BUFFER_H
+#ifndef GAME_RENDER_UNIFORM_BUFFER_H
+#define GAME_RENDER_UNIFORM_BUFFER_H
 
 struct UniformBuffer {
     void* cache;

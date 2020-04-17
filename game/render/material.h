@@ -2,8 +2,8 @@
 #include <game/render/camera.h>
 #include <game/render/vertex_array.h>
 
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef GAME_RENDER_MATERIAL_H
+#define GAME_RENDER_MATERIAL_H
 
 struct Material {
     void (*load)(GLuint program, void* params);

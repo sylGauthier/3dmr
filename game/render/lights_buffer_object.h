@@ -1,8 +1,8 @@
 #include <game/render/uniform_buffer.h>
 #include "../light/light.h"
 
-#ifndef LIGHTS_BUFFER_OBJECT_H
-#define LIGHTS_BUFFER_OBJECT_H
+#ifndef GAME_LIGHTS_BUFFER_OBJECT_H
+#define GAME_LIGHTS_BUFFER_OBJECT_H
 
 int lights_buffer_object_gen(struct UniformBuffer* dest);
 struct UniformBuffer* lights_buffer_object_new(void);

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <GL/glew.h>
 
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef GAME_RENDER_SHADER_H
+#define GAME_RENDER_SHADER_H
 
 #define LOCATION_VERTEX 0
 #define LOCATION_NORMAL 1

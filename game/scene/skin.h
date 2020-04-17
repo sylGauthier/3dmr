@@ -1,5 +1,5 @@
-#ifndef SKIN_H
-#define SKIN_H
+#ifndef GAME_SCENE_SKIN_H
+#define GAME_SCENE_SKIN_H
 
 #include <game/scene/node.h>
 #include <game/render/uniform_buffer.h>

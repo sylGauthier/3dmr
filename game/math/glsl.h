@@ -1,7 +1,7 @@
 #include "linear_algebra.h"
 
-#ifndef GLSL_H
-#define GLSL_H
+#ifndef GAME_MATH_GLSL_H
+#define GAME_MATH_GLSL_H
 
 typedef Vec2 vec2;
 typedef Vec3 vec3;

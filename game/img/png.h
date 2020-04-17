@@ -1,5 +1,5 @@
-#ifndef PNG_H
-#define PNG_H
+#ifndef GAME_IMG_PNG_H
+#define GAME_IMG_PNG_H
 
 /* channels=[1,4]:
  * 1: grayscale

@@ -3,8 +3,8 @@
 #include <game/mesh/mesh.h>
 #include <game/render/material.h>
 
-#ifndef PHONG_H
-#define PHONG_H
+#ifndef GAME_MATERIAL_PHONG_H
+#define GAME_MATERIAL_PHONG_H
 
 struct PhongMaterialParams {
     struct MatParamVec3 ambient, diffuse, specular;

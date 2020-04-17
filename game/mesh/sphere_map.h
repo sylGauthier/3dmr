@@ -1,7 +1,7 @@
 #include <game/mesh/mesh.h>
 
-#ifndef SPHERE_UV_H
-#define SPHERE_UV_H
+#ifndef GAME_MESH_SPHERE_UV_H
+#define GAME_MESH_SPHERE_UV_H
 
 enum SphereMapType {
     SPHERE_MAP_CENTRAL_CYLINDRICAL, /* https://en.wikipedia.org/wiki/Central_cylindrical_projection */

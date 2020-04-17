@@ -1,7 +1,7 @@
 #include <GL/glew.h>
 
-#ifndef LIGHT_IBL_H
-#define LIGHT_IBL_H
+#ifndef GAME_LIGHT_IBL_H
+#define GAME_LIGHT_IBL_H
 
 struct IBL {
     GLuint irradianceMap, specularMap, specularBrdf;

@@ -1,7 +1,7 @@
 #include <game/mesh/mesh.h>
 
-#ifndef OBJ_H
-#define OBJ_H
+#ifndef GAME_MESH_OBJ_H
+#define GAME_MESH_OBJ_H
 
 struct OBJ {
     float *vertices, *normals, *texCoords;

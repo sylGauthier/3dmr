@@ -1,8 +1,8 @@
 #include <GL/glew.h>
 #include <game/mesh/mesh.h>
 
-#ifndef VERTEX_ARRAY_H
-#define VERTEX_ARRAY_H
+#ifndef GAME_RENDER_VERTEX_ARRAY_H
+#define GAME_RENDER_VERTEX_ARRAY_H
 
 struct VertexArray {
     GLuint vbo, ibo, vao;

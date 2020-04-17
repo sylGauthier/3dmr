@@ -1,8 +1,8 @@
 #include <game/render/material.h>
 #include <game/render/vertex_array.h>
 
-#ifndef SKYBOX_H
-#define SKYBOX_H
+#ifndef GAME_SKYBOX_H
+#define GAME_SKYBOX_H
 
 struct Skybox {
     struct Material material;

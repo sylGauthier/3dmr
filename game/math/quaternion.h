@@ -1,7 +1,7 @@
 #include "linear_algebra.h"
 
-#ifndef QUATERNION_H
-#define QUATERNION_H
+#ifndef GAME_MATH_QUATERNION_H
+#define GAME_MATH_QUATERNION_H
 
 typedef Vec4 Quaternion;
 

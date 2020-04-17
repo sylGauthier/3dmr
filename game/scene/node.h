@@ -1,5 +1,5 @@
-#ifndef NODE_H
-#define NODE_H
+#ifndef GAME_SCENE_NODE_H
+#define GAME_SCENE_NODE_H
 
 #include <game/render/material.h>
 #include <game/render/vertex_array.h>

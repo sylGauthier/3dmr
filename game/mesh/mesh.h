@@ -1,7 +1,7 @@
 #include <game/math/linear_algebra.h>
 
-#ifndef MESH_H
-#define MESH_H
+#ifndef GAME_MESH_H
+#define GAME_MESH_H
 
 enum MeshFlags {
     MESH_NORMALS = 1 << 0,

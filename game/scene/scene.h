@@ -2,8 +2,8 @@
 #include <game/render/viewer.h>
 #include <game/scene/node.h>
 
-#ifndef SCENE_H
-#define SCENE_H
+#ifndef GAME_SCENE_H
+#define GAME_SCENE_H
 
 struct Scene {
     struct Node root;

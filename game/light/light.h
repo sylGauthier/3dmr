@@ -7,8 +7,8 @@
 #include <game/light/spot_light.h>
 #include <game/light/ibl.h>
 
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef GAME_LIGHT_H
+#define GAME_LIGHT_H
 
 struct Lights {
     struct DirectionalLight directional[MAX_DIRECTIONAL_LIGHTS];

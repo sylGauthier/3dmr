@@ -3,8 +3,8 @@
 #include <game/mesh/mesh.h>
 #include <game/render/material.h>
 
-#ifndef PBR_H
-#define PBR_H
+#ifndef GAME_MATERIAL_PBR_H
+#define GAME_MATERIAL_PBR_H
 
 struct PBRMaterialParams {
     struct MatParamVec3 albedo;

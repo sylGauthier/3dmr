@@ -1,8 +1,8 @@
 #include <GL/glew.h>
 #include <game/render/camera.h>
 
-#ifndef VIEWER_H
-#define VIEWER_H
+#ifndef GAME_RENDER_VIEWER_H
+#define GAME_RENDER_VIEWER_H
 
 enum ViewerCursorMode {
     VIEWER_CURSOR_NORMAL,

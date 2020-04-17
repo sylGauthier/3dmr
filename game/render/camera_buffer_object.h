@@ -1,8 +1,8 @@
 #include <game/render/uniform_buffer.h>
 #include "camera.h"
 
-#ifndef CAMERA_BUFFER_OBJECT_H
-#define CAMERA_BUFFER_OBJECT_H
+#ifndef GAME_CAMERA_BUFFER_OBJECT_H
+#define GAME_CAMERA_BUFFER_OBJECT_H
 
 int camera_buffer_object_gen(struct UniformBuffer* dest);
 struct UniformBuffer* camera_buffer_object_new(void);

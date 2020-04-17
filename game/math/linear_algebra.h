@@ -1,5 +1,5 @@
-#ifndef LINEAR_ALGEBRA_H
-#define LINEAR_ALGEBRA_H
+#ifndef GAME_MATH_LINEAR_ALGEBRA_H
+#define GAME_MATH_LINEAR_ALGEBRA_H
 
 /* If c99 is available, use the restrict keyword
  * to allow the compiler to do vectorial optimizations

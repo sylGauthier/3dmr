@@ -1,8 +1,8 @@
 #include <GL/glew.h>
 #include <game/math/linear_algebra.h>
 
-#ifndef MATERIAL_PARAM_H
-#define MATERIAL_PARAM_H
+#ifndef GAME_MATERIAL_PARAM_H
+#define GAME_MATERIAL_PARAM_H
 
 enum MatParamMode {
     MAT_PARAM_CONSTANT,

@@ -1,5 +1,5 @@
-#ifndef IMG_HDR_H
-#define IMG_HDR_H
+#ifndef GAME_IMG_HDR_H
+#define GAME_IMG_HDR_H
 
 int hdr_read(const char* filename, unsigned int alignRows, unsigned int* width, unsigned int* height, float** buffer);
 

@@ -3,8 +3,8 @@
 #include <game/mesh/mesh.h>
 #include <game/render/material.h>
 
-#ifndef SOLID_H
-#define SOLID_H
+#ifndef GAME_MATERIAL_SOLID_H
+#define GAME_MATERIAL_SOLID_H
 
 struct SolidMaterialParams {
     struct MatParamVec3 color;

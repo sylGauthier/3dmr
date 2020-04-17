@@ -2,8 +2,8 @@
 #include <game/scene/node.h>
 #include <game/scene/skin.h>
 
-#ifndef GAME_IMPORT_H
-#define GAME_IMPORT_H
+#ifndef GAME_SCENE_IMPORT_H
+#define GAME_SCENE_IMPORT_H
 
 void imported_node_free(struct Node* node);
 
