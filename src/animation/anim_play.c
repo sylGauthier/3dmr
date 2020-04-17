@@ -144,7 +144,7 @@ static float interp_track(struct Track* track, unsigned int curPos) {
 }
 
 void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, unsigned int curPos) {
-    Vec3 rot;
+    Vec3 rot = {0};
 
     if (flags & TRACKING_POS) {
         if (tracks[TRACK_X_POS].numKeys) {
