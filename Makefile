@@ -52,20 +52,20 @@ test/ubo.h: src/render/lights_buffer_object.c src/render/camera_buffer_object.c
 	grep -h '^#define' $^ > $@
 $(TEST_EXECS): $(LIB)
 
-$(filter-out test/%_dist,$(TEST_EXECS)): CFLAGS += -DTDMR_SHADERS_PATH=\"$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders\"
-$(filter test/%_dist,$(TEST_EXECS)): CFLAGS += -DTDMR_SHADERS_PATH=\"$(PREFIX)/$(DATADIR)/$(NAME)/shaders\"
+SHADERS_PATH_SRC := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders
+SHADERS_PATH_DIST := $(PREFIX)/$(DATADIR)/shaders
+CFLAGS += -DTDMR_SHADERS_PATH_SRC=\"$(SHADERS_PATH_SRC)\" -DTDMR_SHADERS_PATH_DIST=\"$(SHADERS_PATH_DIST)\"
 $(TEST_EXECS): CFLAGS += $(if $(OPENGEX), -DTDMR_OPENGEX=1)
 
 .PHONY: install
 D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
-install: $(LIB) $(NAME).pc $(if $(OPENGEX),test/ogexview_dist)
-	mkdir -p $(D)/$(INCLUDEDIR) $(D)/$(LIBDIR)/pkgconfig $(D)/$(DATADIR)/$(NAME) $(D)/bin
+install: $(LIB) $(NAME).pc $(if $(OPENGEX),test/ogexview)
+	mkdir -p $(D)/$(INCLUDEDIR) $(D)/$(LIBDIR)/pkgconfig $(D)/$(DATADIR) $(D)/bin
 	cp -R $(NAME) $(D)/$(INCLUDEDIR)
-	find $(D)/$(INCLUDEDIR)/$(NAME) -type f -name '*.h' -exec sed -i 's,^\(#include <\)\(shaders/\),\13dmr/\2,' {} +
-	cp -R shaders $(D)/$(DATADIR)/$(NAME)
+	cp -R shaders $(D)/$(DATADIR)
 	cp $(LIB) $(D)/$(LIBDIR)
 	cp $(NAME).pc $(D)/$(LIBDIR)/pkgconfig
-	$(if $(OPENGEX),cp test/ogexview_dist $(D)/bin/ogexview)
+	$(if $(OPENGEX),cp test/ogexview $(D)/bin/)
 
 .PHONY: $(NAME).pc
 $(NAME).pc:
@@ -77,7 +77,7 @@ $(NAME).pc:
 		'$(NAME)' \
 		'$(NAME)' \
 		'$(VERSION)' \
-		'-I$${includedir} -I$${datadir} -DTDMR_SHADERS_PATH=\"$${datadir}/$(NAME)/shaders\"$(if $(OPENGEX), -DTDMR_OPENGEX=1)' \
+		'-I$${includedir} -I$${datadir}$(if $(OPENGEX), -DTDMR_OPENGEX=1)' \
 		'-L$${libdir} -l$(NAME) -lm' \
 		'$(DEPS)' \
 		> $@

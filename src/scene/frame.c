@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <3dmr/init.h>
 #include <3dmr/material/solid.h>
 #include <3dmr/mesh/mesh.h>
 #include <3dmr/render/shader.h>

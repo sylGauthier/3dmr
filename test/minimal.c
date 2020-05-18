@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <3dmr/init.h>
 #include <3dmr/render/camera_buffer_object.h>
 #include <3dmr/render/lights_buffer_object.h>
 #include <3dmr/render/vertex_array.h>
@@ -56,9 +55,7 @@ int main(int argc, char** argv) {
     load_id3(inv);
     solid_material_params_init(&matParams);
     material_param_set_vec3_elems(&matParams.color, 0, 0, 1);
-    if (!tdmr_init(TDMR_SHADERS_PATH)) {
-        fprintf(stderr, "Error: failed to init library\n");
-    } else if (!(viewer = viewer_new(640, 480, "test"))) {
+    if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(va = mkcube()) || !(mat = solid_material_new(0, &matParams))) {
         fprintf(stderr, "Error: failed to create cube\n");
@@ -90,6 +87,5 @@ int main(int argc, char** argv) {
     free(mat);
     vertex_array_free(va);
     viewer_free(viewer);
-    tdmr_free();
     return 0;
 }

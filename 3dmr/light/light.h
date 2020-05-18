@@ -1,6 +1,5 @@
 #include <GL/glew.h>
 #include <3dmr/math/linear_algebra.h>
-#include <3dmr/math/glsl.h>
 #include <3dmr/light/ambient_light.h>
 #include <3dmr/light/directional_light.h>
 #include <3dmr/light/point_light.h>

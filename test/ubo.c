@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <3dmr/init.h>
 #include <3dmr/render/shader.h>
 #include <3dmr/render/viewer.h>
 #include <3dmr/render/camera_buffer_object.h>
@@ -127,12 +126,12 @@ int test_lights(GLuint prog) {
 int main() {
     static const char* defines[] = {"HAVE_NORMAL", NULL};
     struct Viewer* viewer;
+    const char* shaderPath = "shaders";
     GLuint prog;
     int ret = 1;
 
-    if (!tdmr_init("shaders")) return 1;
     if ((viewer = viewer_new(640, 480, ""))) {
-        if ((prog = shader_find_compile_link_vertfrag("standard.vert", "phong.frag", &tdmrShaderRootPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)), NULL, 0))) {
+        if ((prog = shader_find_compile_link_vertfrag("standard.vert", "phong.frag", &shaderPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)), NULL, 0))) {
             printf("================================================================================\n");
             printf("  %-44s %-16s %-16s\n", "name", "offset", "expected");
             printf("--------------------------------------------------------------------------------\n");
@@ -144,6 +143,5 @@ int main() {
         }
         viewer_free(viewer);
     }
-    tdmr_free();
     return ret;
 }

@@ -1,4 +1,4 @@
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/render/vertex_shader.h>
 #include <3dmr/render/shader.h>
 #include <3dmr/render/vertex_array.h>

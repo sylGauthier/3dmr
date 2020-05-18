@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/light/ibl.h>
 #include <3dmr/render/shader.h>
 

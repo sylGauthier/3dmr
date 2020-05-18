@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/material/solid.h>
 #include <3dmr/render/shader.h>
 #include <3dmr/render/vertex_shader.h>

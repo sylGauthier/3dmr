@@ -2,7 +2,7 @@
 #include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/animation/play.h>
 #include <3dmr/render/camera_buffer_object.h>
 #include <3dmr/render/lights_buffer_object.h>
@@ -153,10 +153,9 @@ int main(int argc, char** argv) {
         usage(argv[0]);
         return 1;
     }
-    if (!tdmr_init(TDMR_SHADERS_PATH)) {
-        fprintf(stderr, "Error: failed to init 3dmr library\n");
-        return 1;
-    }
+#ifdef TDMR_SHADERS_PATH
+    tdmrShaderRootPath = TDMR_SHADERS_PATH;
+#endif
 
     prog.numDirectionalLights = 0;
     prog.numPointLights = 0;
@@ -264,7 +263,6 @@ int main(int argc, char** argv) {
         import_free_metadata(&prog.metadata);
     }
     if (viewer) viewer_free(viewer);
-    tdmr_free();
 
     return err;
 }

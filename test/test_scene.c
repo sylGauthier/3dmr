@@ -5,7 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/render/camera_buffer_object.h>
 #include <3dmr/render/viewer.h>
 #include <3dmr/scene/scene.h>
@@ -134,12 +134,11 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to cd to test dir\n");
         return 1;
     }
+    tdmrShaderRootPath = "../shaders";
 
     camera_projection(640.0 / 480.0, 1.04, 0.1, 2000, camera.projection);
     camera_view(cpos, corient, camera.view);
-    if (!tdmr_init("../shaders")) {
-        fprintf(stderr, "Error: failed to init library\n");
-    } else if (!(viewer = viewer_new(640, 480, argv[1]))) {
+    if (!(viewer = viewer_new(640, 480, argv[1]))) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(sceneInit = scene_init(&scene, &camera))) {
         fprintf(stderr, "Error: failed to init scene\n");
@@ -175,6 +174,5 @@ int main(int argc, char** argv) {
 
     if (sceneInit > 1) scenes[i].teardown(&scene);
     if (sceneInit) scene_free(&scene, free_node);
-    tdmr_free();
     return ret;
 }

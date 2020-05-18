@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <3dmr/init.h>
+#include <3dmr/shaders.h>
 #include <3dmr/mesh/box.h>
 #include <3dmr/render/shader.h>
 #include <3dmr/render/texture.h>
