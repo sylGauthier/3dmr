@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <game/render/camera_buffer_object.h>
-#include <game/render/shader.h>
+#include <3dmr/render/camera_buffer_object.h>
+#include <3dmr/render/shader.h>
 
 /* offsets and size of uniform Camera (as defined in camera.glsl) following the std140 layout rules */
 #define OFFSET_PROJECTION 0

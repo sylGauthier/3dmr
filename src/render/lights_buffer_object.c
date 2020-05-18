@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <game/render/lights_buffer_object.h>
-#include <game/render/shader.h>
+#include <3dmr/render/lights_buffer_object.h>
+#include <3dmr/render/shader.h>
 
 /* offsets and size of uniform Lights (as defined in direct.glsl) following the std140 layout rules */
 #define OFFSET_AMBIENT 0

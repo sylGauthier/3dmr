@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <game/math/linear_algebra.h>
+#include <3dmr/math/linear_algebra.h>
 
 const Vec3 VEC3_AXIS_X = {1,0,0};
 const Vec3 VEC3_AXIS_Y = {0,1,0};

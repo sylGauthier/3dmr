@@ -1,11 +1,11 @@
 #include <stdlib.h>
-#include <game/init.h>
-#include <game/mesh/box.h>
-#include <game/render/shader.h>
-#include <game/render/texture.h>
-#include <game/img/hdr.h>
-#include <game/img/png.h>
-#include <game/skybox.h>
+#include <3dmr/init.h>
+#include <3dmr/mesh/box.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/texture.h>
+#include <3dmr/img/hdr.h>
+#include <3dmr/img/png.h>
+#include <3dmr/skybox.h>
 
 static void texture_params_cubemap(void) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -83,7 +83,7 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                     glBindVertexArray(empty);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     if (hdr_read(path, 4, &width, &height, &data)) {
-                        if ((program = shader_find_compile_link_vertfrag("cubemap.vert", "equirect_to_cubemap.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) {
+                        if ((program = shader_find_compile_link_vertfrag("cubemap.vert", "equirect_to_cubemap.frag", &tdmrShaderRootPath, 1, NULL, 0, NULL, 0))) {
                             glUseProgram(program);
                             glBindTexture(GL_TEXTURE_CUBE_MAP, tex[1]);
                             texture_params_cubemap();
@@ -135,7 +135,7 @@ int skybox_create(GLuint texture, struct Skybox* skybox) {
     struct Mesh box;
     GLuint prog;
 
-    if (!(prog = shader_find_compile_link_vertfrag("skybox.vert", "skybox.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
+    if (!(prog = shader_find_compile_link_vertfrag("skybox.vert", "skybox.frag", &tdmrShaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     if (make_box(&box, 1, 1, 1)) {
         vertex_array_gen(&box, &skybox->vertexArray);
         mesh_free(&box);

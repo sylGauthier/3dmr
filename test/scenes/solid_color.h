@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <game/material/solid.h>
-#include <game/mesh/box.h>
-#include <game/render/texture.h>
-#include <game/scene/scene.h>
+#include <3dmr/material/solid.h>
+#include <3dmr/mesh/box.h>
+#include <3dmr/render/texture.h>
+#include <3dmr/scene/scene.h>
 #include "util.h"
 
 static int alpha_setup(enum AlphaMode alphaMode, struct AlphaParams* params) {

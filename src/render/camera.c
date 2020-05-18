@@ -1,8 +1,8 @@
 #include <string.h>
 #include <math.h>
-#include <game/math/linear_algebra.h>
-#include <game/math/quaternion.h>
-#include <game/render/camera.h>
+#include <3dmr/math/linear_algebra.h>
+#include <3dmr/math/quaternion.h>
+#include <3dmr/render/camera.h>
 
 void camera_get_position(const Mat4 view, Vec3 position) {
     Mat3 tmp;

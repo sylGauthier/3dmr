@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
-#include <game/mesh/circle.h>
+#include <3dmr/mesh/circle.h>
 
 #define VERTEX(i, vx, vy, vz) \
     dest->vertices[6 * (i)] = vx; \

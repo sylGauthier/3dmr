@@ -1,7 +1,7 @@
 include config.mk
 
 DEPS := glfw3 glew libpng $(if $(OPENGEX),liboddl)
-NAME := game
+NAME := 3dmr
 LIB := lib$(NAME).a
 VERSION ?= $(shell git describe --tags 2>/dev/null || printf '9999-%d-%s\n' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
 
@@ -52,16 +52,16 @@ test/ubo.h: src/render/lights_buffer_object.c src/render/camera_buffer_object.c
 	grep -h '^#define' $^ > $@
 $(TEST_EXECS): $(LIB)
 
-$(filter-out test/%_dist,$(TEST_EXECS)): CFLAGS += -DGAME_SHADERS_PATH=\"$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders\"
-$(filter test/%_dist,$(TEST_EXECS)): CFLAGS += -DGAME_SHADERS_PATH=\"$(PREFIX)/$(DATADIR)/$(NAME)/shaders\"
-$(TEST_EXECS): CFLAGS += $(if $(OPENGEX), -DGAME_OPENGEX=1)
+$(filter-out test/%_dist,$(TEST_EXECS)): CFLAGS += -DTDMR_SHADERS_PATH=\"$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders\"
+$(filter test/%_dist,$(TEST_EXECS)): CFLAGS += -DTDMR_SHADERS_PATH=\"$(PREFIX)/$(DATADIR)/$(NAME)/shaders\"
+$(TEST_EXECS): CFLAGS += $(if $(OPENGEX), -DTDMR_OPENGEX=1)
 
 .PHONY: install
 D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
 install: $(LIB) $(NAME).pc $(if $(OPENGEX),test/ogexview_dist)
 	mkdir -p $(D)/$(INCLUDEDIR) $(D)/$(LIBDIR)/pkgconfig $(D)/$(DATADIR)/$(NAME) $(D)/bin
 	cp -R $(NAME) $(D)/$(INCLUDEDIR)
-	find $(D)/$(INCLUDEDIR)/$(NAME) -type f -name '*.h' -exec sed -i 's,^\(#include <\)\(shaders/\),\1game/\2,' {} +
+	find $(D)/$(INCLUDEDIR)/$(NAME) -type f -name '*.h' -exec sed -i 's,^\(#include <\)\(shaders/\),\13dmr/\2,' {} +
 	cp -R shaders $(D)/$(DATADIR)/$(NAME)
 	cp $(LIB) $(D)/$(LIBDIR)
 	cp $(NAME).pc $(D)/$(LIBDIR)/pkgconfig
@@ -77,7 +77,7 @@ $(NAME).pc:
 		'$(NAME)' \
 		'$(NAME)' \
 		'$(VERSION)' \
-		'-I$${includedir} -I$${datadir} -DGAME_SHADERS_PATH=\"$${datadir}/$(NAME)/shaders\"$(if $(OPENGEX), -DGAME_OPENGEX=1)' \
+		'-I$${includedir} -I$${datadir} -DTDMR_SHADERS_PATH=\"$${datadir}/$(NAME)/shaders\"$(if $(OPENGEX), -DTDMR_OPENGEX=1)' \
 		'-L$${libdir} -l$(NAME) -lm' \
 		'$(DEPS)' \
 		> $@

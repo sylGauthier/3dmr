@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/material/phong.h>
+#include <3dmr/material/phong.h>
 
 #include "context.h"
 #include "object_ref.h"

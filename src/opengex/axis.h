@@ -1,5 +1,5 @@
-#ifndef GAME_OPENGEX_AXIS_H
-#define GAME_OPENGEX_AXIS_H
+#ifndef TDMR_OPENGEX_AXIS_H
+#define TDMR_OPENGEX_AXIS_H
 
 enum OgexAxis {
     AXIS_X = 1,

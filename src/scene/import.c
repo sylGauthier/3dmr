@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <game/scene/import.h>
+#include <3dmr/scene/import.h>
 
 void imported_node_free(struct Node* node) {
     if (node) {

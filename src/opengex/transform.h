@@ -1,7 +1,7 @@
 #include "context.h"
 
-#ifndef GAME_OPENGEX_TRANSFORM_H
-#define GAME_OPENGEX_TRANSFORM_H
+#ifndef TDMR_OPENGEX_TRANSFORM_H
+#define TDMR_OPENGEX_TRANSFORM_H
 
 int ogex_parse_translation(const struct OgexContext* context, struct Node* node, const struct ODDLStructure* cur);
 int ogex_parse_rotation(const struct OgexContext* context, struct Node* node, const struct ODDLStructure* cur);

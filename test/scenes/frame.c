@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <game/scene/frame.h>
-#include <game/scene/scene.h>
+#include <3dmr/scene/frame.h>
+#include <3dmr/scene/scene.h>
 
 int frame_setup(struct Scene* scene) {
     struct Node* frame = make_frame();

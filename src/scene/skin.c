@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <game/scene/skin.h>
-#include <game/render/shader.h>
+#include <3dmr/scene/skin.h>
+#include <3dmr/render/shader.h>
 
 static void find_skin_root(struct Skin* skin) {
     unsigned int minDepth = (unsigned int) -1;

@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <game/render/material.h>
-#include <game/render/shader.h>
+#include <3dmr/render/material.h>
+#include <3dmr/render/shader.h>
 
 struct Material* material_new(void (*load)(GLuint, void*), void* params, GLuint program, GLuint polygonMode) {
     struct Material* m;

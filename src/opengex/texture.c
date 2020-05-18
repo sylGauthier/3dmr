@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <game/render/texture.h>
+#include <3dmr/render/texture.h>
 #include "common.h"
 #include "texture.h"
 

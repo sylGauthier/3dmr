@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <game/math/linear_algebra.h>
+#include <3dmr/math/linear_algebra.h>
 
 
 /* Mersenne-Twister PRNG (MT19937).

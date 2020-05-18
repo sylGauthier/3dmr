@@ -1,5 +1,5 @@
-#include <game/scene/node.h>
-#include <game/mesh/mesh.h>
+#include <3dmr/scene/node.h>
+#include <3dmr/mesh/mesh.h>
 
 #ifndef TEST_SCENES_UTIL_H
 #define TEST_SCENES_UTIL_H

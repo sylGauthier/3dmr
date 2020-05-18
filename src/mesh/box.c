@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/mesh/box.h>
+#include <3dmr/mesh/box.h>
 
 #define VERTEX(i, vx, vy, vz, nx, ny, nz, tu, tv) \
     dest->vertices[8 * i] = vx; \

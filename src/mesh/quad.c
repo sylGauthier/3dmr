@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/mesh/quad.h>
+#include <3dmr/mesh/quad.h>
 
 #define VERTEX(i, vx, vy, vz, nx, ny, nz, tu, tv) \
     dest->vertices[8 * i] = vx; \

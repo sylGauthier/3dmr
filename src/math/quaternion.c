@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <game/math/linear_algebra.h>
-#include <game/math/quaternion.h>
+#include <3dmr/math/linear_algebra.h>
+#include <3dmr/math/quaternion.h>
 
 void quaternion_load_id(Quaternion q) {
     q[0] = 1;

@@ -1,8 +1,8 @@
 #include <liboddl/liboddl.h>
 #include "context.h"
 
-#ifndef GAME_OPENGEX_LIGHT_OBJECT_H
-#define GAME_OPENGEX_LIGHT_OBJECT_H
+#ifndef TDMR_OPENGEX_LIGHT_OBJECT_H
+#define TDMR_OPENGEX_LIGHT_OBJECT_H
 
 #define OGEX_LIGHT_MAX_ATTEN 5
 

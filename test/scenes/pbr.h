@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <game/material/pbr.h>
-#include <game/mesh/icosphere.h>
-#include <game/render/lights_buffer_object.h>
-#include <game/scene/scene.h>
+#include <3dmr/material/pbr.h>
+#include <3dmr/mesh/icosphere.h>
+#include <3dmr/render/lights_buffer_object.h>
+#include <3dmr/scene/scene.h>
 #include "util.h"
 
 static int pbr_setup(struct Scene* scene) {

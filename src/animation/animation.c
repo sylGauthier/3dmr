@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <game/animation/animation.h>
+#include <3dmr/animation/animation.h>
 
 int anim_curve_init(struct AnimCurve* curve, enum TrackCurve type, unsigned int n) {
     curve->sharedValues = 0;

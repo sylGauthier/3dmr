@@ -1,7 +1,7 @@
 #include <GL/glew.h>
-#include <game/init.h>
-#include <game/light/ibl.h>
-#include <game/render/shader.h>
+#include <3dmr/init.h>
+#include <3dmr/light/ibl.h>
+#include <3dmr/render/shader.h>
 
 static void params_cubemap_texture(int mip) {
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -22,7 +22,7 @@ static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap
     GLuint program;
     GLint i;
 
-    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/irradiance_map.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/irradiance_map.frag", &tdmrShaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     params_cubemap_texture(0);
@@ -50,7 +50,7 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
     GLint i, level;
     float roughness;
 
-    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/specular_map.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("cubemap.vert", "ibl/specular_map.frag", &tdmrShaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_CUBE_MAP, specularMap);
     params_cubemap_texture(1);
@@ -83,7 +83,7 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
 static int specular_brdf(unsigned int size, GLuint specularBrdf) {
     GLuint program;
 
-    if (!(program = shader_find_compile_link_vertfrag("quad.vert", "ibl/specular_brdf.frag", &shaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
+    if (!(program = shader_find_compile_link_vertfrag("quad.vert", "ibl/specular_brdf.frag", &tdmrShaderRootPath, 1, NULL, 0, NULL, 0))) return 0;
     glUseProgram(program);
     glBindTexture(GL_TEXTURE_2D, specularBrdf);
     params_2d_texture();

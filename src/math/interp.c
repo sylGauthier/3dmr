@@ -1,5 +1,5 @@
 #include <math.h>
-#include <game/math/quaternion.h>
+#include <3dmr/math/quaternion.h>
 
 float lerp(float a0, float a1, float t) {
     return a0 + t * (a1 - a0);

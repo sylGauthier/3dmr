@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <game/material/phong.h>
-#include <game/mesh/icosphere.h>
-#include <game/render/lights_buffer_object.h>
-#include <game/scene/scene.h>
+#include <3dmr/material/phong.h>
+#include <3dmr/mesh/icosphere.h>
+#include <3dmr/render/lights_buffer_object.h>
+#include <3dmr/scene/scene.h>
 #include "util.h"
 
 static int phong_setup(struct Scene* scene, int withSpecular) {

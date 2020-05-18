@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <game/mesh/sphere_map.h>
+#include <3dmr/mesh/sphere_map.h>
 
 #define central_cylindrical tan
 

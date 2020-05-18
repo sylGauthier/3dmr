@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <game/animation/animation.h>
+#include <3dmr/animation/animation.h>
 
 #include "anim.h"
 #include "clip.h"

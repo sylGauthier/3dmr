@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glew.h>
-#include <game/img/png.h>
+#include <3dmr/img/png.h>
 
 static GLenum format_type(unsigned int channels) {
     switch (channels) {

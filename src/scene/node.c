@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <game/scene/node.h>
+#include <3dmr/scene/node.h>
 
 void node_init(struct Node* node) {
     node->children = NULL;

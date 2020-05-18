@@ -2,11 +2,11 @@
 #include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <game/init.h>
-#include <game/animation/play.h>
-#include <game/render/camera_buffer_object.h>
-#include <game/render/lights_buffer_object.h>
-#include <game/scene/opengex.h>
+#include <3dmr/init.h>
+#include <3dmr/animation/play.h>
+#include <3dmr/render/camera_buffer_object.h>
+#include <3dmr/render/lights_buffer_object.h>
+#include <3dmr/scene/opengex.h>
 
 struct Prog {
     struct Scene scene;
@@ -153,8 +153,8 @@ int main(int argc, char** argv) {
         usage(argv[0]);
         return 1;
     }
-    if (!game_init(GAME_SHADERS_PATH)) {
-        fprintf(stderr, "Error: failed to init game library\n");
+    if (!tdmr_init(TDMR_SHADERS_PATH)) {
+        fprintf(stderr, "Error: failed to init 3dmr library\n");
         return 1;
     }
 
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
         import_free_metadata(&prog.metadata);
     }
     if (viewer) viewer_free(viewer);
-    game_free();
+    tdmr_free();
 
     return err;
 }

@@ -1,23 +1,23 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/math/random.h>
+#include <3dmr/math/random.h>
 
-const char* shaderRootPath;
-char* _shaderRootPath;
+const char* tdmrShaderRootPath;
+char* _tdmrShaderRootPath;
 
-int game_init(const char* gameShaderRootPath) {
-    size_t n = strlen(gameShaderRootPath);
-    if (!(_shaderRootPath = malloc(++n))) {
+int tdmr_init(const char* shaderRootPath) {
+    size_t n = strlen(shaderRootPath);
+    if (!(_tdmrShaderRootPath = malloc(++n))) {
         return 0;
     }
-    memcpy(_shaderRootPath, gameShaderRootPath, n);
-    shaderRootPath = _shaderRootPath;
+    memcpy(_tdmrShaderRootPath, shaderRootPath, n);
+    tdmrShaderRootPath = _tdmrShaderRootPath;
 
     random_seed(4357);
 
     return 1;
 }
 
-void game_free(void) {
-    free(_shaderRootPath);
+void tdmr_free(void) {
+    free(_tdmrShaderRootPath);
 }

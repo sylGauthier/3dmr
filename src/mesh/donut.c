@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <game/math/linear_algebra.h>
-#include <game/mesh/donut.h>
+#include <3dmr/math/linear_algebra.h>
+#include <3dmr/mesh/donut.h>
 
 #define VERTEX(i) (dest->vertices + (6 * (i)))
 #define NORMAL(i) (dest->vertices + (6 * (i) + 3))

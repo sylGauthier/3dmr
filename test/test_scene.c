@@ -5,10 +5,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <game/init.h>
-#include <game/render/camera_buffer_object.h>
-#include <game/render/viewer.h>
-#include <game/scene/scene.h>
+#include <3dmr/init.h>
+#include <3dmr/render/camera_buffer_object.h>
+#include <3dmr/render/viewer.h>
+#include <3dmr/scene/scene.h>
 #include "scenes.h"
 
 struct CallbackParam {
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
 
     camera_projection(640.0 / 480.0, 1.04, 0.1, 2000, camera.projection);
     camera_view(cpos, corient, camera.view);
-    if (!game_init("../shaders")) {
+    if (!tdmr_init("../shaders")) {
         fprintf(stderr, "Error: failed to init library\n");
     } else if (!(viewer = viewer_new(640, 480, argv[1]))) {
         fprintf(stderr, "Error: failed to create viewer\n");
@@ -175,6 +175,6 @@ int main(int argc, char** argv) {
 
     if (sceneInit > 1) scenes[i].teardown(&scene);
     if (sceneInit) scene_free(&scene, free_node);
-    game_free();
+    tdmr_free();
     return ret;
 }

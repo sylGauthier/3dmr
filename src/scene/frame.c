@@ -1,11 +1,11 @@
 #include <stdlib.h>
-#include <game/init.h>
-#include <game/material/solid.h>
-#include <game/mesh/mesh.h>
-#include <game/render/shader.h>
-#include <game/render/vertex_shader.h>
-#include <game/scene/node.h>
-#include <game/scene/frame.h>
+#include <3dmr/init.h>
+#include <3dmr/material/solid.h>
+#include <3dmr/mesh/mesh.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/vertex_shader.h>
+#include <3dmr/scene/node.h>
+#include <3dmr/scene/frame.h>
 
 static const float arrowVertices[] = {
     0.0,  0.1,  0.0,   1.0, 0.0, 0.0,   0.0,  0.0,  0.1,

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <game/material/phong.h>
+#include <3dmr/material/phong.h>
 
 #include "anim.h"
 #include "context.h"

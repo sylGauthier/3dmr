@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/math/linear_algebra.h>
-#include <game/mesh/mesh.h>
+#include <3dmr/math/linear_algebra.h>
+#include <3dmr/mesh/mesh.h>
 
 int mesh_unindex(struct Mesh* mesh) {
     float *vertices, *cur;

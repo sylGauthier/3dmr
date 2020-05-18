@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/scene/import.h>
+#include <3dmr/scene/import.h>
 #include "camera_node.h"
 #include "object_ref.h"
 

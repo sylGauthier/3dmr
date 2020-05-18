@@ -1,4 +1,4 @@
-#include <game/material/alpha.h>
+#include <3dmr/material/alpha.h>
 
 void alpha_params_init(struct AlphaParams* params) {
     params->mode = ALPHA_DISABLED;

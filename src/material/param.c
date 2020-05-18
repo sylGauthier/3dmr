@@ -1,6 +1,6 @@
 #include <stdarg.h>
 #include <string.h>
-#include <game/material/param.h>
+#include <3dmr/material/param.h>
 
 void material_param_send_texture(GLuint shader, GLuint tex, const char* name, unsigned int* texSlot) {
     GLint uniform = glGetUniformLocation(shader, name);

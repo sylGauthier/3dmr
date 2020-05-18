@@ -1,4 +1,4 @@
-#include <game/light/light.h>
+#include <3dmr/light/light.h>
 
 void light_init(struct Lights* lights) {
     lights->numDirectionalLights = 0;

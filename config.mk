@@ -7,5 +7,5 @@ INCLUDEDIR ?= include
 LIBDIR ?= lib
 DATADIR ?= share/$(NAME)-$(VERSION)
 
-# game features
+# 3dmr features
 OPENGEX=1

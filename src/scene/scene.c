@@ -1,7 +1,7 @@
 #include <stdlib.h>
-#include <game/render/camera_buffer_object.h>
-#include <game/render/lights_buffer_object.h>
-#include <game/scene/scene.h>
+#include <3dmr/render/camera_buffer_object.h>
+#include <3dmr/render/lights_buffer_object.h>
+#include <3dmr/scene/scene.h>
 
 int scene_init(struct Scene* scene, struct Camera* camera) {
     node_init(&scene->root);

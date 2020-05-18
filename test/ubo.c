@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <game/init.h>
-#include <game/render/shader.h>
-#include <game/render/viewer.h>
-#include <game/render/camera_buffer_object.h>
-#include <game/render/lights_buffer_object.h>
+#include <3dmr/init.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/viewer.h>
+#include <3dmr/render/camera_buffer_object.h>
+#include <3dmr/render/lights_buffer_object.h>
 #include "ubo.h"
 
 int test_ubo(GLuint prog, GLuint ubo, const char* uboName, unsigned long (*get_offset)(const char*)) {
@@ -130,9 +130,9 @@ int main() {
     GLuint prog;
     int ret = 1;
 
-    if (!game_init("shaders")) return 1;
+    if (!tdmr_init("shaders")) return 1;
     if ((viewer = viewer_new(640, 480, ""))) {
-        if ((prog = shader_find_compile_link_vertfrag("standard.vert", "phong.frag", &shaderRootPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)), NULL, 0))) {
+        if ((prog = shader_find_compile_link_vertfrag("standard.vert", "phong.frag", &tdmrShaderRootPath, 1, defines, sizeof(defines) / (2 * sizeof(*defines)), NULL, 0))) {
             printf("================================================================================\n");
             printf("  %-44s %-16s %-16s\n", "name", "offset", "expected");
             printf("--------------------------------------------------------------------------------\n");
@@ -144,6 +144,6 @@ int main() {
         }
         viewer_free(viewer);
     }
-    game_free();
+    tdmr_free();
     return ret;
 }

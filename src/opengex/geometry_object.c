@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <game/render/vertex_shader.h>
+#include <3dmr/render/vertex_shader.h>
 
 #include "common.h"
 #include "context.h"

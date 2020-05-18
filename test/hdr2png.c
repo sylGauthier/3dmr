@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <game/img/hdr.h>
-#include <game/img/png.h>
+#include <3dmr/img/hdr.h>
+#include <3dmr/img/png.h>
 
 int main(int argc, char** argv) {
     float* hdr;

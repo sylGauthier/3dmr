@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <game/animation/animation.h>
+#include <3dmr/animation/animation.h>
 
 static float get_time_key(const struct Track* track, unsigned int idx) {
     switch (track->times.curveType) {

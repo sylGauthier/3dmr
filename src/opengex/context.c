@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/scene/skin.h>
+#include <3dmr/scene/skin.h>
 #include "context.h"
 #include "material.h"
 #include "geometry_object.h"

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include <game/animation/animation.h>
+#include <3dmr/animation/animation.h>
 
 static void make_curve_transition(struct AnimCurve* dest, const struct AnimCurve* targetCurve, struct Node* targetNode, enum TrackTargetType t) {
     Vec3 eulerRot;

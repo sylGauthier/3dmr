@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <game/math/linear_algebra.h>
-#include <game/mesh/cone.h>
+#include <3dmr/math/linear_algebra.h>
+#include <3dmr/mesh/cone.h>
 
 int make_cone(struct Mesh* dest, float radius1, float radius2, float depth, unsigned int numSidePoints) {
     Vec3 d, r;

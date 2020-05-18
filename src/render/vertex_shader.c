@@ -1,8 +1,8 @@
-#include <game/init.h>
-#include <game/render/vertex_shader.h>
-#include <game/render/shader.h>
-#include <game/render/vertex_array.h>
-#include <game/scene/skin.h>
+#include <3dmr/init.h>
+#include <3dmr/render/vertex_shader.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/vertex_array.h>
+#include <3dmr/scene/skin.h>
 
 #define _STR(n) #n
 #define NB_STR(n) _STR(n)
@@ -34,7 +34,7 @@ GLuint vertex_shader_standard_(enum MeshFlags flags, int overlay) {
         defines[2 * numDefines] = "NB_BONES";
         defines[2 * numDefines++ + 1] = MAX_NB_BONES_STR;
     }
-    return shader_find_compile("standard.vert", GL_VERTEX_SHADER, &shaderRootPath, 1, defines, numDefines);
+    return shader_find_compile("standard.vert", GL_VERTEX_SHADER, &tdmrShaderRootPath, 1, defines, numDefines);
 }
 
 GLuint vertex_shader_standard(enum MeshFlags flags) {

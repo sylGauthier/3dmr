@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glew.h>
-#include <game/render/shader.h>
-#include <game/render/viewer.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/viewer.h>
 
 static void usage(const char* prog) {
     printf("Usage: %s [-I dir]... [-D macro[=value]]... [-S vert|tesc|tese|geom|frag|comp] [file]\n", prog);

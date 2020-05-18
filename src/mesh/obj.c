@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <game/mesh/obj.h>
+#include <3dmr/mesh/obj.h>
 
 static void obj_parse_face_elem(struct OBJFaceElem* elem, const char** line) {
     elem->v = strtoul(*line, (char**)line, 10) - 1;

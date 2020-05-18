@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <game/render/uniform_buffer.h>
+#include <3dmr/render/uniform_buffer.h>
 
 int uniform_buffer_gen(unsigned int size, struct UniformBuffer* dest) {
     if (!(dest->cache = malloc(size))) {

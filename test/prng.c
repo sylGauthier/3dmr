@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <game/init.h>
-#include <game/math/random.h>
+#include <3dmr/init.h>
+#include <3dmr/math/random.h>
 
 static void usage(const char* prog) {
     printf("Usage: %s n [seed]\n", prog);
@@ -10,7 +10,7 @@ static void usage(const char* prog) {
 int main(int argc, char** argv) {
     unsigned long i, n;
 
-    if (!game_init(".")) return 1;
+    if (!tdmr_init(".")) return 1;
     if (argc < 2 || argc > 3) {
         usage(argv[0]);
         return 1;
@@ -22,6 +22,6 @@ int main(int argc, char** argv) {
     for (i = 0; i < n; i++) {
         printf("%f\n", random_double());
     }
-    game_free();
+    tdmr_free();
     return 0;
 }

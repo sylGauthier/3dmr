@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <GL/glew.h>
-#include <game/render/shader.h>
+#include <3dmr/render/shader.h>
 
 #define MAX_INCLUDE_DEPTH 32
 #define MAX_SHADER_PATHS 32

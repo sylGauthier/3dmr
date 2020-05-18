@@ -1,4 +1,4 @@
-#include <game/material/alpha.h>
+#include <3dmr/material/alpha.h>
 #include "solid_color.h"
 
 int alpha_blend_setup(struct Scene* scene) {

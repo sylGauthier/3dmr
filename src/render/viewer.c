@@ -3,8 +3,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <game/render/viewer.h>
-#include <game/img/png.h>
+#include <3dmr/render/viewer.h>
+#include <3dmr/img/png.h>
 
 struct ViewerImpl {
     struct Viewer user;

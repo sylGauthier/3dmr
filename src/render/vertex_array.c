@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <float.h>
-#include <game/render/shader.h>
-#include <game/render/vertex_array.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/vertex_array.h>
 
 static void gen_bounding_box(const struct Mesh* mesh, struct VertexArray* va) {
     unsigned int i, j, stride = MESH_FLOATS_PER_VERTEX(mesh);

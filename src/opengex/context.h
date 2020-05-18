@@ -1,8 +1,8 @@
-#include <game/scene/import.h>
+#include <3dmr/scene/import.h>
 #include "axis.h"
 
-#ifndef GAME_OPENGEX_CONTEXT_H
-#define GAME_OPENGEX_CONTEXT_H
+#ifndef TDMR_OPENGEX_CONTEXT_H
+#define TDMR_OPENGEX_CONTEXT_H
 
 struct OgexContext {
     float scale, angle, time;

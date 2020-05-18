@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <game/init.h>
-#include <game/material/phong.h>
-#include <game/render/shader.h>
-#include <game/render/vertex_shader.h>
+#include <3dmr/init.h>
+#include <3dmr/material/phong.h>
+#include <3dmr/render/shader.h>
+#include <3dmr/render/vertex_shader.h>
 
 void phong_material_params_init(struct PhongMaterialParams* p) {
     material_param_set_vec3_elems(&p->ambient, 0, 0, 0);
@@ -59,7 +59,7 @@ GLuint phong_shader_new(const struct PhongMaterialParams* params) {
         defines[2 * numDefines++ + 1] = NULL;
     }
     alpha_set_defines(&params->alpha, defines, &numDefines);
-    return shader_find_compile("phong.frag", GL_FRAGMENT_SHADER, &shaderRootPath, 1, defines, numDefines);
+    return shader_find_compile("phong.frag", GL_FRAGMENT_SHADER, &tdmrShaderRootPath, 1, defines, numDefines);
 }
 
 struct Material* phong_material_new(enum MeshFlags mflags, const struct PhongMaterialParams* params) {
