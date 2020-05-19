@@ -77,7 +77,7 @@ $(NAME).pc:
 		'$(NAME)' \
 		'$(NAME)' \
 		'$(VERSION)' \
-		'-I$${includedir} -I$${datadir}$(if $(OPENGEX), -DTDMR_OPENGEX=1)' \
+		'-I$${includedir} -I$${datadir} -DTDMR_SHADERS_PATH=\"$${datadir}/shaders\"$(if $(OPENGEX), -DTDMR_OPENGEX=1)' \
 		'-L$${libdir} -l$(NAME) -lm' \
 		'$(DEPS)' \
 		> $@
