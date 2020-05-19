@@ -1,4 +1,4 @@
-#include "light/direct.glsl"
+#include "../light/direct.glsl"
 
 vec3 phong_compute_directional_light(vec3 diffuse, vec3 specular, float shininess, DirectionalLight light, vec3 surfelToCamera, vec3 surfelNormal) {
     vec3 surfelToLight = -light.direction;
