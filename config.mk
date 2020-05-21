@@ -1,5 +1,5 @@
 # Build options
-CFLAGS ?= -fPIC -std=c89 -pedantic -march=native -Wall -O3
+CFLAGS ?= -std=c89 -pedantic -march=native -Wall -O3
 
 # Install prefixes
 PREFIX ?= $(HOME)/.local
