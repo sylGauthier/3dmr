@@ -12,6 +12,7 @@ struct Skybox {
 
 GLuint skybox_load_texture_png_6faces(const char* left, const char* right, const char* bottom, const char* top, const char* back, const char* front);
 GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceSize);
+GLuint skybox_load_texture_hdr_equirect_32(const char* path, unsigned int cubeFaceSize);
 
 int skybox_create(GLuint texture, struct Skybox* skybox);
 void skybox_destroy(struct Skybox* skybox);

@@ -18,7 +18,7 @@ static void params_2d_texture(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap) {
+static int irradiance_map(GLuint envmap, unsigned int size, GLint format, GLuint irradianceMap) {
     GLuint program;
     GLint i;
 
@@ -27,7 +27,7 @@ static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     params_cubemap_texture(0);
     for (i = 0; i < 6; i++) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     }
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, envmap);
@@ -45,7 +45,7 @@ static int irradiance_map(GLuint envmap, unsigned int size, GLuint irradianceMap
     return 1;
 }
 
-static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmaps, GLuint specularMap) {
+static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmaps, GLint format, GLuint specularMap) {
     GLuint program;
     GLint i, level;
     float roughness;
@@ -55,7 +55,7 @@ static int specular_map(GLuint envmap, unsigned int size, unsigned int numMipmap
     glBindTexture(GL_TEXTURE_CUBE_MAP, specularMap);
     params_cubemap_texture(1);
     for (i = 0; i < 6; i++) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, size, size, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, size, size, 0, GL_RGB, GL_FLOAT, NULL);
     }
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     glActiveTexture(GL_TEXTURE0);
@@ -98,7 +98,7 @@ static int specular_brdf(unsigned int size, GLuint specularBrdf) {
     return 1;
 }
 
-int compute_ibl(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsigned int spMips, unsigned int spBrdfSize, struct IBL* dest) {
+static int compute_ibl_(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsigned int spMips, unsigned int spBrdfSize, GLint format, struct IBL* dest) {
     GLuint fbo, rbo, textures[3], empty;
     GLint viewport[4];
     int ret = 0;
@@ -118,8 +118,8 @@ int compute_ibl(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsign
                     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
                     glBindVertexArray(empty);
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                    ret = irradiance_map(envmap, irrSize, textures[0])
-                       && specular_map(envmap, spSize, spMips, textures[1])
+                    ret = irradiance_map(envmap, irrSize, format, textures[0])
+                       && specular_map(envmap, spSize, spMips, format, textures[1])
                        && specular_brdf(spBrdfSize, textures[2]);
                     if (ret) {
                         dest->irradianceMap = textures[0];
@@ -144,6 +144,14 @@ int compute_ibl(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsign
     }
 
     return ret;
+}
+
+int compute_ibl(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsigned int spMips, unsigned int spBrdfSize, struct IBL* dest) {
+    return compute_ibl_(envmap, irrSize, spSize, spMips, spBrdfSize, GL_RGB16F, dest);
+}
+
+int compute_ibl_32(GLuint envmap, unsigned int irrSize, unsigned int spSize, unsigned int spMips, unsigned int spBrdfSize, struct IBL* dest) {
+    return compute_ibl_(envmap, irrSize, spSize, spMips, spBrdfSize, GL_RGB32F, dest);
 }
 
 void light_load_ibl_uniforms(GLuint shader, const struct IBL* ibl, unsigned int tex1, unsigned int tex2, unsigned int tex3) {

@@ -59,7 +59,7 @@ GLuint skybox_load_texture_png_6faces(const char* left, const char* right, const
     return 0;
 }
 
-GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceSize) {
+static GLuint skybox_load_texture_hdr_equirect_(const char* path, unsigned int cubeFaceSize, GLint format) {
     GLuint tex[2], program, fbo, rbo, empty;
     GLint viewport[4];
     float* data;
@@ -88,11 +88,11 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
                             glBindTexture(GL_TEXTURE_CUBE_MAP, tex[1]);
                             texture_params_cubemap();
                             for (i = 0; i < 6; i++) {
-                                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, cubeFaceSize, cubeFaceSize, 0, GL_RGB, GL_FLOAT, NULL);
+                                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, cubeFaceSize, cubeFaceSize, 0, GL_RGB, GL_FLOAT, NULL);
                             }
                             glActiveTexture(GL_TEXTURE0);
                             glBindTexture(GL_TEXTURE_2D, tex[0]);
-                            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+                            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGB, GL_FLOAT, data);
                             texture_params_2d();
                             glUniform1i(glGetUniformLocation(program, "source"), 0);
                             glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cubeFaceSize, cubeFaceSize);
@@ -123,6 +123,14 @@ GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceS
     }
 
     return ok ? tex[1] : 0;
+}
+
+GLuint skybox_load_texture_hdr_equirect(const char* path, unsigned int cubeFaceSize) {
+    return skybox_load_texture_hdr_equirect_(path, cubeFaceSize, GL_RGB16F);
+}
+
+GLuint skybox_load_texture_hdr_equirect_32(const char* path, unsigned int cubeFaceSize) {
+    return skybox_load_texture_hdr_equirect_(path, cubeFaceSize, GL_RGB32F);
 }
 
 static void skybox_load(GLuint program, void* param) {
