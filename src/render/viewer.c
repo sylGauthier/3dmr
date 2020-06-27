@@ -109,10 +109,13 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
                 viewer_make_current(&viewer->user);
                 return &viewer->user;
             }
+            viewer_free(&viewer->user);
+            return NULL;
         }
+        glfwTerminate();
     }
+    free(viewer);
 
-    viewer_free(&viewer->user);
     return NULL;
 }
 

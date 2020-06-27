@@ -142,7 +142,7 @@ int anim_new_slot(struct AnimationEngine* engine) {
     struct AnimStack** tmp;
 
     if (engine->numAnimSlots >= ((unsigned int)-1)
-     || !(tmp = realloc(engine->animQueue, (engine->numAnimSlots + 1) * sizeof(struct AnimStack)))) {
+     || !(tmp = realloc(engine->animQueue, (engine->numAnimSlots + 1) * sizeof(*engine->animQueue)))) {
         fprintf(stderr, "Error: anim_new_slot: could not reallocate memory for new anim slot\n");
         return 0;
     }

@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
                         stage = argv[i];
                     } else {
                         ret = 1;
+                        continue;
                     }
                     for (j = 0; j < sizeof(stages) / sizeof(*stages); j++) {
                         if (!strcmp(stage, stages[j].name)) {

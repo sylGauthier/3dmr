@@ -40,6 +40,7 @@ static void compute_transforms(struct Skin* skin) {
 int skin_gen(struct Skin* skin, unsigned int numBones) {
     unsigned int uboSize = numBones * sizeof(Mat4);
 
+    skin->bones = NULL;
     if (!(skin->bindPose = malloc(numBones * sizeof(*skin->bindPose)))
      || !(skin->bones = malloc(numBones * sizeof(*skin->bones)))
      || !uniform_buffer_gen(uboSize, &skin->transforms)) {

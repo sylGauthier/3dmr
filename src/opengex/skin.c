@@ -243,8 +243,8 @@ int ogex_parse_skin(struct OgexContext* context, struct ODDLStructure* cur, stru
         } else if (!(*skin = skin_new(numBones))) {
             fprintf(stderr, "Error: Skin: failed to allocate skin\n");
         } else {
-            *indices = malloc(2 * countLen * sizeof(*indices));
-            *weights = malloc(2 * countLen * sizeof(*weights));
+            *indices = malloc(2 * countLen * sizeof(**indices));
+            *weights = malloc(2 * countLen * sizeof(**weights));
             *numVertices = countLen;
             if (!*indices || !*weights) {
                 fprintf(stderr, "Error: Skin: couldn't allocate memory for index or weight array\n");

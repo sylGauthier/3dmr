@@ -121,13 +121,19 @@ struct OgexLight* ogex_parse_light_object(const struct OgexContext* context, con
         if (!tmp->identifier) {
             continue;
         } else if (!strcmp(tmp->identifier, "Color")) {
-            if (!(ogex_parse_color(tmp, &attrib, color))) return 0;
+            if (!(ogex_parse_color(tmp, &attrib, color))) {
+                free(light);
+                return 0;
+            }
             if (strcmp(attrib, "light")) {
                 fprintf(stderr, "Warning: LightObject: unknown color attribute: %s\n", attrib);
                 color[0] = 1; color[1] = 1; color[2] = 1;
             }
         } else if (!strcmp(tmp->identifier, "Param")) {
-            if (!(ogex_parse_param(tmp, &attrib, &param))) return 0;
+            if (!(ogex_parse_param(tmp, &attrib, &param))) {
+                free(light);
+                return 0;
+            }
             if (strcmp(attrib, "intensity")) {
                 fprintf(stderr, "Warning: LightObject: unknown param attribute: %s\n", attrib);
             } else {
@@ -136,7 +142,10 @@ struct OgexLight* ogex_parse_light_object(const struct OgexContext* context, con
         } else if (!strcmp(tmp->identifier, "Texture")) {
             fprintf(stderr, "Warning: LightObject: light textures are not supported yet (but will be Soon(TM))\n");
         } else if (!strcmp(tmp->identifier, "Atten")) {
-            if (!(ogex_parse_atten(tmp, &atten))) return 0;
+            if (!(ogex_parse_atten(tmp, &atten))) {
+                free(light);
+                return 0;
+            }
             if (light->numAtten < OGEX_LIGHT_MAX_ATTEN) {
                 light->atten[light->numAtten++] = atten;
             } else {
