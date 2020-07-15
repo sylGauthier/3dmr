@@ -83,6 +83,13 @@ vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 
         vec3 Lradiance = pointLights[i].color * point_light_attenuation(pointLights[i], distance);
         directLighting += pbr_direct_lighting(Li, Lo, cosLo, surfelNormal, albedo, metalness, roughness, F0, Lradiance);
     }
+    for (uint i = 0U; i < numSpotLights; i++) {
+        vec3 Li = spotLights[i].position - surfelPosition;
+        float distance = length(Li);
+        Li /= distance;
+        vec3 Lradiance = spotLights[i].color * spot_light_attenuation(spotLights[i], surfelPosition);
+        directLighting += pbr_direct_lighting(Li, Lo, cosLo, surfelNormal, albedo, metalness, roughness, F0, Lradiance);
+    }
 
     // Ambient lighting
     vec3 ambientLighting = pbr_ambient_lighting(Lr, cosLo, surfelNormal, albedo, metalness, roughness, F0);
