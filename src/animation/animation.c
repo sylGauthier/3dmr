@@ -4,37 +4,64 @@
 
 #include <3dmr/animation/animation.h>
 
-int anim_curve_init(struct AnimCurve* curve, enum TrackCurve type, unsigned int n) {
+int anim_curve_init(struct AnimCurve* curve, enum TrackInterp interp, unsigned int comp, unsigned int n) {
     curve->sharedValues = 0;
-    switch (curve->curveType = type) {
-        case TRACK_CURVE_NONE: return 1;
-        case TRACK_LINEAR: return n < ((unsigned int)-1) / sizeof(float) && (curve->values.linear = malloc(n * sizeof(float)));
-        case TRACK_BEZIER: return n < ((unsigned int)-1) / sizeof(Vec3) && (curve->values.bezier = malloc(n * sizeof(Vec3)));
+    curve->numComponent = comp;
+    curve->values = NULL;
+    switch (curve->interp = interp) {
+        case TRACK_INTERP_NONE: return 1;
+        case TRACK_LINEAR: return n < ((unsigned int)-1) / (sizeof(float) * comp) && (curve->values = malloc(comp * n * sizeof(float)));
+        case TRACK_BEZIER: return n < ((unsigned int)-1) / (sizeof(Vec3) * comp) && (curve->values = malloc(comp * n * sizeof(Vec3)));
+        case TRACK_CUBIC_SPLINE:
+            fprintf(stderr, "Error: anim_curve_init: cubic spline not implemented yet\n");
+            return 0;
     }
     return 0;
 }
 
 void anim_curve_free(struct AnimCurve* curve) {
     if (curve->sharedValues) return;
-    switch (curve->curveType) {
-        case TRACK_LINEAR: free(curve->values.linear); break;
-        case TRACK_BEZIER: free(curve->values.bezier); break;
-        default:;
-    }
+    free(curve->values);
 }
 
 void anim_curve_copy(struct AnimCurve* dest, const struct AnimCurve* src) {
+    *dest = *src;
     dest->sharedValues = 1;
-    dest->curveType = src->curveType;
-    dest->values = src->values;
 }
 
-int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int numKeys) {
-    if (!anim_curve_init(&track->times, timeCurve, numKeys)) return 0;
-    if (!anim_curve_init(&track->values, valCurve, numKeys)) {
+int anim_track_init(struct Track* track, enum TrackChannel channel, enum TrackInterp timeInterp, enum TrackInterp valInterp, unsigned int numKeys) {
+    int ok;
+    if (!anim_curve_init(&track->times, timeInterp, 1, numKeys)) return 0;
+
+    switch (channel) {
+        case TRACK_X_POS:
+        case TRACK_Y_POS:
+        case TRACK_Z_POS:
+        case TRACK_X_SCALE:
+        case TRACK_Y_SCALE:
+        case TRACK_Z_SCALE:
+        case TRACK_X_ROT:
+        case TRACK_Y_ROT:
+        case TRACK_Z_ROT:
+            ok = anim_curve_init(&track->values, valInterp, 1, numKeys);
+            break;
+        case TRACK_POS:
+        case TRACK_SCALE:
+        case TRACK_ROT:
+            ok = anim_curve_init(&track->values, valInterp, 3, numKeys);
+            break;
+        case TRACK_QUAT:
+            ok = anim_curve_init(&track->values, valInterp, 4, numKeys);
+            break;
+        default:
+            ok = 0;
+            break;
+    }
+    if (!ok) {
         anim_curve_free(&track->times);
         return 0;
     }
+    track->channel = channel;
     track->numKeys = numKeys;
     track->lastIdx = 0;
     return 1;
@@ -45,34 +72,47 @@ void anim_track_free(struct Track* track) {
     anim_curve_free(&track->values);
 }
 
-struct Track* anim_new_track_set(void) {
-    struct Track* t;
-    unsigned int i;
-
-    if (!(t = malloc(TRACK_NB_TYPES * sizeof(*t)))) return 0;
-    for (i = 0; i < TRACK_NB_TYPES; i++) {
-        anim_track_init(t + i, TRACK_CURVE_NONE, TRACK_CURVE_NONE, 0); /* cannot fail with TRACK_CURVE_NONE */
-    }
-    return t;
-}
-
-void anim_animation_zero(struct Animation* anim) {
-    anim->targetNode = 0;
-    anim->tracks = 0;
-    anim->flags = 0;
-}
-
 int anim_animation_init(struct Animation* anim, struct Node* targetNode) {
+    anim->tracks = 0;
+    anim->numTracks = 0;
     anim->targetNode = targetNode;
-    if (!(anim->tracks = anim_new_track_set())) return 0;
-    anim->flags = 0;
     return 1;
+}
+
+int anim_animation_new_track(struct Animation* anim, enum TrackChannel channel,
+                             enum TrackInterp timeInterp, enum TrackInterp valInterp,
+                             unsigned int numKeys, unsigned int* trackIdx) {
+    unsigned int i;
+    void* tmp;
+
+    if (!numKeys) return 0;
+
+    for (i = 0; i < anim->numTracks; i++) {
+        enum TrackChannel cur = anim->tracks[i].channel;
+        if (       cur == channel
+                || (cur == TRACK_POS && (channel == TRACK_X_POS || channel == TRACK_Y_POS || channel == TRACK_Z_POS))
+                || (cur == TRACK_SCALE && (channel == TRACK_X_SCALE || channel == TRACK_Y_SCALE || channel == TRACK_Z_SCALE))
+                || (cur == TRACK_ROT && (channel == TRACK_X_ROT || channel == TRACK_Y_ROT || channel == TRACK_Z_ROT))
+                || (channel == TRACK_POS && (cur == TRACK_X_POS || cur == TRACK_Y_POS || cur == TRACK_Z_POS))
+                || (channel == TRACK_SCALE && (cur == TRACK_X_SCALE || cur == TRACK_Y_SCALE || cur == TRACK_Z_SCALE))
+                || (channel == TRACK_ROT && (cur == TRACK_X_ROT || cur == TRACK_Y_ROT || cur == TRACK_Z_ROT))) {
+            fprintf(stderr, "Error: anim_animation_new_track: redundant anim channel\n");
+            return 0;
+        }
+    }
+    if (!(tmp = realloc(anim->tracks, (anim->numTracks + 1) * sizeof(*anim->tracks)))) {
+        fprintf(stderr, "Error: anim_animation_new_track: can't allocate memory for new track\n");
+        return 0;
+    }
+    anim->tracks = tmp;
+    *trackIdx = anim->numTracks++;
+    return anim_track_init(&anim->tracks[anim->numTracks - 1], channel, timeInterp, valInterp, numKeys);
 }
 
 void anim_animation_free(struct Animation* anim) {
     if (anim->tracks) {
         unsigned int i;
-        for (i = 0; i < TRACK_NB_TYPES; i++) {
+        for (i = 0; i < anim->numTracks; i++) {
             anim_track_free(&anim->tracks[i]);
         }
         free(anim->tracks);

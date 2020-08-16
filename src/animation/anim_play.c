@@ -1,13 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include <3dmr/animation/animation.h>
+#include <3dmr/math/interp.h>
 
 static float get_time_key(const struct Track* track, unsigned int idx) {
-    switch (track->times.curveType) {
-        case TRACK_LINEAR: return track->times.values.linear[idx];
-        case TRACK_BEZIER: return track->times.values.bezier[idx][0];
+    switch (track->times.interp) {
+        case TRACK_LINEAR: return track->times.values[idx];
+        case TRACK_BEZIER: return track->times.values[3 * idx];
         default:;
     }
     return 0;
@@ -63,23 +65,32 @@ static float time_linear_interp(unsigned int curFrame, float x, float* times, un
     return (x - times[curFrame]) / (times[curFrame + 1] - times[curFrame]);
 }
 
-static float value_linear_interp(unsigned int curFrame, float s, float* values, unsigned int nbKeys) {
-    if (curFrame >= nbKeys - 1) return values[nbKeys - 1];
-    if (s <= 0) return values[curFrame];
-    if (s >= 1) return values[curFrame + 1];
-    return (1 - s) * values[curFrame] + s * values[curFrame + 1];
+static void value_linear_interp(float* dest, unsigned int curFrame, float s, float* values, unsigned int comp, unsigned int nbKeys) {
+    unsigned int i;
+
+    if (curFrame >= nbKeys - 1) memcpy(dest, &values[comp * (nbKeys - 1)], comp * sizeof(float));
+    else if (s <= 0)            memcpy(dest, &values[comp * curFrame], comp * sizeof(float));
+    else if (s >= 1)            memcpy(dest, &values[comp * (curFrame + 1)], comp * sizeof(float));
+    for (i = 0; i < comp; i++) dest[i] = values[comp * curFrame + i] + s * (values[comp * (curFrame + 1) + i] - values[comp * curFrame + i]);
 }
 
-static float time_bezier_interp(unsigned int curFrame, float x, Vec3* times, unsigned int nbKeys) {
+static void quat_linear_interp(float* dest, unsigned int curFrame, float s, float* values, unsigned int nbKeys) {
+    if (curFrame >= nbKeys - 1) memcpy(dest, &values[4 * (nbKeys - 1)], 4 * sizeof(float));
+    else if (s <= 0)            memcpy(dest, &values[4 * curFrame], 4 * sizeof(float));
+    else if (s >= 1)            memcpy(dest, &values[4 * (curFrame + 1)], 4 * sizeof(float));
+    quaternion_slerp(dest, &values[4 * curFrame], &values[4 * (curFrame + 1)], s);
+}
+
+static float time_bezier_interp(unsigned int curFrame, float x, float* times, unsigned int nbKeys) {
     unsigned int a;
     float s = 0, t1, t2, c1, c2;
 
-    if (curFrame >= nbKeys - 1) return times[nbKeys - 1][0];
-    if (x <= times[curFrame][0]) return 0;
-    if (x >= times[curFrame + 1][0]) return 1;
+    if (curFrame >= nbKeys - 1) return times[3 * (nbKeys - 1)];
+    if (x <= times[3 * curFrame]) return 0;
+    if (x >= times[3 * (curFrame + 1)]) return 1;
 
-    t1 = times[curFrame][0]; t2 = times[curFrame + 1][0];
-    c1 = times[curFrame][2]; c2 = times[curFrame + 1][1];
+    t1 = times[3 * curFrame]; t2 = times[3 * (curFrame + 1)];
+    c1 = times[3 * curFrame + 2]; c2 = times[3 * (curFrame + 1) + 1];
     s = (x - t1) / (t2 - t1);
 
     /* Newton method to solve Bernstein polynom - OpenGEX spec page 76 */
@@ -90,17 +101,20 @@ static float time_bezier_interp(unsigned int curFrame, float x, Vec3* times, uns
     return s;
 }
 
-static float value_bezier_interp(unsigned int curFrame, float s, Vec3* points, unsigned int nbKeys) {
-    float v1, v2, p1, p2;
-
-    if (curFrame >= nbKeys - 1) return points[nbKeys - 1][0];
-    if (s <= 0) return points[curFrame][0];
-    if (s >= 1) return points[curFrame + 1][0];
-
-    v1 = points[curFrame][0]; v2 = points[curFrame + 1][0];
-    p1 = points[curFrame][2]; p2 = points[curFrame + 1][1];
-
+static float bern_pol(float s, float v1, float v2, float p1, float p2) {
     return (1 - s) * (1 - s) * (1 - s) * v1 + 3 * s * (1 - s) * (1 - s) * p1 + 3 * s * s * (1 - s) * p2 + s * s * s * v2;
+}
+
+static void value_bezier_interp(float* dest, unsigned int curFrame, float s, float* points, unsigned int comp, unsigned int nbKeys) {
+    unsigned int i;
+
+    if (curFrame >= nbKeys - 1) memcpy(dest, &points[3 * comp * (nbKeys - 1)], comp * sizeof(float));
+    else if (s <= 0)            memcpy(dest, &points[3 * comp * curFrame], comp * sizeof(float));
+    else if (s >= 1)            memcpy(dest, &points[3 * comp * (curFrame + 1)], comp * sizeof(float));
+    for (i = 0; i < comp; i++) {
+        dest[i] = bern_pol(s, points[3 * comp * curFrame + i],            points[3 * comp * (curFrame + 1) + i],
+                              points[3 * comp * curFrame + 2 * comp + i], points[3 * comp * (curFrame + 1) + comp + i]);
+    }
 }
 
 static unsigned int get_cur_frame(struct Track* track, float x) {
@@ -116,91 +130,111 @@ static unsigned int get_cur_frame(struct Track* track, float x) {
     return a;
 }
 
-static float interp_track(struct Track* track, float time) {
+static void interp_track(struct Track* track, float time, float* dest) {
     float s;
     unsigned int curFrame;
 
     curFrame = get_cur_frame(track, time);
 
-    switch (track->times.curveType) {
+    switch (track->times.interp) {
         case TRACK_LINEAR:
-            s = time_linear_interp(curFrame, time, track->times.values.linear, track->numKeys);
+            s = time_linear_interp(curFrame, time, track->times.values, track->numKeys);
             break;
         case TRACK_BEZIER:
-            s = time_bezier_interp(curFrame, time, track->times.values.bezier, track->numKeys);
+            s = time_bezier_interp(curFrame, time, track->times.values, track->numKeys);
             break;
         default:
             s = 0.;
     }
-    switch (track->values.curveType) {
+    switch (track->values.interp) {
         case TRACK_LINEAR:
-            return value_linear_interp(curFrame, s, track->values.values.linear, track->numKeys);
+            value_linear_interp(dest, curFrame, s, track->values.values, track->values.numComponent, track->numKeys);
+            break;
         case TRACK_BEZIER:
-            return value_bezier_interp(curFrame, s, track->values.values.bezier, track->numKeys);
+            value_bezier_interp(dest, curFrame, s, track->values.values, track->values.numComponent, track->numKeys);
+            break;
         default:
-            return 0.;
+            break;
     }
 }
 
-void anim_play_track_set(struct Track* tracks, struct Node* n, enum TrackFlags flags, float curPos) {
+static void interp_quat_track(struct Track* track, float time, float* dest) {
+    float s;
+    unsigned int curFrame;
+
+    curFrame = get_cur_frame(track, time);
+
+    switch (track->times.interp) {
+        case TRACK_LINEAR:
+            s = time_linear_interp(curFrame, time, track->times.values, track->numKeys);
+            break;
+        case TRACK_BEZIER:
+            s = time_bezier_interp(curFrame, time, track->times.values, track->numKeys);
+            break;
+        default:
+            s = 0.;
+    }
+    switch (track->values.interp) {
+        case TRACK_LINEAR:
+            quat_linear_interp(dest, curFrame, s, track->values.values, track->numKeys);
+            break;
+        default:
+            break;
+    }
+}
+
+void anim_track_play(struct Node* n, struct Track* track, float curPos) {
     Vec3 rot = {0};
 
-    if (flags & TRACKING_POS) {
-        if (tracks[TRACK_X_POS].numKeys) {
-            n->position[0] = interp_track(&tracks[TRACK_X_POS], curPos);
-        }
-        if (tracks[TRACK_Y_POS].numKeys) {
-            n->position[1] = interp_track(&tracks[TRACK_Y_POS], curPos);
-        }
-        if (tracks[TRACK_Z_POS].numKeys) {
-            n->position[2] = interp_track(&tracks[TRACK_Z_POS], curPos);
-        }
-        n->changedFlags |= POSITION_CHANGED;
-    }
-    if (flags & TRACKING_SCALE) {
-        if (tracks[TRACK_X_SCALE].numKeys) {
-            n->scale[0] = interp_track(&tracks[TRACK_X_SCALE], curPos);
-        }
-        if (tracks[TRACK_Y_SCALE].numKeys) {
-            n->scale[1] = interp_track(&tracks[TRACK_Y_SCALE], curPos);
-        }
-        if (tracks[TRACK_Z_SCALE].numKeys) {
-            n->scale[2] = interp_track(&tracks[TRACK_Z_SCALE], curPos);
-        }
-        n->changedFlags |= SCALE_CHANGED;
-    }
-    if (flags & TRACKING_ROT) {
-        if (tracks[TRACK_X_ROT].numKeys) {
-            rot[0] = interp_track(&tracks[TRACK_X_ROT], curPos);
-        }
-        if (tracks[TRACK_Y_ROT].numKeys) {
-            rot[1] = interp_track(&tracks[TRACK_Y_ROT], curPos);
-        }
-        if (tracks[TRACK_Z_ROT].numKeys) {
-            rot[2] = interp_track(&tracks[TRACK_Z_ROT], curPos);
-        }
-        quaternion_from_xyz(n->orientation, rot);
-        n->changedFlags |= ORIENTATION_CHANGED;
-    }
-    if (flags & TRACKING_QUAT) {
-        if (tracks[TRACK_W_QUAT].numKeys) {
-            n->orientation[0] = interp_track(&tracks[TRACK_W_QUAT], curPos);
-        }
-        if (tracks[TRACK_X_QUAT].numKeys) {
-            n->orientation[1] = interp_track(&tracks[TRACK_X_QUAT], curPos);
-        }
-        if (tracks[TRACK_Y_QUAT].numKeys) {
-            n->orientation[2] = interp_track(&tracks[TRACK_Y_QUAT], curPos);
-        }
-        if (tracks[TRACK_Z_QUAT].numKeys) {
-            n->orientation[3] = interp_track(&tracks[TRACK_Z_QUAT], curPos);
-        }
-        n->changedFlags |= ORIENTATION_CHANGED;
+    switch (track->channel) {
+        case TRACK_POS:
+            interp_track(track, curPos, n->position);
+            n->changedFlags |= POSITION_CHANGED;
+            break;
+        case TRACK_SCALE:
+            interp_track(track, curPos, n->scale);
+            n->changedFlags |= SCALE_CHANGED;
+            break;
+        case TRACK_ROT:
+            interp_track(track, curPos, rot);
+            quaternion_from_xyz(n->orientation, rot);
+            n->changedFlags |= ORIENTATION_CHANGED;
+            break;
+        case TRACK_QUAT:
+            interp_quat_track(track, curPos, n->orientation);
+            n->changedFlags |= ORIENTATION_CHANGED;
+            break;
+        case TRACK_X_POS:
+        case TRACK_Y_POS:
+        case TRACK_Z_POS:
+            interp_track(track, curPos, n->position + track->channel - TRACK_X_POS);
+            n->changedFlags |= POSITION_CHANGED;
+            break;
+        case TRACK_X_SCALE:
+        case TRACK_Y_SCALE:
+        case TRACK_Z_SCALE:
+            interp_track(track, curPos, n->scale + track->channel - TRACK_X_SCALE);
+            n->changedFlags |= SCALE_CHANGED;
+            break;
+        case TRACK_X_ROT:
+        case TRACK_Y_ROT:
+        case TRACK_Z_ROT:
+            quaternion_to_xyz(rot, n->orientation);
+            interp_track(track, curPos, rot + track->channel - TRACK_X_ROT);
+            quaternion_from_xyz(n->orientation, rot);
+            n->changedFlags |= ORIENTATION_CHANGED;
+            break;
+        default:
+            break;
     }
 }
 
 void anim_play(struct Animation* anim, float curPos) {
-    anim_play_track_set(anim->tracks, anim->targetNode, anim->flags, curPos);
+    unsigned int i;
+
+    for (i = 0; i < anim->numTracks; i++) {
+        anim_track_play(anim->targetNode, &anim->tracks[i], curPos);
+    }
 }
 
 int anim_play_clip(struct Clip* clip, float dt) {
@@ -211,8 +245,7 @@ int anim_play_clip(struct Clip* clip, float dt) {
 
     running = update_clip_cur_time(clip, dt);
     for (i = 0; i < clip->numAnimations; i++) {
-        anim_play_track_set(clip->animations[i].tracks, clip->animations[i].targetNode,
-                            clip->animations[i].flags, clip->curPos);
+        anim_play(&clip->animations[i], clip->curPos);
     }
     return running;
 }

@@ -4,50 +4,44 @@
 #include <3dmr/scene/node.h>
 #include <3dmr/math/linear_algebra.h>
 
-enum TrackFlags {
-    TRACKING_POS =      1 << 0,
-    TRACKING_SCALE =    1 << 1,
-    TRACKING_ROT =      1 << 2,
-    TRACKING_QUAT =     1 << 3
-};
-
-enum TrackTargetType {
+enum TrackChannel {
+    /* Pos, Scale and Rot channels can be split into separate components */
     TRACK_X_POS = 0,
     TRACK_Y_POS,
     TRACK_Z_POS,
+    TRACK_POS,
 
     TRACK_X_SCALE,
     TRACK_Y_SCALE,
     TRACK_Z_SCALE,
+    TRACK_SCALE,
 
     TRACK_X_ROT,
     TRACK_Y_ROT,
     TRACK_Z_ROT,
+    TRACK_ROT,
 
-    TRACK_W_QUAT,
-    TRACK_X_QUAT,
-    TRACK_Y_QUAT,
-    TRACK_Z_QUAT,
+    /* Quat has to be animated as a whole (doesn't really make sense to animate single components) */
+    TRACK_QUAT,
 
-    TRACK_NB_TYPES,
+    TRACK_TRANSFORM,
 
-    TRACK_TRANSFORM
+    TRACK_NB_TYPES
 };
 
 struct AnimCurve {
-    enum TrackCurve {
-        TRACK_CURVE_NONE,
+    enum TrackInterp {
+        TRACK_INTERP_NONE,
         TRACK_LINEAR,
-        TRACK_BEZIER
-    } curveType;
-    union TrackCurveData {
-        float* linear;
-        Vec3* bezier;
-    } values;
+        TRACK_BEZIER,
+        TRACK_CUBIC_SPLINE
+    } interp;
+    unsigned int numComponent;
+    float* values;
     char sharedValues;
 };
 
-int anim_curve_init(struct AnimCurve* curve, enum TrackCurve type, unsigned int n);
+int anim_curve_init(struct AnimCurve* curve, enum TrackInterp interp, unsigned int comp, unsigned int n);
 void anim_curve_free(struct AnimCurve* curve);
 void anim_curve_copy(struct AnimCurve* dest, const struct AnimCurve* src);
 
@@ -57,21 +51,23 @@ struct Track {
 
     unsigned int numKeys;
     unsigned int lastIdx;
+
+    enum TrackChannel channel;
 };
 
-int anim_track_init(struct Track* track, enum TrackCurve timeCurve, enum TrackCurve valCurve, unsigned int numKeys);
+int anim_track_init(struct Track* track, enum TrackChannel channel, enum TrackInterp timeInterp, enum TrackInterp valInterp, unsigned int numKeys);
 void anim_track_free(struct Track* track);
-
-struct Track* anim_new_track_set(void);
 
 struct Animation {
     struct Node* targetNode;
     struct Track* tracks;
-    enum TrackFlags flags;
+    unsigned int numTracks;
 };
 
-void anim_animation_zero(struct Animation* anim);
 int anim_animation_init(struct Animation* anim, struct Node* targetNode);
+int anim_animation_new_track(struct Animation* anim, enum TrackChannel channel,
+                             enum TrackInterp timeInterp, enum TrackInterp valInterp,
+                             unsigned int numKeys, unsigned int* trackIdx);
 void anim_animation_free(struct Animation* anim);
 
 struct Clip {
