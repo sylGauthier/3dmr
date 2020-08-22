@@ -50,6 +50,7 @@ int skin_gen(struct Skin* skin, unsigned int numBones) {
     }
     skin->numBones = numBones;
     skin->root = NULL;
+    load_id4(skin->skinTransform);
     return 1;
 }
 
