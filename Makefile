@@ -1,6 +1,6 @@
 include config.mk
 
-DEPS := glfw3 glew libpng libjpeg $(if $(OPENGEX),liboddl) $(if $(TTF),libsfnt)
+DEPS := glfw3 glew libpng libjpeg $(if $(OPENGEX),liboddl) $(if $(TTF),libsfnt) $(if $(GLTF),jansson)
 NAME := 3dmr
 LIB := lib$(NAME).a
 VERSION ?= $(shell git describe --tags 2>/dev/null || printf '9999-%d-%s\n' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
@@ -12,6 +12,7 @@ LDFLAGS += $(shell pkg-config --libs-only-L --libs-only-other $(DEPS))
 LIB_OBJECTS := $(patsubst %.c,%.o,$(wildcard src/*.c src/*/*.c))
 LIB_OBJECTS := $(if $(OPENGEX),$(LIB_OBJECTS),$(filter-out src/opengex/%,$(LIB_OBJECTS)))
 LIB_OBJECTS := $(if $(TTF),$(LIB_OBJECTS),$(filter-out src/font/%,$(LIB_OBJECTS)))
+LIB_OBJECTS := $(if $(GLTF),$(LIB_OBJECTS),$(filter-out src/gltf/%,$(LIB_OBJECTS)))
 TEST_EXECS := $(patsubst %.c,%,$(wildcard test/*.c))
 TEST_EXECS := $(if $(OPENGEX),$(TEST_EXECS),$(filter-out test/ogex%,$(TEST_EXECS)))
 TEST_EXECS := $(if $(TTF),$(TEST_EXECS),$(filter-out test/font,$(TEST_EXECS)))
@@ -58,6 +59,7 @@ SHADERS_PATH_SRC := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/shaders
 SHADERS_PATH_DIST := $(PREFIX)/$(DATADIR)/shaders
 CFLAGS += -DTDMR_SHADERS_PATH_SRC=\"$(SHADERS_PATH_SRC)\" -DTDMR_SHADERS_PATH_DIST=\"$(SHADERS_PATH_DIST)\"
 $(TEST_EXECS): CFLAGS += $(if $(OPENGEX), -DTDMR_OPENGEX=1)
+$(TEST_EXECS): CFLAGS += $(if $(GLTF), -DTDMR_GLTF=1)
 
 .PHONY: install
 D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
