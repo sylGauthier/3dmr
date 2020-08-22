@@ -7,6 +7,7 @@
 #include <3dmr/render/camera_buffer_object.h>
 #include <3dmr/render/lights_buffer_object.h>
 #include <3dmr/scene/opengex.h>
+#include <3dmr/scene/gltf.h>
 
 struct Prog {
     struct Scene scene;
@@ -59,6 +60,10 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             update_cam(viewer, prog);
             break;
         case GLFW_KEY_SPACE:
+            if (!prog->metadata.numClips) {
+                printf("No clip.\n");
+                return;
+            }
             prog->activeClip = (prog->activeClip + 1) % prog->metadata.numClips;
             if (prog->metadata.clips[prog->activeClip]->name) {
                 printf("Current clip: %s\n", prog->metadata.clips[prog->activeClip]->name);
@@ -120,23 +125,47 @@ static char* dirname(char* path) {
 }
 
 static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int argc, char** argv) {
-    FILE* file;
-    unsigned int i;
+    FILE* file = NULL;
+    unsigned int i, ok = 1;
 
-    for (i = 0; i < argc; i++) {
+    for (i = 0; i < argc && ok; i++) {
+        char* extension;
         printf("Appending scene: %s\n", argv[i]);
-        if (!(file = fopen(argv[i], "r"))) {
+        if (!(extension = strrchr(argv[i], '.'))) {
+            fprintf(stderr, "Error: no file extension\n");
+            ok = 0;
+        } else if (!(file = fopen(argv[i], "r"))) {
             fprintf(stderr, "Error: could not open file: %s\n", argv[i]);
-            return 0;
+            ok = 0;
+        } else if (!strcmp(extension, ".ogex")) {
+#ifdef TDMR_OPENGEX
+            if (!ogex_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata)) {
+                fprintf(stderr, "Error: failed to load ogex file\n");
+                ok = 0;
+            }
+#else
+            fprintf(stderr, "Warning: 3dmrview was built without opengex support, skipping ogex file\n");
+#endif
+        } else if (!strcmp(extension, ".gltf")) {
+#ifdef TDMR_GLTF
+            if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata)) {
+                fprintf(stderr, "Error: failed to load gltf file\n");
+                ok = 0;
+            }
+#else
+            fprintf(stderr, "Warning: 3dmrview was built without gltf support, skipping gltf file\n");
+#endif
+        } else {
+            fprintf(stderr, "Error: invalid extension: %s\n", extension);
+            ok = 0;
         }
-        if (!ogex_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata)) {
-            fprintf(stderr, "Error: failed to load ogex file\n");
-            fclose(file);
-            return 0;
-        }
-        fclose(file);
+        if (file) fclose(file);
     }
-    return 1;
+    if (!ok) {
+        import_free_shared_data(shared);
+        import_free_metadata(&prog->metadata);
+    }
+    return ok;
 }
 
 int main(int argc, char** argv) {

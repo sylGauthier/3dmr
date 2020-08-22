@@ -14,7 +14,7 @@ LIB_OBJECTS := $(if $(OPENGEX),$(LIB_OBJECTS),$(filter-out src/opengex/%,$(LIB_O
 LIB_OBJECTS := $(if $(TTF),$(LIB_OBJECTS),$(filter-out src/font/%,$(LIB_OBJECTS)))
 LIB_OBJECTS := $(if $(GLTF),$(LIB_OBJECTS),$(filter-out src/gltf/%,$(LIB_OBJECTS)))
 TEST_EXECS := $(patsubst %.c,%,$(wildcard test/*.c))
-TEST_EXECS := $(if $(OPENGEX),$(TEST_EXECS),$(filter-out test/ogex%,$(TEST_EXECS)))
+TEST_EXECS := $(if $(or $(OPENGEX),$(GLTF)),$(TEST_EXECS),$(filter-out test/ogex% test/3dmrview%,$(TEST_EXECS)))
 TEST_EXECS := $(if $(TTF),$(TEST_EXECS),$(filter-out test/font,$(TEST_EXECS)))
 TESTS := $(patsubst %.sh,%,$(notdir $(wildcard test/scripts/test_*.sh)))
 
@@ -63,13 +63,13 @@ $(TEST_EXECS): CFLAGS += $(if $(GLTF), -DTDMR_GLTF=1)
 
 .PHONY: install
 D := $(if $(DESTDIR),$(DESTDIR)/)$(PREFIX)
-install: $(LIB) $(NAME).pc $(if $(OPENGEX),test/ogexview)
+install: $(LIB) $(NAME).pc $(if $(or $(OPENGEX),$(GLTF)),test/3dmrview)
 	mkdir -p $(D)/$(INCLUDEDIR) $(D)/$(LIBDIR)/pkgconfig $(D)/$(DATADIR) $(D)/bin
 	cp -R $(NAME) $(D)/$(INCLUDEDIR)
 	cp -R shaders $(D)/$(DATADIR)
 	cp $(LIB) $(D)/$(LIBDIR)
 	cp $(NAME).pc $(D)/$(LIBDIR)/pkgconfig
-	$(if $(OPENGEX),cp test/ogexview $(D)/bin/)
+	$(if $(or $(OPENGEX),$(GLTF)),cp test/3dmrview $(D)/bin/)
 
 .PHONY: $(NAME).pc
 $(NAME).pc:
