@@ -61,6 +61,8 @@ GLuint shader_find_compile(const char* filename, GLenum type, const char** inclu
     if ((path = find_file(includePaths, numIncludePaths, filename))) {
         shader = shader_compile(path, type, includePaths, numIncludePaths, defines, numDefines);
         free(path);
+    } else {
+        fprintf(stderr, "Error: could not find shader: %s\n", filename);
     }
     return shader;
 }
