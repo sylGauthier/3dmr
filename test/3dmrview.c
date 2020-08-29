@@ -146,9 +146,9 @@ static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int a
 #else
             fprintf(stderr, "Warning: 3dmrview was built without opengex support, skipping ogex file\n");
 #endif
-        } else if (!strcmp(extension, ".gltf")) {
+        } else if (!strcmp(extension, ".gltf") || !strcmp(extension, ".glb")) {
 #ifdef TDMR_GLTF
-            if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata)) {
+            if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata, !strcmp(extension, ".glb"))) {
                 fprintf(stderr, "Error: failed to load gltf file\n");
                 ok = 0;
             }

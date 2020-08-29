@@ -1,7 +1,8 @@
 #include "gltf.h"
 
-int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct ImportSharedData* shared, struct ImportMetadata* metadata) {
+int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct ImportSharedData* shared, struct ImportMetadata* metadata, char binary) {
     json_t *jroot;
+    json_error_t error;
     struct GltfContext context = {0};
 
     context.shared = shared;
@@ -12,10 +13,47 @@ int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct Import
     context.metadataSave = *metadata;
 
     context.path = path;
+    context.file = gltfFile;
+    context.binary = binary;
     context.root = root;
-    if (!(jroot = json_loadf(gltfFile, 0, NULL))) {
-        fprintf(stderr, "Error: gltf: could not load file\n");
+    if (binary) {
+        uint32_t header[5];
+        if (fread(header, 4, 5, gltfFile) != 5) {
+            fprintf(stderr, "Error: gltf: binary file: couldn't read header\n");
+            return 0;
+        }
+        if (header[0] != 0x46546C67) {
+            fprintf(stderr, "Error: gltf: binary file: invalid magic\n");
+            return 0;
+        } else if (header[1] != 2) {
+            fprintf(stderr, "Error: gltf: binary file: invalid glTF version (expected 2)\n");
+            return 0;
+        } else if (header[4] != 0x4E4F534A) {
+            fprintf(stderr, "Error: gltf: binary file: invalid chunk type (expected JSON)\n");
+            return 0;
+        }
+    }
+    if (!(jroot = json_loadf(gltfFile, JSON_DISABLE_EOF_CHECK, &error))) {
+        fprintf(stderr, "Error: gltf: could not load file, JSON error:\n");
+        fprintf(stderr, "%s\n", error.text);
         return 0;
+    }
+    if (binary) {
+        long pos = ftell(gltfFile);
+        uint32_t header[2];
+        /* Align correctly for the rest of the data */
+        if (pos % 4) {
+            if (fseek(gltfFile, 4 - pos % 4, SEEK_CUR)) {
+                fprintf(stderr, "Error: gltf: binary file: missing padding after JSON data\n");
+                return 0;
+            }
+        }
+        if (fread(header, 4, 2, gltfFile) == 2) {
+            if (header[1] != 0x004E4942) {
+                fprintf(stderr, "Error: gltf: binary file: invalid chunk type (expected BIN)\n");
+                return 0;
+            }
+        }
     }
 
     if (       !gltf_parse_buffers(&context, jroot)

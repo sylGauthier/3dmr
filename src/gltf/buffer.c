@@ -40,16 +40,25 @@ int gltf_parse_buffers(struct GltfContext* context, json_t* jroot) {
             return 0;
         }
         if (!(uri = json_object_get(buf, "uri"))) {
-            fprintf(stderr, "Error: gltf: missing uri\n");
-            return 0;
+            if (idx != 0 || !context->binary) {
+                fprintf(stderr, "Error: gltf: missing uri (either not a binary file or not first buffer in the list)\n");
+                return 0;
+            }
         }
         if (!(context->buffers[idx].data = malloc(context->buffers[idx].size))) {
             fprintf(stderr, "Error: gltf: could not allocate memory for buffer\n");
             return 0;
         }
-        if (!gltf_load_uri(context, uri, &context->buffers[idx])) {
-            fprintf(stderr, "Error: gltf: could not load uri\n");
-            return 0;
+        if (uri) {
+            if (!gltf_load_uri(context, uri, &context->buffers[idx])) {
+                fprintf(stderr, "Error: gltf: could not load uri\n");
+                return 0;
+            }
+        } else {
+            if (fread(context->buffers[idx].data, 1, context->buffers[idx].size, context->file) != context->buffers[idx].size) {
+                fprintf(stderr, "Error: gltf: buffer: error reading file's own binary data\n");
+                return 0;
+            }
         }
     }
     return 1;

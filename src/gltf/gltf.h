@@ -103,6 +103,8 @@ struct GltfContext {
     struct ImportMetadata *metadata, metadataSave;
     struct Node* root;
     const char* path;
+    FILE* file;
+    char binary;
 };
 
 enum GltfURIType gltf_uri_type(json_t* juri);
