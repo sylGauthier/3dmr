@@ -47,7 +47,23 @@ GLuint texture_load_from_png(const char* filename) {
 
     glGetIntegerv(GL_UNPACK_ALIGNMENT, &ralign);
 
-    if (png_read(filename, ralign, &width, &height, &channels, 0, 1, &buffer)) {
+    if (png_read_file(filename, ralign, &width, &height, &channels, 0, 1, &buffer)) {
+        texture = texture_load_from_uchar_buffer(buffer, width, height, channels, 0);
+        free(buffer);
+    }
+
+    return texture;
+}
+
+GLuint texture_load_from_png_buffer(const void* buf, unsigned int size) {
+    GLuint texture = 0;
+    unsigned char* buffer;
+    unsigned int width, height, channels;
+    GLint ralign = 0;
+
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &ralign);
+
+    if (png_read_buf(buf, size, ralign, &width, &height, &channels, 0, 1, &buffer)) {
         texture = texture_load_from_uchar_buffer(buffer, width, height, channels, 0);
         free(buffer);
     }

@@ -27,7 +27,7 @@ static int load_face(const char* path, GLenum target) {
     float* hdr;
     unsigned int width, height, channels;
 
-    if (png_read(path, 4, &width, &height, &channels, 3, 0, &ldr)) {
+    if (png_read_file(path, 4, &width, &height, &channels, 3, 0, &ldr)) {
         if ((hdr = ldr_to_hdr(ldr, width, height, 4, 0, 2.2f, 1.0f))) {
             glTexImage2D(target, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, hdr);
             free(hdr);

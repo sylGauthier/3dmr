@@ -7,7 +7,7 @@ int png_read_write(const char* in, const char* out, unsigned int alignRow) {
     unsigned char* buffer;
     int retval;
 
-    if (!png_read(in, alignRow, &width, &height, &channels, 0, 0, &buffer)) {
+    if (!png_read_file(in, alignRow, &width, &height, &channels, 0, 0, &buffer)) {
         return 0;
     }
 
