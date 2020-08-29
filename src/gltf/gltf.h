@@ -50,6 +50,12 @@ enum GltfType {
     GLTF_MAT4
 };
 
+enum GltfURIType {
+    GLTF_URI_NONE,
+    GLTF_URI_B64,
+    GLTF_URI_FILE
+};
+
 struct GltfAccessor {
     unsigned int bufferView;
     unsigned int byteOffset;
@@ -98,6 +104,9 @@ struct GltfContext {
     struct Node* root;
     const char* path;
 };
+
+enum GltfURIType gltf_uri_type(json_t* juri);
+int gltf_load_uri(struct GltfContext* context, json_t* juri, struct GltfBuffer* dest);
 
 int gltf_parse_buffers(struct GltfContext* context, json_t* jroot);
 int gltf_parse_buffer_views(struct GltfContext* context, json_t* jroot);

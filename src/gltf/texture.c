@@ -5,22 +5,10 @@
 #include "gltf.h"
 #include "utils.h"
 
-int parse_img(GLuint* tex, json_t* jimg, const char* path) {
-    json_t* tmp;
+static int parse_img_file(struct GltfContext* context, GLuint* tex, json_t* juri) {
     char* pngPath;
 
-    if ((tmp = json_object_get(jimg, "mimeType"))) {
-        if (!json_string_value(tmp) || strcmp(json_string_value(tmp), "image/png")) {
-            fprintf(stderr, "Error: gltf: texture: invalid mimeType (only png supported)\n");
-            return 0;
-        }
-    }
-    if (!(tmp = json_object_get(jimg, "uri"))
-            || !json_string_value(tmp)) {
-        fprintf(stderr, "Error: gltf: texture: missing uri\n");
-        return 0;
-    }
-    if (!(pngPath = fullpath(path, json_string_value(tmp)))) {
+    if (!(pngPath = fullpath(context->path, json_string_value(juri)))) {
         return 0;
     }
     if (!(*tex = texture_load_from_png(pngPath))) {
@@ -29,6 +17,56 @@ int parse_img(GLuint* tex, json_t* jimg, const char* path) {
         return 0;
     }
     free(pngPath);
+    return 1;
+}
+
+static int parse_img_buffer(struct GltfContext* context, GLuint* tex, json_t* jbufview) {
+    const char* data;
+    unsigned int bufview;
+    struct GltfBufferView* view;
+
+    if (!json_is_integer(jbufview) || (bufview = json_integer_value(jbufview)) >= context->numBufferViews) {
+        fprintf(stderr, "Error: gltf: texture: invalid bufferView idx\n");
+        return 0;
+    }
+    view = &context->bufferViews[bufview];
+    data = ((char*)context->buffers[view->buffer].data) + view->byteOffset;
+    if (!(*tex = texture_load_from_png_buffer(data, view->byteLength))) {
+        fprintf(stderr, "Error: gltf: texture: could not load texture from buffer\n");
+        return 0;
+    }
+    return 1;
+}
+
+static int parse_img(struct GltfContext* context, GLuint* tex, json_t* jimg) {
+    json_t* tmp;
+    char pngMime = 0;
+
+    if ((tmp = json_object_get(jimg, "mimeType"))) {
+        if (!json_string_value(tmp) || strcmp(json_string_value(tmp), "image/png")) {
+            fprintf(stderr, "Error: gltf: texture: invalid mimeType (only png supported)\n");
+            return 0;
+        }
+        pngMime = 1;
+    }
+    if ((tmp = json_object_get(jimg, "uri"))) {
+        switch (gltf_uri_type(tmp)) {
+            case GLTF_URI_FILE:
+                return parse_img_file(context, tex, tmp);
+            case GLTF_URI_B64:
+                fprintf(stderr, "Error: gltf: texture: base64 URIs for textures not implemented yet\n");
+                return 0;
+            default:
+                fprintf(stderr, "Error: gltf: texture: invalid URI\n");
+                return 0;
+        }
+    } else if ((tmp = json_object_get(jimg, "bufferView"))) {
+        if (!pngMime) {
+            fprintf(stderr, "Error: gltf: texture: missing mime type, required for buffer data\n");
+            return 0;
+        }
+        return parse_img_buffer(context, tex, tmp);
+    }
     return 1;
 }
 
@@ -56,7 +94,7 @@ int gltf_parse_textures(struct GltfContext* context, json_t* jroot) {
     }
 
     json_array_foreach(img, idx, curImg) {
-        if (!parse_img(&texGLuint[idx], curImg, context->path)) {
+        if (!parse_img(context, &texGLuint[idx], curImg)) {
             free(texGLuint);
             return 0;
         }

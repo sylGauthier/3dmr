@@ -33,35 +33,24 @@ int gltf_parse_buffers(struct GltfContext* context, json_t* jroot) {
         return 0;
     }
     json_array_foreach(buffers, idx, buf) {
-        FILE* f;
-        const char* name;
-        char* path;
+        json_t* uri;
 
         if (!(context->buffers[idx].size = json_integer_value(json_object_get(buf, "byteLength")))) {
             fprintf(stderr, "Error: gltf: invalid buffer size\n");
+            return 0;
+        }
+        if (!(uri = json_object_get(buf, "uri"))) {
+            fprintf(stderr, "Error: gltf: missing uri\n");
             return 0;
         }
         if (!(context->buffers[idx].data = malloc(context->buffers[idx].size))) {
             fprintf(stderr, "Error: gltf: could not allocate memory for buffer\n");
             return 0;
         }
-        if (       !(name = json_string_value(json_object_get(buf, "uri")))
-                || !(path = fullpath(context->path, name))) {
-            fprintf(stderr, "Error: gltf: filename error\n");
+        if (!gltf_load_uri(context, uri, &context->buffers[idx])) {
+            fprintf(stderr, "Error: gltf: could not load uri\n");
             return 0;
         }
-        if (!(f = fopen(path, "r"))) {
-            fprintf(stderr, "Error: gltf: could not open buffer file: %s\n", path);
-            free(path);
-            return 0;
-        }
-        if (fread(context->buffers[idx].data, 1, context->buffers[idx].size, f) != context->buffers[idx].size) {
-            fprintf(stderr, "Error: gltf: error loading buffer file: %s\n", path);
-            free(path);
-            return 0;
-        }
-        free(path);
-        fclose(f);
     }
     return 1;
 }
