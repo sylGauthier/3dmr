@@ -68,17 +68,27 @@ static float time_linear_interp(unsigned int curFrame, float x, float* times, un
 static void value_linear_interp(float* dest, unsigned int curFrame, float s, float* values, unsigned int comp, unsigned int nbKeys) {
     unsigned int i;
 
-    if (curFrame >= nbKeys - 1) memcpy(dest, &values[comp * (nbKeys - 1)], comp * sizeof(float));
-    else if (s <= 0)            memcpy(dest, &values[comp * curFrame], comp * sizeof(float));
-    else if (s >= 1)            memcpy(dest, &values[comp * (curFrame + 1)], comp * sizeof(float));
-    for (i = 0; i < comp; i++) dest[i] = values[comp * curFrame + i] + s * (values[comp * (curFrame + 1) + i] - values[comp * curFrame + i]);
+    if (curFrame >= nbKeys - 1) {
+        memcpy(dest, &values[comp * (nbKeys - 1)], comp * sizeof(float));
+    } else if (s <= 0) {
+        memcpy(dest, &values[comp * curFrame], comp * sizeof(float));
+    } else if (s >= 1) {
+        memcpy(dest, &values[comp * (curFrame + 1)], comp * sizeof(float));
+    } else {
+        for (i = 0; i < comp; i++) dest[i] = values[comp * curFrame + i] + s * (values[comp * (curFrame + 1) + i] - values[comp * curFrame + i]);
+    }
 }
 
 static void quat_linear_interp(float* dest, unsigned int curFrame, float s, float* values, unsigned int nbKeys) {
-    if (curFrame >= nbKeys - 1) memcpy(dest, &values[4 * (nbKeys - 1)], 4 * sizeof(float));
-    else if (s <= 0)            memcpy(dest, &values[4 * curFrame], 4 * sizeof(float));
-    else if (s >= 1)            memcpy(dest, &values[4 * (curFrame + 1)], 4 * sizeof(float));
-    quaternion_slerp(dest, &values[4 * curFrame], &values[4 * (curFrame + 1)], s);
+    if (curFrame >= nbKeys - 1) {
+        memcpy(dest, &values[4 * (nbKeys - 1)], 4 * sizeof(float));
+    } else if (s <= 0) {
+        memcpy(dest, &values[4 * curFrame], 4 * sizeof(float));
+    } else if (s >= 1) {
+        memcpy(dest, &values[4 * (curFrame + 1)], 4 * sizeof(float));
+    } else {
+        quaternion_slerp(dest, &values[4 * curFrame], &values[4 * (curFrame + 1)], s);
+    }
 }
 
 static float time_bezier_interp(unsigned int curFrame, float x, float* times, unsigned int nbKeys) {
@@ -108,12 +118,17 @@ static float bern_pol(float s, float v1, float v2, float p1, float p2) {
 static void value_bezier_interp(float* dest, unsigned int curFrame, float s, float* points, unsigned int comp, unsigned int nbKeys) {
     unsigned int i;
 
-    if (curFrame >= nbKeys - 1) memcpy(dest, &points[3 * comp * (nbKeys - 1)], comp * sizeof(float));
-    else if (s <= 0)            memcpy(dest, &points[3 * comp * curFrame], comp * sizeof(float));
-    else if (s >= 1)            memcpy(dest, &points[3 * comp * (curFrame + 1)], comp * sizeof(float));
-    for (i = 0; i < comp; i++) {
-        dest[i] = bern_pol(s, points[3 * comp * curFrame + i],            points[3 * comp * (curFrame + 1) + i],
-                              points[3 * comp * curFrame + 2 * comp + i], points[3 * comp * (curFrame + 1) + comp + i]);
+    if (curFrame >= nbKeys - 1) {
+        memcpy(dest, &points[3 * comp * (nbKeys - 1)], comp * sizeof(float));
+    } else if (s <= 0) {
+        memcpy(dest, &points[3 * comp * curFrame], comp * sizeof(float));
+    } else if (s >= 1) {
+        memcpy(dest, &points[3 * comp * (curFrame + 1)], comp * sizeof(float));
+    } else {
+        for (i = 0; i < comp; i++) {
+            dest[i] = bern_pol(s, points[3 * comp * curFrame + i],            points[3 * comp * (curFrame + 1) + i],
+                                  points[3 * comp * curFrame + 2 * comp + i], points[3 * comp * (curFrame + 1) + comp + i]);
+        }
     }
 }
 

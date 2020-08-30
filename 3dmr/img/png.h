@@ -10,9 +10,7 @@
  */
 
 int png_read_file(const char* filename, unsigned int alignRows, unsigned int* width, unsigned int* height, unsigned int* channels, unsigned int reqChannels, int vReverse, unsigned char** buffer);
-int png_read_buf(const void* buf, unsigned int size, unsigned int alignRows,
-                 unsigned int* width, unsigned int* height, unsigned int* channels,
-                 unsigned int reqChannels, int vReverse, unsigned char** buffer);
+int png_read_buf(const void* buf, unsigned int size, unsigned int alignRows, unsigned int* width, unsigned int* height, unsigned int* channels, unsigned int reqChannels, int vReverse, unsigned char** buffer);
 int png_write(const char* filename, unsigned int alignRows, unsigned int width, unsigned int height, unsigned int channels, int vReverse, const unsigned char* buffer);
 
 #endif

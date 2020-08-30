@@ -5,7 +5,7 @@
 
 struct PNGParam {
     FILE* in;
-    char name[128];
+    const char* name;
 
     const char* buf;
     unsigned int bufSize;
@@ -19,7 +19,7 @@ int png_read_buf(const void* buf, unsigned int size, unsigned int alignRows, uns
     params.buf = buf;
     params.bufSize = size;
 
-    strcpy(params.name, "<gltf_buffer>");
+    params.name = "<mem_buffer>";
     return _png_read(&params, alignRows, width, height, channels, reqChannels, vReverse, buffer);
 }
 
@@ -27,15 +27,14 @@ int png_read_file(const char* filename, unsigned int alignRows, unsigned int* wi
     struct PNGParam params = {0};
 
     if (!(params.in = fopen(filename, "rb"))) {
-        fprintf(stderr, "Error: gltf: png: can't open file: %s\n", filename);
+        fprintf(stderr, "Error: png: can't open file: %s\n", filename);
         return 0;
     }
-    strncpy(params.name, filename, 127);
-    params.name[127] = '\0';
+    params.name = filename;
     return _png_read(&params, alignRows, width, height, channels, reqChannels, vReverse, buffer);
 }
 
-static int _png_get_header(struct PNGParam* params, unsigned char* header) {
+static unsigned int _png_get_header(struct PNGParam* params, unsigned char* header) {
     if (params->in) {
         return fread(header, 1, 8, params->in);
     } else if (params->buf) {
@@ -53,7 +52,7 @@ static void _png_read_fn(png_structp pngStruct, png_bytep dest, size_t length) {
 
     params = png_get_io_ptr(pngStruct);
     if (params->bufSize < length) {
-        fprintf(stderr, "Error: gltf: PNG: read error\n");
+        fprintf(stderr, "Error: PNG: read error\n");
         longjmp(png_jmpbuf(pngStruct), 1);
     }
     memcpy(dest, params->buf, length);
@@ -70,7 +69,7 @@ static void _png_init_io(png_structp pngStruct, struct PNGParam* params) {
 }
 
 static int _png_read(struct PNGParam* params, unsigned int alignRows, unsigned int* width, unsigned int* height, unsigned int* channels, unsigned int reqChannels, int vReverse, unsigned char** buffer) {
-    int y, nbBytes;
+    unsigned int y, nbBytes;
     unsigned char header[8];
     int bitDepth, colorType, interlaceMethod, nPass, nbPasses;
     png_uint_32 w, h, rowStride;
@@ -116,12 +115,12 @@ static int _png_read(struct PNGParam* params, unsigned int alignRows, unsigned i
                         colorType |= PNG_COLOR_MASK_ALPHA;
                     }
                     if ((colorType == PNG_COLOR_TYPE_GRAY_ALPHA && reqChannels == 1)
-                            || (colorType == PNG_COLOR_TYPE_RGB_ALPHA && reqChannels == 3)) {
+                     || (colorType == PNG_COLOR_TYPE_RGB_ALPHA && reqChannels == 3)) {
                         png_set_strip_alpha(pngStruct);
                         colorType &= ~PNG_COLOR_MASK_ALPHA;
                     }
                     if ((colorType == PNG_COLOR_TYPE_GRAY && (reqChannels == 2 || reqChannels == 4))
-                            || (colorType == PNG_COLOR_TYPE_RGB && reqChannels == 4)) {
+                     || (colorType == PNG_COLOR_TYPE_RGB && reqChannels == 4)) {
                         png_set_filler(pngStruct, 0xFF, PNG_FILLER_AFTER);
                         colorType |= PNG_COLOR_MASK_ALPHA;
                     }
