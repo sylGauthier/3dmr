@@ -16,6 +16,13 @@ struct ViewerImpl {
 
 static struct Viewer* currentViewer = NULL;
 
+static void mouse_callback(GLFWwindow* window, int button, int action, int mods) {
+    struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
+    if (viewer->user.mouse_callback) {
+        viewer->user.mouse_callback(&viewer->user, button, action, mods, viewer->user.callbackData);
+    }
+}
+
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
     int buttonLeft = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
@@ -78,6 +85,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
             glfwSetWindowUserPointer(viewer->window, viewer);
             glfwSetKeyCallback(viewer->window, key_callback);
             glfwSetCursorPosCallback(viewer->window, cursor_callback);
+            glfwSetMouseButtonCallback(viewer->window, mouse_callback);
             glfwSetScrollCallback(viewer->window, scroll_callback);
             glfwSetWindowSizeCallback(viewer->window, window_size_callback);
             glfwSetWindowCloseCallback(viewer->window, window_close_callback);
@@ -88,6 +96,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
             } else if ((error = glewInit()) != GLEW_OK) {
                 fprintf(stderr, "Error: GLEW initialization failed\n");
             } else {
+                viewer->user.mouse_callback = NULL;
                 viewer->user.cursor_callback = NULL;
                 viewer->user.wheel_callback = NULL;
                 viewer->user.key_callback = NULL;

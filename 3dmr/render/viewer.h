@@ -12,6 +12,7 @@ enum ViewerCursorMode {
 
 struct Viewer {
     unsigned int width, height;
+    void (*mouse_callback)(struct Viewer*, int, int, int, void*);
     void (*cursor_callback)(struct Viewer*, double, double, double, double, int, int, int, void*);
     void (*wheel_callback)(struct Viewer*, double, double, void*);
     void (*key_callback)(struct Viewer*, int, int, int, int, void*);
