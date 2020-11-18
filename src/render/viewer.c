@@ -15,6 +15,19 @@ struct ViewerImpl {
 };
 
 static struct Viewer* currentViewer = NULL;
+static unsigned int glfwInitialized = 0;
+
+static int init_glfw(void) {
+    if (glfwInitialized >= ((unsigned int)-1)) return 0;
+    if (!glfwInitialized && !glfwInit()) return 0;
+    glfwInitialized++;
+    return 1;
+}
+
+static void free_glfw(void) {
+    if (!glfwInitialized) return;
+    if (!--glfwInitialized) glfwTerminate();
+}
 
 static void mouse_callback(GLFWwindow* window, int button, int action, int mods) {
     struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
@@ -72,7 +85,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
 
     if (!(viewer = malloc(sizeof(struct ViewerImpl)))) {
         fprintf(stderr, "Error: memory allocation failed\n");
-    } else if (!glfwInit()) {
+    } else if (!init_glfw()) {
         fprintf(stderr, "Error: GLFW3 initialization failed\n");
     } else {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -121,7 +134,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
             viewer_free(&viewer->user);
             return NULL;
         }
-        glfwTerminate();
+        free_glfw();
     }
     free(viewer);
 
@@ -131,14 +144,17 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
 void viewer_free(struct Viewer* viewer) {
     if (viewer) {
         struct Viewer* current = currentViewer;
+        int shouldFreeGlfw = 0;
+
         if (current == viewer) current = NULL;
         viewer_make_current(viewer);
         if (((struct ViewerImpl*)viewer)->window) {
             glfwDestroyWindow(((struct ViewerImpl*)viewer)->window);
-            glfwTerminate();
+            shouldFreeGlfw = 1;
         }
         free(viewer);
         viewer_make_current(current);
+        if (shouldFreeGlfw) free_glfw();
     }
 }
 
