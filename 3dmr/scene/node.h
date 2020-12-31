@@ -70,6 +70,7 @@ void node_set_slight(struct Node* node, struct SpotLight* slight);
 void node_set_camera(struct Node* node, struct Camera* camera);
 
 int node_add_child(struct Node* node, struct Node* child);
+int node_rm_child(struct Node* node, struct Node* child);
 void nodes_free(struct Node* root, void (*free_node)(struct Node*));
 
 int node_update_matrices(struct Node* node);

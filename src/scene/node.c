@@ -83,6 +83,19 @@ int node_add_child(struct Node* node, struct Node* child) {
     return 1;
 }
 
+int node_rm_child(struct Node* node, struct Node* child) {
+    unsigned int i;
+
+    if (!node->nbChildren) return 0;
+    for (i = 0; i < node->nbChildren; i++) {
+        if (node->children[i] == child) break;
+    }
+    if (i >= node->nbChildren) return 0;
+    node->children[i] = node->children[node->nbChildren - 1];
+    node->nbChildren--;
+    return 1;
+}
+
 void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
     struct Node *cur, *next;
 
