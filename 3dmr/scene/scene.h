@@ -13,6 +13,7 @@ struct Scene {
 };
 
 int scene_init(struct Scene* scene, struct Camera* camera);
+void scene_clean(struct Scene* scene);
 void scene_free(struct Scene* scene, void (*free_node)(struct Node*));
 
 int scene_add(struct Scene* scene, struct Node* node);

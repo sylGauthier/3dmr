@@ -25,11 +25,15 @@ int scene_init(struct Scene* scene, struct Camera* camera) {
     return 1;
 }
 
-void scene_free(struct Scene* scene, void (*free_node)(struct Node*)) {
-    nodes_free(&scene->root, free_node);
+void scene_clean(struct Scene* scene) {
     uniform_buffer_del(&scene->camera);
     uniform_buffer_del(&scene->lights);
     free(scene->renderQueue);
+}
+
+void scene_free(struct Scene* scene, void (*free_node)(struct Node*)) {
+    nodes_free(&scene->root, free_node);
+    scene_clean(scene);
 }
 
 int scene_add(struct Scene* scene, struct Node* node) {
