@@ -1,3 +1,5 @@
+#include <3dmr/math/constants.h>
+
 #ifndef TDMR_MATH_LINEAR_ALGEBRA_H
 #define TDMR_MATH_LINEAR_ALGEBRA_H
 
@@ -32,10 +34,6 @@ typedef Vec4 Mat4[4];
 extern const Vec3 VEC3_AXIS_X;
 extern const Vec3 VEC3_AXIS_Y;
 extern const Vec3 VEC3_AXIS_Z;
-
-#ifndef M_PI
-#define M_PI 3.14159265358979 
-#endif
 
 /* Vec2 */
 void zero2v(Vec2 v);
