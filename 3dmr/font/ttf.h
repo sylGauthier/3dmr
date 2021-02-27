@@ -31,5 +31,6 @@ void ttf_free(struct TTF* ttf);
 
 int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline);
 int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Character* c);
+int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars);
 
 #endif

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <sfnt/character_map.h>
 #include <sfnt/platform.h>
 #include <3dmr/font/ttf.h>
@@ -224,5 +225,26 @@ int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Charact
         return 1;
     }
     if (hasglyph) sfnt_free_glyf(&glyph);
+    return 0;
+}
+
+int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars) {
+    unsigned int l;
+
+    l = strlen(str);
+    if (!(*c = malloc(l * sizeof(struct Character)))) {
+        fprintf(stderr, "Error: can't allocate memory for Characters\n");
+    } else {
+        unsigned int i;
+
+        for (i = 0; i < l; i++) {
+            if (!ttf_load_char(ttf, str[i], *c + i)) {
+                free(*c);
+                return 0;
+            }
+        }
+        *numChars = l;
+        return 1;
+    }
     return 0;
 }
