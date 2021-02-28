@@ -52,7 +52,7 @@ static const Vec2* segment_start_point(const union OutlineSegment* seg) {
     return NULL;
 }
 
-GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
+unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
     float* sdm;
     float* mindist;
     unsigned char* sdm8;
@@ -70,7 +70,6 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
     float cyMin, cyMax, xMin, yMin, yMax, scale, scaleinv, maxdist = 0;
     float pen, width, a, more, lsb;
     size_t i, j, k, x, y, w, npix, ncp, acp = 0;
-    GLuint tex;
     int winding, r, numRoots;
 
     if (!numChars) return 0;
@@ -309,7 +308,18 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
         }
     }
     free(sdm);
-    tex = texture_load_from_uchar_buffer(sdm8, w, mapHeight, 1, 1);
-    free(sdm8);
+    return sdm8;
+}
+
+GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
+    unsigned char* sdm8;
+    GLuint tex = 0;
+    size_t w;
+
+    if ((sdm8 = text_to_sdm_buffer(chars, numChars, mapHeight, &w))) {
+        tex = texture_load_from_uchar_buffer(sdm8, w, mapHeight, 1, 1);
+        free(sdm8);
+        if (mapWidth) *mapWidth = w;
+    }
     return tex;
 }

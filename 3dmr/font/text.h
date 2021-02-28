@@ -12,6 +12,8 @@ struct Character {
 
 void character_free(struct Character* c);
 
+unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth);
+
 GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth);
 
 #endif
