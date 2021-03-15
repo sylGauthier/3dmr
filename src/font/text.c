@@ -55,7 +55,7 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
     float coefs[3], roots[2];
     Vec2 pt, pt2;
     float cyMin, cyMax, xMin, yMin, yMax, scale, scaleinv, maxdist = 0;
-    float pen, width, a, lsb;
+    float pen, width, a, more, lsb;
     size_t i, j, k, x, y, w, npix, ncp, acp = 0;
     GLuint tex;
     int winding, r, numRoots;
@@ -64,9 +64,10 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
     yMin = chars[0].yMin;
     yMax = chars[0].yMax;
     if (yMax < yMin) return 0;
-    if ((chars[0].xMax - (xMin = chars[0].xMin) + (lsb = chars[0].lsb)) > (a = chars[0].advance) || a < 0.0f) return 0;
-    width = a;
-    if ((lsb = chars[0].lsb) < 0.0f) {
+    if ((a = chars[0].advance) < 0.0f) return 0;
+    width = chars[0].xMax - (xMin = chars[0].xMin) + (lsb = chars[0].lsb);
+    if (width < a) width = a;
+    if (lsb < 0.0f) {
         pen = -lsb;
         width += pen;
     } else {
@@ -74,26 +75,27 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
     }
     if (numChars > ((size_t)-1) / sizeof(*cl) || !(cl = malloc(numChars * sizeof(*cl)))) return 0;
     cl[0].xoffset = pen + lsb - xMin;
+    pen += a;
     for (i = 1; i < numChars; i++) {
         if ((cyMin = chars[i].yMin) < yMin) yMin = cyMin;
         if ((cyMax = chars[i].yMax) > yMax) yMax = cyMax;
-        if (cyMax < cyMin) return 0;
-        if ((chars[i].xMax - (xMin = chars[i].xMin) + (lsb = chars[i].lsb)) > (a = chars[i].advance) || a < 0.0f || (lsb < 0.0f && lsb + width < 0.0f)) {
+        if (cyMax < cyMin || (a = chars[i].advance) < 0.0f || ((lsb = chars[i].lsb) < 0.0f && lsb + width < 0.0f)) {
             free(cl);
             return 0;
         }
-        cl[i].xoffset = width + lsb - xMin;
-        width += a;
+        more = chars[i].xMax - (xMin = chars[i].xMin) + lsb;
+        if (more < a) more = a;
+        if (pen + more > width) width = pen + more;
+        cl[i].xoffset = pen + lsb - xMin;
+        pen += a;
     }
     scale = ((float)mapHeight) / (yMax - yMin);
     scaleinv = 1.0f / scale;
     w = width * scale;
     if (mapWidth) *mapWidth = w;
     for (i = 0; i < numChars; i++) {
-        xMin = pen + chars[i].lsb;
-        cl[i].xmin = xMin * scale;
-        cl[i].xmax = (xMin + chars[i].xMax - chars[i].xMin) * scale;
-        pen += chars[i].advance;
+        cl[i].xmin = (cl[i].xoffset + chars[i].xMin) * scale;
+        cl[i].xmax = (cl[i].xoffset + chars[i].xMax) * scale;
     }
     if (w > ((size_t)-1) / mapHeight || (npix = w * mapHeight) > ((size_t)-1) - sizeof(*sdm)
      || !(sdm = malloc(npix * sizeof(*sdm)))) {
