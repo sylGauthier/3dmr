@@ -140,7 +140,7 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
                                 numRoots = polynom_roots_2(roots, coefs);
                                 for (r = 0; ok && r < numRoots; r++) {
                                     if (roots[r] >= 0.0f && roots[r] <= 1.0f
-                                     && (d = ((1.0f - roots[r]) * coefs[1] + 2.0f * roots[r] * dy12))
+                                     && ((d = ((1.0f - roots[r]) * coefs[1] + 2.0f * roots[r] * dy12)) || (d = (roots[r] == 1.0f) * dy01 + (roots[r] == 0.0f) * dy12))
                                      && (ok = (cp = cp_append(&cps, &ncp, &acp)) != NULL)) {
                                         cp->x = seg->quadratic.p0[0]
                                               + 2.0f * roots[r] * (seg->quadratic.p1[0] - seg->quadratic.p0[0])
