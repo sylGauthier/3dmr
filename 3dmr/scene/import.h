@@ -11,10 +11,12 @@ struct ImportSharedData {
     void** matParams;
     struct VertexArray** va;
     struct Skin** skins;
+    struct Geometry** geometries;
 
     unsigned int numMatParams;
     unsigned int numVA;
     unsigned int numSkins;
+    unsigned int numGeometries;
 };
 
 void import_init_shared_data(struct ImportSharedData* shared);
@@ -23,6 +25,7 @@ void import_free_shared_data(struct ImportSharedData* shared);
 int import_add_shared_matparam(struct ImportSharedData* shared, void* p);
 int import_add_shared_va(struct ImportSharedData* shared, struct VertexArray* va);
 int import_add_shared_skin(struct ImportSharedData* shared, struct Skin* s);
+int import_add_shared_geometry(struct ImportSharedData* shared, struct Geometry* g);
 
 struct ImportMetadata {
     struct Node** cameraNodes;

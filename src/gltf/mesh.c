@@ -137,10 +137,11 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
 
         struct PBRMaterialParams* pbr = NULL;
         struct Mesh mesh = {0};
-        struct Geometry* geom;
+        struct Geometry* geom = NULL;
 
         unsigned int *indices = NULL, *joints = NULL, numIndices = 0, numVertices = 0;
         float *pos = NULL, *normals = NULL, *texCoords = NULL, *weights = NULL;
+        char ok = 0;
 
         if (!(context->meshes[idx] = calloc(1, sizeof(**context->meshes)))) {
             fprintf(stderr, "Error: gltf: mesh: can't allocate geometry\n");
@@ -238,22 +239,22 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
 
         /* concatenate arrays and build up a Mesh structure */
         if (!build_mesh(context, &mesh, indices, numIndices, pos, normals, texCoords, joints, weights, numVertices)) {
-            return 0;
-        }
-
-        /* setup the Geometry object */
-        geom = context->meshes[idx];
-        if (       !(geom->vertexArray = vertex_array_new(&mesh))
+            fprintf(stderr, "Error: gltf: mesh: could not build mesh\n");
+        } else if (geom = context->meshes[idx],
+                   !(geom->vertexArray = vertex_array_new(&mesh))
                 || !import_add_shared_va(context->shared, geom->vertexArray)) {
             fprintf(stderr, "Error: gltf: mesh: could not create VertexArray\n");
-            return 0;
-        }
-        if (!(geom->material = pbr_material_new(mesh.flags, pbr))) {
+        } else if (!(geom->material = pbr_material_new(mesh.flags, pbr))) {
             fprintf(stderr, "Error: gltf: mesh: could not create material\n");
-            return 0;
+        } else if (!import_add_shared_geometry(context->shared, geom)) {
+            fprintf(stderr, "Error: gltf: mesh: could not add shared geometry\n");
+        } else {
+            ok = 1;
         }
-        mesh_free(&mesh);
+
+        if (geom) mesh_free(&mesh);
         free(joints);
+        if (!ok) return 0;
     }
     return 1;
 }

@@ -6,11 +6,9 @@
 void imported_node_free(struct Node* node) {
     if (node) {
         switch (node->type) {
+            case NODE_EMPTY:
+            case NODE_BONE:
             case NODE_GEOMETRY:
-                if (node->data.geometry) {
-                    free(node->data.geometry->material);
-                    free(node->data.geometry);
-                }
                 break;
             case NODE_CAMERA:
                 free(node->data.camera);
@@ -35,10 +33,12 @@ void import_init_shared_data(struct ImportSharedData* shared) {
     shared->matParams = NULL;
     shared->va = NULL;
     shared->skins = NULL;
+    shared->geometries = NULL;
 
     shared->numMatParams = 0;
     shared->numVA = 0;
     shared->numSkins = 0;
+    shared->numGeometries = 0;
 }
 
 #define IMPORT_ADD_ITEM(type, array, size, newItem) { \
@@ -58,6 +58,9 @@ IMPORT_ADD_ITEM(struct VertexArray, shared->va, shared->numVA, va)
 int import_add_shared_skin(struct ImportSharedData* shared, struct Skin* s)
 IMPORT_ADD_ITEM(struct Skin, shared->skins, shared->numSkins, s)
 
+int import_add_shared_geometry(struct ImportSharedData* shared, struct Geometry* g)
+IMPORT_ADD_ITEM(struct Geometry, shared->geometries, shared->numGeometries, g)
+
 void import_free_shared_data(struct ImportSharedData* shared) {
     unsigned int i;
 
@@ -70,9 +73,14 @@ void import_free_shared_data(struct ImportSharedData* shared) {
     for (i = 0; i < shared->numSkins; i++) {
         skin_free(shared->skins[i]);
     }
+    for (i = 0; i < shared->numGeometries; i++) {
+        free(shared->geometries[i]->material);
+        free(shared->geometries[i]);
+    }
     free(shared->matParams);
     free(shared->va);
     free(shared->skins);
+    free(shared->geometries);
 }
 
 void import_init_metadata(struct ImportMetadata* metadata) {
