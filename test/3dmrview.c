@@ -12,8 +12,9 @@
 struct Prog {
     struct Scene scene;
     struct ImportMetadata metadata;
-    unsigned int activeCam, activeClip, numDirectionalLights, numPointLights, numSpotLights;
+    unsigned int activeCamIdx, activeClip, numDirectionalLights, numPointLights, numSpotLights;
     struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS], *slights[MAX_SPOT_LIGHTS];
+    struct Node *defCam, *defCamPivot, *activeCam;
     int running;
 };
 
@@ -23,7 +24,7 @@ static void usage(const char* prog) {
 
 static void resize_callback(struct Viewer* viewer, void* data) {
     struct Prog* prog = data;
-    struct Camera* activeCam = prog->metadata.cameraNodes[prog->activeCam]->data.camera;
+    struct Camera* activeCam = prog->activeCam->data.camera;
     glViewport(0, 0, viewer->width, viewer->height);
     camera_set_ratio(((float)viewer->width) / ((float)viewer->height), activeCam->projection);
     camera_buffer_object_update_projection(&prog->scene.camera, MAT_CONST_CAST(activeCam->projection));
@@ -32,15 +33,44 @@ static void resize_callback(struct Viewer* viewer, void* data) {
 
 static void update_cam(struct Viewer* viewer, struct Prog* prog) {
     struct Camera* activeCam;
-    activeCam = prog->metadata.cameraNodes[prog->activeCam]->data.camera;
+    activeCam = prog->activeCam->data.camera;
     camera_set_ratio(((float)viewer->width) / ((float)viewer->height), activeCam->projection);
     camera_buffer_object_update_projection(&prog->scene.camera, MAT_CONST_CAST(activeCam->projection));
     camera_buffer_object_update_view_and_position(&prog->scene.camera, MAT_CONST_CAST(activeCam->view));
     uniform_buffer_send(&prog->scene.camera);
-    if (prog->metadata.cameraNodes[prog->activeCam]->name) {
-        printf("Current camera: %s\n", prog->metadata.cameraNodes[prog->activeCam]->name);
+    if (prog->activeCam->name) {
+        printf("Current camera: %s\n", prog->activeCam->name);
     } else {
-        printf("Current camera: #%u\n", prog->activeCam);
+        printf("Current camera: #%u\n", prog->activeCamIdx);
+    }
+}
+
+static void cursor_callback(struct Viewer* viewer, double xpos, double ypos,
+                            double dx, double dy, int bl, int bm, int br,
+                            void* data) {
+    struct Prog* prog = data;
+    Vec3 axisX = {1, 0, 0};
+    Vec3 axisY = {0, 1, 0};
+
+    if (br && prog->activeCam == prog->defCam) {
+        node_rotate(prog->defCamPivot, axisY, -dx / viewer->width);
+        node_slew(prog->defCamPivot, axisX, -dy / viewer->width);
+    }
+    return;
+}
+
+static void wheel_callback(struct Viewer* viewer, double dx, double dy, void* data) {
+    struct Prog* prog = data;
+
+    if (prog->activeCam == prog->defCam) {
+        Vec3 t;
+        t[0] = 0;
+        t[1] = 0;
+        if (dy < 0)
+            t[2] = prog->activeCam->position[2] * (1 - dy / 10.);
+        else
+            t[2] = prog->activeCam->position[2] / (1 + dy / 10.);
+        node_set_pos(prog->activeCam, t);
     }
 }
 
@@ -52,11 +82,21 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             prog->running = 0;
             break;
         case GLFW_KEY_LEFT: case GLFW_KEY_UP:
-            prog->activeCam = (prog->activeCam + prog->metadata.numCameraNodes - 1) % prog->metadata.numCameraNodes;
-            update_cam(viewer, prog);
+            if (prog->metadata.numCameraNodes) {
+                prog->activeCamIdx = (prog->activeCamIdx + prog->metadata.numCameraNodes - 1) % prog->metadata.numCameraNodes;
+                prog->activeCam = prog->metadata.cameraNodes[prog->activeCamIdx];
+                update_cam(viewer, prog);
+            }
             break;
         case GLFW_KEY_RIGHT: case GLFW_KEY_DOWN:
-            prog->activeCam = (prog->activeCam + 1) % prog->metadata.numCameraNodes;
+            if (prog->metadata.numCameraNodes) {
+                prog->activeCamIdx = (prog->activeCamIdx + 1) % prog->metadata.numCameraNodes;
+                prog->activeCam = prog->metadata.cameraNodes[prog->activeCamIdx];
+                update_cam(viewer, prog);
+            }
+            break;
+        case GLFW_KEY_HOME:
+            prog->activeCam = prog->defCam;
             update_cam(viewer, prog);
             break;
         case GLFW_KEY_SPACE:
@@ -106,9 +146,8 @@ static void update_node(struct Scene* scene, struct Node* n, void* data) {
             }
             break;
         case NODE_CAMERA:
-            if (n == prog->metadata.cameraNodes[prog->activeCam]) {
-                camera_buffer_object_update_view(&scene->camera, MAT_CONST_CAST(n->data.camera->view));
-                camera_buffer_object_update_position(&scene->camera, n->position);
+            if (n == prog->activeCam) {
+                camera_buffer_object_update_view_and_position(&scene->camera, MAT_CONST_CAST(n->data.camera->view));
             }
             break;
         default:;
@@ -168,6 +207,40 @@ static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int a
     return ok;
 }
 
+static int init_def_cam(struct Prog* prog) {
+    struct Camera* cam = NULL;
+
+    prog->defCam = NULL;
+    prog->defCamPivot = NULL;
+    if (       !(prog->defCam = malloc(sizeof(struct Node)))
+            || !(prog->defCamPivot = malloc(sizeof(struct Node)))
+            || !(cam = malloc(sizeof(struct Camera)))) {
+        fprintf(stderr, "Error: can allocate default cam\n");
+    } else if (node_init(prog->defCam), node_init(prog->defCamPivot), !node_add_child(prog->defCamPivot, prog->defCam)) {
+        fprintf(stderr, "Error: can't init default cam\n");
+    } else if (!scene_add(&prog->scene, prog->defCamPivot)) {
+        fprintf(stderr, "Error: can't add default cam to scene\n");
+    } else {
+        Vec3 t = {0., 0., 5.}, axisX = {1, 0, 0}, axisY = {0, 1, 0};
+
+        node_rotate(prog->defCamPivot, axisY, M_PI / 4.);
+        node_slew(prog->defCamPivot, axisX, -M_PI / 4.);
+        node_translate(prog->defCam, t);
+
+        node_set_name(prog->defCam, "default");
+        node_set_camera(prog->defCam, cam);
+
+        load_id4(cam->view);
+        camera_projection(1., 60 / 360. * 2 * M_PI, 0.001, 1000., cam->projection);
+        return 1;
+    }
+    free(cam);
+    free(prog->defCamPivot->children);
+    free(prog->defCamPivot);
+    free(prog->defCam);
+    return 0;
+}
+
 int main(int argc, char** argv) {
     FILE* f = NULL;
     struct Prog prog;
@@ -175,7 +248,7 @@ int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct Camera* camera;
     unsigned int i;
-    int sceneInit = 0, ogexInit = 0, err = 1;
+    int sceneInit = 0, ogexInit = 0, camInit = 0, err = 1;
     double dt;
 
     if (argc < 2) {
@@ -197,16 +270,19 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to init scene\n");
     } else if (!(ogexInit = load_scenes(&prog, &shared, argc - 1, argv + 1))) {
         fprintf(stderr, "Error: failed to load scenes\n");
-    } else if (!prog.metadata.numCameraNodes) {
-        fprintf(stderr, "Error: no camera node in any of the scenes\n");
+    } else if (!(camInit = init_def_cam(&prog))) {
+        fprintf(stderr, "Error: failed to init default camera\n");
     } else {
         err = 0;
-        prog.activeCam = 0;
+        prog.activeCamIdx = 0;
+        prog.activeCam = prog.defCam;
         prog.activeClip = 0;
         prog.running = 1;
         viewer->callbackData = &prog;
         viewer->resize_callback = resize_callback;
         viewer->key_callback = key_callback;
+        viewer->cursor_callback = cursor_callback;
+        viewer->wheel_callback = wheel_callback;
         viewer->close_callback = close_callback;
         scene_update_nodes(&prog.scene, NULL, NULL);
         for (i = 0; i < prog.metadata.numLightNodes; i++) {
@@ -255,7 +331,7 @@ int main(int argc, char** argv) {
         lights_buffer_object_update_ndlight(&prog.scene.lights, prog.numDirectionalLights);
         lights_buffer_object_update_nplight(&prog.scene.lights, prog.numPointLights);
         lights_buffer_object_update_nslight(&prog.scene.lights, prog.numSpotLights);
-        camera = prog.metadata.cameraNodes[0]->data.camera;
+        camera = prog.activeCam->data.camera;
         camera_set_ratio(((float)viewer->width) / ((float)viewer->height), camera->projection);
         camera_buffer_object_update_projection(&prog.scene.camera, MAT_CONST_CAST(camera->projection));
         camera_buffer_object_update_view_and_position(&prog.scene.camera, MAT_CONST_CAST(camera->view));
@@ -263,17 +339,15 @@ int main(int argc, char** argv) {
         uniform_buffer_send(&prog.scene.camera);
         glfwSwapInterval(1);
         while (prog.running) {
-            viewer_process_events(viewer);
             dt = viewer_next_frame(viewer);
+            viewer_process_events(viewer);
             if (prog.metadata.numClips) {
-                if (prog.metadata.numClips) {
-                    anim_play_clip(prog.metadata.clips[prog.activeClip], dt);
-                }
-                scene_update_nodes(&prog.scene, update_node, &prog);
-                uniform_buffer_send(&prog.scene.lights);
-                uniform_buffer_send(&prog.scene.camera);
+                anim_play_clip(prog.metadata.clips[prog.activeClip], dt);
             }
-            camera = prog.metadata.cameraNodes[prog.activeCam]->data.camera;
+            scene_update_nodes(&prog.scene, update_node, &prog);
+            uniform_buffer_send(&prog.scene.lights);
+            uniform_buffer_send(&prog.scene.camera);
+            camera = prog.activeCam->data.camera;
             scene_update_render_queue(&prog.scene, MAT_CONST_CAST(camera->view), MAT_CONST_CAST(camera->projection));
             scene_render(&prog.scene);
         }
