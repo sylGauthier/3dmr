@@ -70,6 +70,7 @@ void node_set_dlight(struct Node* node, struct DirectionalLight* dlight);
 void node_set_plight(struct Node* node, struct PointLight* plight);
 void node_set_slight(struct Node* node, struct SpotLight* slight);
 void node_set_camera(struct Node* node, struct Camera* camera);
+int node_set_name(struct Node* node, const char* name);
 
 int node_add_child(struct Node* node, struct Node* child);
 int node_rm_child(struct Node* node, struct Node* child);

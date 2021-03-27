@@ -67,6 +67,17 @@ void node_set_camera(struct Node* node, struct Camera* camera) {
     node_reset_bounding_box(node, NULL);
 }
 
+int node_set_name(struct Node* node, const char* name) {
+    char* newname;
+
+    if ((newname = malloc(strlen(name)))) {
+        strcpy(newname, name);
+        node->name = newname;
+        return 1;
+    }
+    return 0;
+}
+
 int node_add_child(struct Node* node, struct Node* child) {
     struct Node** tmp;
 
