@@ -101,6 +101,7 @@ struct GltfContext {
 
     struct ImportSharedData *shared, sharedSave;
     struct ImportMetadata *metadata, metadataSave;
+    struct ImportOptions* opts;
     struct Node* root;
     const char* path;
     FILE* file;

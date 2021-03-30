@@ -60,6 +60,7 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
                 material_param_set_float_constant(&pbrMat->roughness, json_number_value(roughness));
             }
         }
+        if (context->opts) pbrMat->ibl = context->opts->ibl;
         context->materials[idx] = pbrMat;
     }
     return 1;

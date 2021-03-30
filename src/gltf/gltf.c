@@ -1,6 +1,6 @@
 #include "gltf.h"
 
-int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct ImportSharedData* shared, struct ImportMetadata* metadata, char binary) {
+int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct ImportSharedData* shared, struct ImportMetadata* metadata, struct ImportOptions* opts) {
     json_t *jroot;
     json_error_t error;
     struct GltfContext context = {0};
@@ -14,9 +14,10 @@ int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct Import
 
     context.path = path;
     context.file = gltfFile;
-    context.binary = binary;
+    context.opts = opts;
+    context.binary = opts && opts->binary;
     context.root = root;
-    if (binary) {
+    if (context.binary) {
         uint32_t header[5];
         if (fread(header, 4, 5, gltfFile) != 5) {
             fprintf(stderr, "Error: gltf: binary file: couldn't read header\n");
@@ -38,7 +39,7 @@ int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct Import
         fprintf(stderr, "%s\n", error.text);
         return 0;
     }
-    if (binary) {
+    if (context.binary) {
         long pos = ftell(gltfFile);
         uint32_t header[2];
         /* Align correctly for the rest of the data */

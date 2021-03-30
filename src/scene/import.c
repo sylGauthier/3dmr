@@ -113,3 +113,8 @@ void import_free_metadata(struct ImportMetadata* metadata) {
     }
     free(metadata->clips);
 }
+
+void import_init_options(struct ImportOptions* opts) {
+    opts->ibl = NULL;
+    opts->binary = 0;
+}

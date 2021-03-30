@@ -45,4 +45,11 @@ int import_add_metadata_camnode(struct ImportMetadata* metadata, struct Node* n)
 int import_add_metadata_lightnode(struct ImportMetadata* metadata, struct Node* n);
 int import_add_metadata_clip(struct ImportMetadata* metadata, struct Clip* c);
 
+struct ImportOptions {
+    struct IBL* ibl;
+    char binary;
+};
+
+void import_init_options(struct ImportOptions* opts);
+
 #endif
