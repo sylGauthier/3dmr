@@ -370,6 +370,7 @@ int main(int argc, char** argv) {
         uniform_buffer_send(&prog.scene.lights);
         uniform_buffer_send(&prog.scene.camera);
         glfwSwapInterval(1);
+        glClearColor(0.2, 0.2, 0.2, 0);
         while (prog.running) {
             dt = viewer_next_frame(viewer);
             viewer_process_events(viewer);
