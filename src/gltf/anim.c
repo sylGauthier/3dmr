@@ -231,11 +231,13 @@ int gltf_parse_anims(struct GltfContext* context, json_t* jroot) {
             return 0;
         }
         anim_clip_init(context->clips[clipIdx]);
-        if (!(context->clips[clipIdx]->name = malloc(strlen(namestr) + 1))) {
-            fprintf(stderr, "Error: gltf: clip: can't allocate clip name\n");
-            return 0;
+        if (namestr) {
+            if (!(context->clips[clipIdx]->name = malloc(strlen(namestr) + 1))) {
+                fprintf(stderr, "Error: gltf: clip: can't allocate clip name\n");
+                return 0;
+            }
+            memcpy(context->clips[clipIdx]->name, namestr, strlen(namestr) + 1);
         }
-        memcpy(context->clips[clipIdx]->name, namestr, strlen(namestr) + 1);
 
         if (!parse_anims(context, channels, samplers, context->clips[clipIdx])) return 0;
 
