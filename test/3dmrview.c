@@ -8,9 +8,11 @@
 #include <3dmr/render/lights_buffer_object.h>
 #include <3dmr/scene/opengex.h>
 #include <3dmr/scene/gltf.h>
+#include <3dmr/skybox.h>
 
 struct Prog {
     struct Scene scene;
+    struct IBL ibl;
     struct ImportMetadata metadata;
     unsigned int activeCamIdx, activeClip, numDirectionalLights, numPointLights, numSpotLights;
     struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS], *slights[MAX_SPOT_LIGHTS];
@@ -19,7 +21,7 @@ struct Prog {
 };
 
 static void usage(const char* prog) {
-    printf("Usage: %s file [file2 [file3 ...]]\n", prog);
+    printf("Usage: %s [--ibl <file>] file [file2 [file3 ...]]\n", prog);
 }
 
 static void resize_callback(struct Viewer* viewer, void* data) {
@@ -187,7 +189,10 @@ static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int a
 #endif
         } else if (!strcmp(extension, ".gltf") || !strcmp(extension, ".glb")) {
 #ifdef TDMR_GLTF
-            if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata, !strcmp(extension, ".glb"))) {
+            struct ImportOptions opts = {0};
+            if (prog->ibl.enabled) opts.ibl = &prog->ibl;
+            opts.binary = !strcmp(extension, ".glb");
+            if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata, &opts)) {
                 fprintf(stderr, "Error: failed to load gltf file\n");
                 ok = 0;
             }
@@ -241,8 +246,17 @@ static int init_def_cam(struct Prog* prog) {
     return 0;
 }
 
+static int load_ibl(struct Prog* prog, const char* filename) {
+    GLuint tex;
+
+    if (!(tex = skybox_load_texture_hdr_equirect(filename, 1024))) {
+        fprintf(stderr, "Error: can't load ibl texture\n");
+        return 0;
+    }
+    return compute_ibl(tex, 32, 1024, 5, 256, &prog->ibl);
+}
+
 int main(int argc, char** argv) {
-    FILE* f = NULL;
     struct Prog prog;
     struct ImportSharedData shared;
     struct Viewer* viewer = NULL;
@@ -264,9 +278,27 @@ int main(int argc, char** argv) {
     prog.numSpotLights = 0;
     import_init_metadata(&prog.metadata);
     import_init_shared_data(&shared);
+
     if (!(viewer = viewer_new(1024, 768, argv[1]))) {
         fprintf(stderr, "Error: failed to start viewer\n");
-    } else if (!(sceneInit = scene_init(&prog.scene, NULL))) {
+        goto exit;
+    }
+
+    if (!strcmp(argv[1], "--ibl")) {
+        if (argc < 4) {
+            usage(argv[0]);
+            goto exit;
+        }
+        if (!load_ibl(&prog, argv[2])) {
+            fprintf(stderr, "Error: loading IBL failed\n");
+            goto exit;
+        }
+        prog.ibl.enabled = 1;
+        argc -= 2;
+        argv += 2;
+    }
+
+    if (!(sceneInit = scene_init(&prog.scene, NULL))) {
         fprintf(stderr, "Error: failed to init scene\n");
     } else if (!(ogexInit = load_scenes(&prog, &shared, argc - 1, argv + 1))) {
         fprintf(stderr, "Error: failed to load scenes\n");
@@ -353,7 +385,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (f) fclose(f);
+exit:
     if (sceneInit) {
         for (i = 0; i < prog.scene.root.nbChildren; i++) {
             nodes_free(prog.scene.root.children[i], imported_node_free);
