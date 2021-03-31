@@ -135,11 +135,13 @@ void anim_clip_init(struct Clip* clip) {
 
 void anim_clip_free(struct Clip* clip) {
     unsigned int i;
-    for (i = 0; i < clip->numAnimations; i++) {
-        anim_animation_free(clip->animations + i);
+    if (clip) {
+        for (i = 0; i < clip->numAnimations; i++) {
+            anim_animation_free(clip->animations + i);
+        }
+        free(clip->animations);
+        free(clip->name);
     }
-    free(clip->animations);
-    free(clip->name);
 }
 
 int anim_clip_new_anim(struct Clip* clip, struct Node* targetNode) {

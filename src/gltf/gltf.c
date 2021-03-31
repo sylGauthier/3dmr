@@ -11,6 +11,7 @@ int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct Import
     /* Save user structures to restore them as-is in case of failure */
     context.sharedSave = *shared;
     context.metadataSave = *metadata;
+    context.nbChildrenSave = root->nbChildren;
 
     context.path = path;
     context.file = gltfFile;

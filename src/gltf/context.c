@@ -21,12 +21,13 @@ static void restore_user_struct(struct GltfContext* context) {
     context->shared->numMatParams = context->sharedSave.numMatParams;
     context->shared->numVA = context->sharedSave.numVA;
     context->shared->numSkins = context->sharedSave.numSkins;
+    context->shared->numGeometries = context->sharedSave.numGeometries;
 
     context->metadata->numCameraNodes = context->metadataSave.numCameraNodes;
     context->metadata->numLightNodes = context->metadataSave.numLightNodes;
     context->metadata->numClips = context->metadataSave.numClips;
 
-    context->root->nbChildren -= context->numNodes;
+    context->root->nbChildren = context->nbChildrenSave;
 }
 
 void gltf_context_drop(struct GltfContext* context) {

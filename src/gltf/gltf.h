@@ -103,6 +103,7 @@ struct GltfContext {
     struct ImportMetadata *metadata, metadataSave;
     struct ImportOptions* opts;
     struct Node* root;
+    unsigned int nbChildrenSave;
     const char* path;
     FILE* file;
     char binary;

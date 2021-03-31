@@ -387,16 +387,16 @@ int main(int argc, char** argv) {
     }
 
 exit:
-    if (sceneInit) {
+    if (ogexInit) {
         for (i = 0; i < prog.scene.root.nbChildren; i++) {
             nodes_free(prog.scene.root.children[i], imported_node_free);
         }
         prog.scene.root.nbChildren = 0;
-        scene_free(&prog.scene, NULL);
-    }
-    if (ogexInit) {
         import_free_shared_data(&shared);
         import_free_metadata(&prog.metadata);
+    }
+    if (sceneInit) {
+        scene_free(&prog.scene, NULL);
     }
     if (viewer) viewer_free(viewer);
 
