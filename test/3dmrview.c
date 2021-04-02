@@ -236,7 +236,7 @@ static int init_def_cam(struct Prog* prog) {
         node_set_camera(prog->defCam, cam);
 
         load_id4(cam->view);
-        camera_projection(1., 60 / 360. * 2 * M_PI, 0.001, 1000., cam->projection);
+        camera_projection(1., 60 / 360. * 2 * M_PI, 0.1, 1000., cam->projection);
         return 1;
     }
     free(cam);
