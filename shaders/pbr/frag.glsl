@@ -27,6 +27,10 @@ uniform sampler2D albedo;
 #else
 uniform vec3 albedo;
 #endif
+
+#ifdef METALNESS_ROUGHNESS_SHARED_TEXTURE
+uniform sampler2D mrmixed;
+#else
 #ifdef METALNESS_TEXTURED
 uniform sampler2D metalness;
 #else
@@ -37,6 +41,8 @@ uniform sampler2D roughness;
 #else
 uniform float roughness;
 #endif
+#endif /* METALNESS_ROUGHNESS_SHARED_TEXTURE */
+
 #ifdef NORMALMAP
 uniform sampler2D normalMap;
 #endif
@@ -63,6 +69,11 @@ void pbr_frag_main() {
 #else
     vec3 a = albedo;
 #endif
+
+#ifdef METALNESS_ROUGHNESS_SHARED_TEXTURE
+    float m = texture(mrmixed, coordTexture).b;
+    float r = texture(mrmixed, coordTexture).g;
+#else
 #ifdef METALNESS_TEXTURED
     float m = texture(metalness, coordTexture).r;
 #else
@@ -73,6 +84,7 @@ void pbr_frag_main() {
 #else
     float r = roughness;
 #endif
+#endif /* METALNESS_ROUGHNESS_SHARED_TEXTURE */
 
     vec3 color = pbr(a, m, r, occlusion, normalize(surfelNormal), surfelPosition, cameraPosition);
     color = reinhard_tonemapping(color, GAMMA, EXPOSURE, PURE_WHITE);

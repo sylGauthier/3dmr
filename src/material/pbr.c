@@ -26,8 +26,14 @@ void pbr_load(GLuint program, void* params) {
     const struct PBRMaterialParams* p = params;
     unsigned int texSlot = 0;
     material_param_send_vec3(program,  &p->albedo, "albedo", &texSlot);
-    material_param_send_float(program, &p->metalness, "metalness", &texSlot);
-    material_param_send_float(program, &p->roughness, "roughness", &texSlot);
+    if (       p->metalness.mode == MAT_PARAM_TEXTURED
+            && p->roughness.mode == MAT_PARAM_TEXTURED
+            && p->metalness.value.texture == p->roughness.value.texture) {
+        material_param_send_float(program, &p->metalness, "mrmixed", &texSlot);
+    } else {
+        material_param_send_float(program, &p->metalness, "metalness", &texSlot);
+        material_param_send_float(program, &p->roughness, "roughness", &texSlot);
+    }
     if (p->normalMap) {
         material_param_send_texture(program, p->normalMap, "normalMap", &texSlot);
     }
@@ -54,13 +60,20 @@ GLuint pbr_shader_new(const struct PBRMaterialParams* params) {
         defines[2 * numDefines] = "ALBEDO_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
     }
-    if (params->metalness.mode == MAT_PARAM_TEXTURED) {
-        defines[2 * numDefines] = "METALNESS_TEXTURED";
+    if (       params->metalness.mode == MAT_PARAM_TEXTURED
+            && params->roughness.mode == MAT_PARAM_TEXTURED
+            && params->metalness.value.texture == params->roughness.value.texture) {
+        defines[2 * numDefines] = "METALNESS_ROUGHNESS_SHARED_TEXTURE";
         defines[2 * numDefines++ + 1] = NULL;
-    }
-    if (params->roughness.mode == MAT_PARAM_TEXTURED) {
-        defines[2 * numDefines] = "ROUGHNESS_TEXTURED";
-        defines[2 * numDefines++ + 1] = NULL;
+    } else {
+        if (params->metalness.mode == MAT_PARAM_TEXTURED) {
+            defines[2 * numDefines] = "METALNESS_TEXTURED";
+            defines[2 * numDefines++ + 1] = NULL;
+        }
+        if (params->roughness.mode == MAT_PARAM_TEXTURED) {
+            defines[2 * numDefines] = "ROUGHNESS_TEXTURED";
+            defines[2 * numDefines++ + 1] = NULL;
+        }
     }
     alpha_set_defines(&params->alpha, defines, &numDefines);
     return shader_find_compile("pbr.frag", GL_FRAGMENT_SHADER, &tdmrShaderRootPath, 1, defines, numDefines);
