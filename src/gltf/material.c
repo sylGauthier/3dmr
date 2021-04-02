@@ -1,6 +1,11 @@
 #include "gltf.h"
 
-static int set_texture(struct GltfContext* context, struct MatParamVec3* param, json_t* jtex) {
+enum TexMode {
+    TEX_VEC_3,
+    TEX_FLOAT
+};
+
+static int set_texture(struct GltfContext* context, void* param, json_t* jtex, enum TexMode mode) {
     json_t* tmp;
     unsigned int texIdx;
 
@@ -10,7 +15,14 @@ static int set_texture(struct GltfContext* context, struct MatParamVec3* param, 
         fprintf(stderr, "Error: gltf: material: invalid texture index\n");
         return 0;
     }
-    material_param_set_vec3_texture(param, context->textures[texIdx]);
+    switch (mode) {
+        case TEX_VEC_3:
+            material_param_set_vec3_texture(param, context->textures[texIdx]);
+            break;
+        case TEX_FLOAT:
+            material_param_set_float_texture(param, context->textures[texIdx]);
+            break;
+    }
     return 1;
 }
 
@@ -46,12 +58,15 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
                 albedo[2] = json_number_value(json_array_get(color, 2));
                 material_param_set_vec3_constant(&pbrMat->albedo, albedo);
             } else if ((color = json_object_get(pbr, "baseColorTexture"))) {
-                if (!set_texture(context, &pbrMat->albedo, color)) {
+                if (!set_texture(context, &pbrMat->albedo, color, TEX_VEC_3)) {
                     return 0;
                 }
             }
             if ((metal = json_object_get(pbr, "metallicRoughnessTexture"))) {
-                fprintf(stderr, "Warning: gltf: material: metallic/roughness texture not supported yet\n");
+                if (       !set_texture(context, &pbrMat->metalness, metal, TEX_FLOAT)
+                        || !set_texture(context, &pbrMat->roughness, metal, TEX_FLOAT)) {
+                    return 0;
+                }
             }
             if ((metal = json_object_get(pbr, "metallicFactor"))) {
                 material_param_set_float_constant(&pbrMat->metalness, json_number_value(metal));
