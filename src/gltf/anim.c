@@ -19,7 +19,7 @@ static void infer_clip_duration(struct Clip* clip) {
 
 static int track_load_vecn(struct GltfContext* context, struct Animation* anim, enum TrackChannel channel,
                            struct GltfAccessor* in, struct GltfAccessor* out, const char* interp) {
-    unsigned int i, numKeys, n, newTrack;
+    unsigned int i, numKeys, n, newTrack, stride;
     float *inf, *outf;
     enum GltfType type;
     struct Track* track;
@@ -56,8 +56,8 @@ static int track_load_vecn(struct GltfContext* context, struct Animation* anim, 
     }
     numKeys = in->count;
     if (!numKeys) return 1;
-    inf = gltf_acc_get_buf(context, in);
-    outf = gltf_acc_get_buf(context, out);
+    inf = gltf_acc_get_buf(context, in, &stride);
+    outf = gltf_acc_get_buf(context, out, &stride);
 
     /* TODO: add STEP and CUBIC_SPLINE interpolation methods here */
     if (!anim_animation_new_track(anim, channel, TRACK_LINEAR, TRACK_LINEAR, numKeys, &newTrack)) return 0;

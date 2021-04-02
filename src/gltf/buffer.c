@@ -11,12 +11,13 @@ struct GltfAccessor* gltf_get_acc(struct GltfContext* context, unsigned int idx)
     return &context->accessors[idx];
 }
 
-void* gltf_acc_get_buf(struct GltfContext* context, struct GltfAccessor* acc) {
+void* gltf_acc_get_buf(struct GltfContext* context, struct GltfAccessor* acc, unsigned int* byteStride) {
     struct GltfBufferView* view;
     struct GltfBuffer* buf;
 
     view = &context->bufferViews[acc->bufferView];
     buf = &context->buffers[view->buffer];
+    if (byteStride) *byteStride = view->byteStride;
     return ((char*)buf->data) + acc->byteOffset + view->byteOffset;
 }
 
@@ -80,6 +81,7 @@ int gltf_parse_buffer_views(struct GltfContext* context, json_t* jroot) {
         context->bufferViews[idx].buffer = json_integer_value(json_object_get(curView, "buffer"));
         context->bufferViews[idx].byteLength = json_integer_value(json_object_get(curView, "byteLength"));
         context->bufferViews[idx].byteOffset = json_integer_value(json_object_get(curView, "byteOffset"));
+        context->bufferViews[idx].byteStride = json_integer_value(json_object_get(curView, "byteStride"));
 
         if (context->bufferViews[idx].buffer >= context->numBuffers) {
             fprintf(stderr, "Error: gltf: bufferView: invalid buffer index\n");

@@ -29,6 +29,7 @@ struct GltfBufferView {
     unsigned int buffer;
     unsigned int byteLength;
     unsigned int byteOffset;
+    unsigned int byteStride;
 };
 
 enum GltfComponentType {
@@ -126,7 +127,7 @@ int gltf_parse_nodes(struct GltfContext* context, struct Node* root, json_t* jro
 int gltf_parse_anims(struct GltfContext* context, json_t* jroot);
 
 struct GltfAccessor* gltf_get_acc(struct GltfContext* context, unsigned int idx);
-void* gltf_acc_get_buf(struct GltfContext* context, struct GltfAccessor* acc);
+void* gltf_acc_get_buf(struct GltfContext* context, struct GltfAccessor* acc, unsigned int* byteStride);
 int gltf_get_root_nodes(json_t* nodes, unsigned int** roots, unsigned int* numRoots);
 
 void gltf_context_free(struct GltfContext* context);

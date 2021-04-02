@@ -3,8 +3,6 @@
 #include "gltf.h"
 
 static unsigned int* acc_get_uint(struct GltfContext* context, struct GltfAccessor* acc) {
-    struct GltfBufferView* view;
-    struct GltfBuffer* buffer;
     void* data;
     uint16_t* data8;
     uint16_t* data16;
@@ -32,9 +30,7 @@ static unsigned int* acc_get_uint(struct GltfContext* context, struct GltfAccess
         fprintf(stderr, "Error: gltf: can't allocate memory\n");
         return NULL;
     }
-    view = &context->bufferViews[acc->bufferView];
-    buffer = &context->buffers[view->buffer];
-    data = ((char*) buffer->data) + view->byteOffset;
+    data = gltf_acc_get_buf(context, acc, NULL);
     if (acc->componentType == GLTF_UNSIGNED_SHORT) {
         unsigned int i;
         data16 = data;
@@ -59,12 +55,20 @@ static unsigned int* acc_get_uint(struct GltfContext* context, struct GltfAccess
 
 static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
                       unsigned int* indices, unsigned int numIndices,
-                      float* positions,
-                      float* normals,
-                      float* texCoords,
-                      unsigned int* joints,
-                      float* weights,        unsigned int numVertices) {
+                      float* positions, unsigned int posStride,
+                      float* normals, unsigned int normStride,
+                      float* texCoords, unsigned int texStride,
+                      unsigned int* joints, unsigned int jointStride,
+                      float* weights, unsigned int weightStride,
+                      unsigned int numVertices) {
     unsigned int i, offset = 0;
+
+    /* TODO: nothing guarantees that data is padded to 4 bytes to we shouldn't do that but treat everything as char */
+    posStride /= sizeof(float);
+    normStride /= sizeof(float);
+    texStride /= sizeof(float);
+    jointStride /= sizeof(float);
+    weightStride /= sizeof(float);
 
     if (indices) {
         mesh->indices = indices;
@@ -76,19 +80,19 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
     }
     mesh->numVertices = numVertices;
     for (i = 0; i < numVertices; i++) {
-        memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh), positions + 3 * i, sizeof(Vec3));
+        memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh), positions + i * posStride, sizeof(Vec3));
     }
     offset += 3;
     if (normals) {
         for (i = 0; i < numVertices; i++) {
-            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, normals + 3 * i, sizeof(Vec3));
+            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, normals + i * normStride, sizeof(Vec3));
         }
         offset += 3;
     }
     if (texCoords) {
         for (i = 0; i < numVertices; i++) {
-            mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset] = texCoords[2 * i];
-            mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset + 1] = 1 - texCoords[2 * i + 1];
+            mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset] = texCoords[i * texStride];
+            mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset + 1] = 1 - texCoords[i * texStride + 1];
         }
         offset += 2;
     }
@@ -99,12 +103,12 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             unsigned int j;
 
             for (j = 0; j < 4; j++) {
-                if (weights[4 * i + j] >= maxWgt1) {
-                    maxIdx1 = joints[4 * i + j];
-                    maxWgt1 = weights[4 * i + j];
-                } else if (weights[4 * i + j] >= maxWgt2) {
-                    maxIdx2 = joints[4 * i + j];
-                    maxWgt2 = weights[4 * i + j];
+                if (weights[4 * i * weightStride + j] >= maxWgt1) {
+                    maxIdx1 = joints[i * jointStride + j];
+                    maxWgt1 = weights[i * weightStride + j];
+                } else if (weights[i * weightStride + j] >= maxWgt2) {
+                    maxIdx2 = joints[i * jointStride + j];
+                    maxWgt2 = weights[i * weightStride + j];
                 }
             }
             mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset] = maxIdx1;
@@ -141,6 +145,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
 
         unsigned int *indices = NULL, *joints = NULL, numIndices = 0, numVertices = 0;
         float *pos = NULL, *normals = NULL, *texCoords = NULL, *weights = NULL;
+        unsigned int posStride = 0, normStride = 0, texStride = 0, weightStride = 0, jointStride = 0;
         char ok = 0;
 
         if (!(context->meshes[idx] = calloc(1, sizeof(**context->meshes)))) {
@@ -187,7 +192,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                 || !(acc = gltf_get_acc(context, json_integer_value(tmp)))
                 || acc->type != GLTF_VEC3
                 || acc->componentType != GLTF_FLOAT
-                || !(pos = gltf_acc_get_buf(context, acc))) {
+                || !(pos = gltf_acc_get_buf(context, acc, &posStride))) {
             fprintf(stderr, "Error: gltf: mesh: needs at least POSITION attribute\n");
             return 0;
         }
@@ -198,7 +203,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                     && acc->type == GLTF_VEC3
                     && acc->componentType == GLTF_FLOAT
                     && acc->count == numVertices
-                    && (normals = gltf_acc_get_buf(context, acc))) {
+                    && (normals = gltf_acc_get_buf(context, acc, &normStride))) {
                 mesh.flags |= MESH_NORMALS;
             } else {
                 fprintf(stderr, "Warning: gltf: mesh: discarding invalid normals\n");
@@ -209,7 +214,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                     && acc->type == GLTF_VEC2
                     && acc->componentType == GLTF_FLOAT
                     && acc->count == numVertices
-                    && (texCoords = gltf_acc_get_buf(context, acc))) {
+                    && (texCoords = gltf_acc_get_buf(context, acc, &texStride))) {
                 mesh.flags |= MESH_TEXCOORDS;
             } else {
                 fprintf(stderr, "Warning: gltf: mesh: discarding invalid texCoords\n");
@@ -226,7 +231,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                             && acc->type == GLTF_VEC4
                             && acc->componentType == GLTF_FLOAT
                             && acc->count == numVertices
-                            && (weights = gltf_acc_get_buf(context, acc))) {
+                            && (weights = gltf_acc_get_buf(context, acc, &weightStride))) {
                         mesh.flags |= MESH_SKIN;
                     } else {
                         fprintf(stderr, "Warning: gltf: mesh: discarding invalid weights\n");
@@ -237,8 +242,21 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
             }
         }
 
+        if (!posStride) posStride = 12;
+        if (!normStride) normStride = 12;
+        if (!texStride) texStride = 8;
+        if (!jointStride) jointStride = 16;
+        if (!weightStride) weightStride = 16;
+
         /* concatenate arrays and build up a Mesh structure */
-        if (!build_mesh(context, &mesh, indices, numIndices, pos, normals, texCoords, joints, weights, numVertices)) {
+        if (!build_mesh(context,    &mesh,
+                        indices,    numIndices,
+                        pos,        posStride,
+                        normals,    normStride,
+                        texCoords,  texStride,
+                        joints,     jointStride,
+                        weights,    weightStride,
+                        numVertices)) {
             fprintf(stderr, "Error: gltf: mesh: could not build mesh\n");
         } else if (geom = context->meshes[idx],
                    !(geom->vertexArray = vertex_array_new(&mesh))
