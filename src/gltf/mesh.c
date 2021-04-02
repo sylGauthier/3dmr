@@ -7,7 +7,7 @@ static unsigned int* acc_get_uint(struct GltfContext* context, struct GltfAccess
     uint16_t* data8;
     uint16_t* data16;
     uint32_t* data32;
-    unsigned int *res, compSize;
+    unsigned int *res, compSize, stride;
 
     if (acc->type == GLTF_SCALAR) {
         compSize = 1;
@@ -30,24 +30,33 @@ static unsigned int* acc_get_uint(struct GltfContext* context, struct GltfAccess
         fprintf(stderr, "Error: gltf: can't allocate memory\n");
         return NULL;
     }
-    data = gltf_acc_get_buf(context, acc, NULL);
+    data = gltf_acc_get_buf(context, acc, &stride);
     if (acc->componentType == GLTF_UNSIGNED_SHORT) {
-        unsigned int i;
+        unsigned int i, j;
         data16 = data;
-        for (i = 0; i < compSize * acc->count; i++) {
-            res[i] = data16[i];
+        stride = stride ? stride / 2 : compSize;
+        for (i = 0; i < acc->count; i++) {
+            for (j = 0; j < compSize; j++) {
+                res[i * compSize + j] = data16[i * stride + j];
+            }
         }
     } else if (acc->componentType == GLTF_UNSIGNED_INT) {
-        unsigned int i;
+        unsigned int i, j;
         data32 = data;
-        for (i = 0; i < compSize * acc->count; i++) {
-            res[i] = data32[i];
+        stride = stride ? stride / 4 : compSize;
+        for (i = 0; i < acc->count; i++) {
+            for (j = 0; j < compSize; j++) {
+                res[i * compSize + j] = data32[i * stride + j];
+            }
         }
     } else if (acc->componentType == GLTF_UNSIGNED_BYTE) {
-        unsigned int i;
+        unsigned int i, j;
         data8 = data;
-        for (i = 0; i < compSize * acc->count; i++) {
-            res[i] = data8[i];
+        stride = stride ? stride : compSize;
+        for (i = 0; i < acc->count; i++) {
+            for (j = 0; j < compSize; j++) {
+                res[i * compSize + j] = data8[i * stride + j];
+            }
         }
     }
     return res;
@@ -58,7 +67,7 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
                       float* positions, unsigned int posStride,
                       float* normals, unsigned int normStride,
                       float* texCoords, unsigned int texStride,
-                      unsigned int* joints, unsigned int jointStride,
+                      unsigned int* joints,
                       float* weights, unsigned int weightStride,
                       unsigned int numVertices) {
     unsigned int i, offset = 0;
@@ -67,7 +76,6 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
     posStride /= sizeof(float);
     normStride /= sizeof(float);
     texStride /= sizeof(float);
-    jointStride /= sizeof(float);
     weightStride /= sizeof(float);
 
     if (indices) {
@@ -103,11 +111,11 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             unsigned int j;
 
             for (j = 0; j < 4; j++) {
-                if (weights[4 * i * weightStride + j] >= maxWgt1) {
-                    maxIdx1 = joints[i * jointStride + j];
+                if (weights[i * weightStride + j] >= maxWgt1) {
+                    maxIdx1 = joints[i * 4 + j];
                     maxWgt1 = weights[i * weightStride + j];
                 } else if (weights[i * weightStride + j] >= maxWgt2) {
-                    maxIdx2 = joints[i * jointStride + j];
+                    maxIdx2 = joints[i * 4 + j];
                     maxWgt2 = weights[i * weightStride + j];
                 }
             }
@@ -145,7 +153,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
 
         unsigned int *indices = NULL, *joints = NULL, numIndices = 0, numVertices = 0;
         float *pos = NULL, *normals = NULL, *texCoords = NULL, *weights = NULL;
-        unsigned int posStride = 0, normStride = 0, texStride = 0, weightStride = 0, jointStride = 0;
+        unsigned int posStride = 0, normStride = 0, texStride = 0, weightStride = 0;
         char ok = 0;
 
         if (!(context->meshes[idx] = calloc(1, sizeof(**context->meshes)))) {
@@ -245,7 +253,6 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         if (!posStride) posStride = 12;
         if (!normStride) normStride = 12;
         if (!texStride) texStride = 8;
-        if (!jointStride) jointStride = 16;
         if (!weightStride) weightStride = 16;
 
         /* concatenate arrays and build up a Mesh structure */
@@ -254,7 +261,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                         pos,        posStride,
                         normals,    normStride,
                         texCoords,  texStride,
-                        joints,     jointStride,
+                        joints,
                         weights,    weightStride,
                         numVertices)) {
             fprintf(stderr, "Error: gltf: mesh: could not build mesh\n");
