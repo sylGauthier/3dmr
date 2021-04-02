@@ -18,6 +18,7 @@ struct Prog {
     struct Node *dlights[MAX_DIRECTIONAL_LIGHTS], *plights[MAX_POINT_LIGHTS], *slights[MAX_SPOT_LIGHTS];
     struct Node *defCam, *defCamPivot, *activeCam;
     int running;
+    float curZNear;
 };
 
 static void usage(const char* prog) {
@@ -40,6 +41,10 @@ static void update_cam(struct Viewer* viewer, struct Prog* prog) {
     camera_buffer_object_update_projection(&prog->scene.camera, MAT_CONST_CAST(activeCam->projection));
     camera_buffer_object_update_view_and_position(&prog->scene.camera, MAT_CONST_CAST(activeCam->view));
     uniform_buffer_send(&prog->scene.camera);
+}
+
+static void switch_cam(struct Viewer* viewer, struct Prog* prog) {
+    update_cam(viewer, prog);
     if (prog->activeCam->name) {
         printf("Current camera: %s\n", prog->activeCam->name);
     } else {
@@ -68,11 +73,17 @@ static void wheel_callback(struct Viewer* viewer, double dx, double dy, void* da
         Vec3 t;
         t[0] = 0;
         t[1] = 0;
-        if (dy < 0)
+        if (dy < 0) {
             t[2] = prog->activeCam->position[2] * (1 - dy / 10.);
-        else
+            prog->curZNear *= (1 - dy / 10.);
+            camera_projection(1., 60 / 360. * 2 * M_PI, prog->curZNear, 1000., prog->defCam->data.camera->projection);
+        } else {
             t[2] = prog->activeCam->position[2] / (1 + dy / 10.);
+            prog->curZNear /= (1 + dy / 10.);
+            camera_projection(1., 60 / 360. * 2 * M_PI, prog->curZNear, 1000., prog->defCam->data.camera->projection);
+        }
         node_set_pos(prog->activeCam, t);
+        update_cam(viewer, prog);
     }
 }
 
@@ -87,14 +98,14 @@ static void key_callback(struct Viewer* viewer, int key, int scancode, int actio
             if (prog->metadata.numCameraNodes) {
                 prog->activeCamIdx = (prog->activeCamIdx + prog->metadata.numCameraNodes - 1) % prog->metadata.numCameraNodes;
                 prog->activeCam = prog->metadata.cameraNodes[prog->activeCamIdx];
-                update_cam(viewer, prog);
+                switch_cam(viewer, prog);
             }
             break;
         case GLFW_KEY_RIGHT: case GLFW_KEY_DOWN:
             if (prog->metadata.numCameraNodes) {
                 prog->activeCamIdx = (prog->activeCamIdx + 1) % prog->metadata.numCameraNodes;
                 prog->activeCam = prog->metadata.cameraNodes[prog->activeCamIdx];
-                update_cam(viewer, prog);
+                switch_cam(viewer, prog);
             }
             break;
         case GLFW_KEY_HOME:
@@ -236,7 +247,8 @@ static int init_def_cam(struct Prog* prog) {
         node_set_camera(prog->defCam, cam);
 
         load_id4(cam->view);
-        camera_projection(1., 60 / 360. * 2 * M_PI, 0.1, 1000., cam->projection);
+        prog->curZNear = 0.1;
+        camera_projection(1., 60 / 360. * 2 * M_PI, prog->curZNear, 1000., cam->projection);
         return 1;
     }
     free(cam);
