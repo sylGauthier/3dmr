@@ -39,13 +39,13 @@ int gltf_parse_cameras(struct GltfContext* context, json_t* jroot) {
         }
         load_id4(context->cameras[i]->view);
         cam = json_array_get(cur, i);
-        if (!(persp = json_object_get(cam, "perspective"))) {
-            fprintf(stderr, "Error: gltf: camera: missing perspective\n");
-            return 0;
-        }
-        if (!parse_perspective(context->cameras[i], persp)) {
-            fprintf(stderr, "Error: gltf: camera: perspective\n");
-            return 0;
+        if ((persp = json_object_get(cam, "perspective"))) {
+            if (!parse_perspective(context->cameras[i], persp)) {
+                fprintf(stderr, "Error: gltf: camera: perspective\n");
+                return 0;
+            }
+        } else {
+            camera_projection(1., 60 / 360. * 2 * M_PI, 0.1, 1000., context->cameras[i]->projection);
         }
     }
     return 1;
