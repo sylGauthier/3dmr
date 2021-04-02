@@ -119,8 +119,7 @@ static int parse_track(struct GltfContext* context, struct Animation* anim, json
     out = context->accessors + json_integer_value(tmp);
 
     if (!(tmp = json_object_get(sampler, "interpolation")) || !(interp = json_string_value(tmp))) {
-        fprintf(stderr, "Error: gltf: anim: sampler: missing interpolation\n");
-        return 0;
+        interp = "LINEAR";
     }
 
     /* Get path */
