@@ -5,7 +5,7 @@ enum TexMode {
     TEX_FLOAT
 };
 
-static int set_texture(struct GltfContext* context, void* param, json_t* jtex, enum TexMode mode) {
+static GLuint get_texture(struct GltfContext* context, json_t* jtex) {
     json_t* tmp;
     unsigned int texIdx;
 
@@ -15,12 +15,18 @@ static int set_texture(struct GltfContext* context, void* param, json_t* jtex, e
         fprintf(stderr, "Error: gltf: material: invalid texture index\n");
         return 0;
     }
+    return context->textures[texIdx];
+}
+
+static int set_texture(struct GltfContext* context, void* param, json_t* jtex, enum TexMode mode) {
+    GLuint tex;
+    if (!(tex = get_texture(context, jtex))) return 0;
     switch (mode) {
         case TEX_VEC_3:
-            material_param_set_vec3_texture(param, context->textures[texIdx]);
+            material_param_set_vec3_texture(param, tex);
             break;
         case TEX_FLOAT:
-            material_param_set_float_texture(param, context->textures[texIdx]);
+            material_param_set_float_texture(param, tex);
             break;
     }
     return 1;
@@ -41,7 +47,7 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
         return 0;
     }
     json_array_foreach(materials, idx, curMat) {
-        json_t* pbr;
+        json_t *pbr, *normal;
         struct PBRMaterialParams* pbrMat;
         Vec3 albedo;
 
@@ -73,6 +79,11 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
             }
             if ((roughness = json_object_get(pbr, "roughnessFactor"))) {
                 material_param_set_float_constant(&pbrMat->roughness, json_number_value(roughness));
+            }
+        }
+        if ((normal = json_object_get(curMat, "normalTexture"))) {
+            if (!(pbrMat->normalMap = get_texture(context, normal))) {
+                return 0;
             }
         }
         if (context->opts) pbrMat->ibl = context->opts->ibl;

@@ -67,6 +67,7 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
                       float* positions, unsigned int posStride,
                       float* normals, unsigned int normStride,
                       float* texCoords, unsigned int texStride,
+                      float* tangents, unsigned int tgtStride,
                       unsigned int* joints,
                       float* weights, unsigned int weightStride,
                       unsigned int numVertices) {
@@ -76,6 +77,7 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
     posStride /= sizeof(float);
     normStride /= sizeof(float);
     texStride /= sizeof(float);
+    tgtStride /= sizeof(float);
     weightStride /= sizeof(float);
 
     if (indices) {
@@ -103,6 +105,16 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + offset + 1] = 1 - texCoords[i * texStride + 1];
         }
         offset += 2;
+    }
+    if (tangents) {
+        if (!normals) {
+            fprintf(stderr, "Error: gltf: mesh: can't have tangents but no normals\n");
+            return 0;
+        }
+        for (i = 0; i < numVertices; i++) {
+            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, tangents + i * tgtStride, sizeof(Vec4));
+        }
+        offset += 4;
     }
     if (joints && weights) {
         for (i = 0; i < numVertices; i++) {
@@ -152,8 +164,8 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         struct Geometry* geom = NULL;
 
         unsigned int *indices = NULL, *joints = NULL, numIndices = 0, numVertices = 0;
-        float *pos = NULL, *normals = NULL, *texCoords = NULL, *weights = NULL;
-        unsigned int posStride = 0, normStride = 0, texStride = 0, weightStride = 0;
+        float *pos = NULL, *normals = NULL, *texCoords = NULL, *tangents = NULL, *weights = NULL;
+        unsigned int posStride = 0, normStride = 0, texStride = 0, tgtStride = 0, weightStride = 0;
         char ok = 0;
 
         if (!(context->meshes[idx] = calloc(1, sizeof(**context->meshes)))) {
@@ -228,6 +240,17 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                 fprintf(stderr, "Warning: gltf: mesh: discarding invalid texCoords\n");
             }
         }
+        if ((tmp = json_object_get(attributes, "TANGENT"))) {
+            if ((acc = gltf_get_acc(context, json_integer_value(tmp)))
+                    && acc->type == GLTF_VEC4
+                    && acc->componentType == GLTF_FLOAT
+                    && acc->count == numVertices
+                    && (tangents = gltf_acc_get_buf(context, acc, &tgtStride))) {
+                mesh.flags |= MESH_TANGENTS;
+            } else {
+                fprintf(stderr, "Warning: gltf: mesh: discarding invalid normals\n");
+            }
+        }
         if ((tmp = json_object_get(attributes, "JOINTS_0"))) {
             if ((acc = gltf_get_acc(context, json_integer_value(tmp)))
                     && acc->count == numVertices
@@ -253,6 +276,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         if (!posStride) posStride = 12;
         if (!normStride) normStride = 12;
         if (!texStride) texStride = 8;
+        if (!tgtStride) tgtStride = 16;
         if (!weightStride) weightStride = 16;
 
         /* concatenate arrays and build up a Mesh structure */
@@ -261,6 +285,7 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
                         pos,        posStride,
                         normals,    normStride,
                         texCoords,  texStride,
+                        tangents,   tgtStride,
                         joints,
                         weights,    weightStride,
                         numVertices)) {
