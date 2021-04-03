@@ -55,7 +55,8 @@ uniform sampler2D occlusionMap;
 void pbr_frag_main() {
 #ifdef NORMALMAP
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
-    surfelNormal = tangentBasis * surfelNormal;
+    mat3 tbn = mat3(normalize(tangentBasis[0]), normalize(tangentBasis[1]), normalize(tangentBasis[2]));
+    surfelNormal = tbn * surfelNormal;
 #endif
 
 #ifdef OCCLUSIONMAP

@@ -8,8 +8,7 @@ in vec3 in_Normal;
 in vec2 in_TexCoord;
 #endif
 #if defined(HAVE_TANGENT) && defined(HAVE_NORMAL)
-in vec3 in_Tangent;
-in vec3 in_Bitangent;
+in vec4 in_Tangent;
 #endif
 #ifdef HAVE_SKIN
 in vec2 in_Index;
@@ -53,11 +52,13 @@ void standard_vert_main() {
 #else
     skinnedVertex = vec4(in_Vertex, 1.0);
 #endif
+
 #ifdef OVERLAY
     gl_Position = model * skinnedVertex;
 #else
     gl_Position = projection * view * model * skinnedVertex;
 #endif
+
 #ifdef HAVE_NORMAL
     surfelPosition = vec3(model * vec4(skinnedVertex.xyz, 1.0));
 #ifdef HAVE_TANGENT
@@ -74,6 +75,7 @@ void standard_vert_main() {
 #endif
 #endif
 #endif
+
 #ifdef HAVE_TEXCOORD
     coordTexture = in_TexCoord;
 #endif
