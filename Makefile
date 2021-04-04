@@ -1,6 +1,6 @@
 include config.mk
 
-DEPS := glfw3 glew libpng $(if $(OPENGEX),liboddl)
+DEPS := glfw3 glew libpng libjpeg $(if $(OPENGEX),liboddl)
 NAME := 3dmr
 LIB := lib$(NAME).a
 VERSION ?= $(shell git describe --tags 2>/dev/null || printf '9999-%d-%s\n' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
