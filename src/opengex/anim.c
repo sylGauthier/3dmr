@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <3dmr/animation/animation.h>
+#include <3dmr/math/utils.h>
 
 #include "anim.h"
 #include "clip.h"
@@ -107,12 +108,10 @@ static int parse_m4_values_linear(const struct OgexContext* context, struct Anim
         Vec3 pos, scale;
         Quaternion quat;
         if (context->up == AXIS_Z) ogex_swap_yz_mat(mat[i]);
-        if (!extract_scale(scale, mat[i])) {
+        if (!mat4toposrotscale(mat[i], pos, quat, scale)) {
             fprintf(stderr, "Error: Key: invalid Transform (null scale)\n");
             return 0;
         }
-        memcpy(pos, mat[i][3], sizeof(Vec3));
-        quaternion_from_mat4(quat, MAT_CONST_CAST(mat[i]));
         memcpy(&anim->tracks[0].values.values[3 * i], pos, sizeof(pos));
         memcpy(&anim->tracks[1].values.values[3 * i], scale, sizeof(scale));
         memcpy(&anim->tracks[2].values.values[4 * i], quat, sizeof(quat));

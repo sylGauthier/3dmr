@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <3dmr/material/phong.h>
+#include <3dmr/math/utils.h>
 
 #include "anim.h"
 #include "context.h"
@@ -14,20 +15,19 @@
 
 static int parse_node_transform(const struct OgexContext* context, struct Node* node, const struct ODDLStructure* cur) {
     Mat4 transform;
-    Vec3 scale;
+    Vec3 scale, pos;
     Quaternion quat;
 
     if (!ogex_parse_transforms(context, cur, &transform, 1)) {
         return 0;
     }
-    if (!extract_scale(scale, transform)) {
+    if (!mat4toposrotscale(transform, pos, quat, scale)) {
         fprintf(stderr, "Error: parse_node_transform: invalid transform matrix (null scaling)\n");
         return 0;
     }
-    quaternion_from_mat4(quat, MAT_CONST_CAST(transform));
     node_set_scale(node, scale);
     node_set_orientation(node, quat);
-    node_set_pos(node, transform[3]);
+    node_set_pos(node, pos);
     return 1;
 }
 
