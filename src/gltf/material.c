@@ -63,14 +63,9 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
                 albedo[1] = json_number_value(json_array_get(color, 1));
                 albedo[2] = json_number_value(json_array_get(color, 2));
                 material_param_set_vec3_constant(&pbrMat->albedo, albedo);
-            } else if ((color = json_object_get(pbr, "baseColorTexture"))) {
-                if (!set_texture(context, &pbrMat->albedo, color, TEX_VEC_3)) {
-                    return 0;
-                }
             }
-            if ((metal = json_object_get(pbr, "metallicRoughnessTexture"))) {
-                if (       !set_texture(context, &pbrMat->metalness, metal, TEX_FLOAT)
-                        || !set_texture(context, &pbrMat->roughness, metal, TEX_FLOAT)) {
+            if ((color = json_object_get(pbr, "baseColorTexture"))) {
+                if (!set_texture(context, &pbrMat->albedo, color, TEX_VEC_3)) {
                     return 0;
                 }
             }
@@ -79,6 +74,12 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
             }
             if ((roughness = json_object_get(pbr, "roughnessFactor"))) {
                 material_param_set_float_constant(&pbrMat->roughness, json_number_value(roughness));
+            }
+            if ((metal = json_object_get(pbr, "metallicRoughnessTexture"))) {
+                if (       !set_texture(context, &pbrMat->metalness, metal, TEX_FLOAT)
+                        || !set_texture(context, &pbrMat->roughness, metal, TEX_FLOAT)) {
+                    return 0;
+                }
             }
         }
         if ((normal = json_object_get(curMat, "normalTexture"))) {
