@@ -4,10 +4,10 @@
 
 #if defined(ALBEDO_TEXTURED) || defined(METALNESS_TEXTURED) \
                              || defined(ROUGHNESS_TEXTURED) \
+                             || defined(METALNESS_ROUGHNESS_SHARED_TEXTURE) \
                              || defined(NORMALMAP) \
                              || defined(OCCLUSIONMAP) \
                              || defined(ALPHA_TEXTURED)
-
 #define HAVE_TEXCOORD
 #endif
 
