@@ -1,5 +1,7 @@
 #include <string.h>
 
+#include <3dmr/math/utils.h>
+
 #include "gltf.h"
 #include "light_node.h"
 #include "topology.h"
@@ -57,6 +59,16 @@ static int parse_node(struct GltfContext* context, struct Node* node, json_t* jn
     zero3v(pos);
     quaternion_load_id(rot);
 
+    if ((tmp = json_object_get(jnode, "matrix"))) {
+        unsigned int i;
+        Mat4 mat;
+
+        for (i = 0; i < 16; i++) mat[i / 4][i % 4] = json_number_value(json_array_get(tmp, i));
+        if (!mat4toposrotscale(mat, pos, rot, scale)) {
+            fprintf(stderr, "Error: gltf: node: invalid transform matrix\n");
+            return 0;
+        }
+    }
     if ((tmp = json_object_get(jnode, "translation"))) {
         unsigned int i;
 
