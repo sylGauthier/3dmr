@@ -7,6 +7,18 @@
 #include <3dmr/scene/gltf.h>
 #include <3dmr/material/pbr.h>
 
+#define GLTF_TYPE_SIZE(type) (((type) == GLTF_BYTE || (type) == GLTF_UNSIGNED_BYTE) \
+                            + ((type) == GLTF_SHORT || (type) == GLTF_UNSIGNED_SHORT) * 2 \
+                            + ((type) == GLTF_UNSIGNED_INT || (type) == GLTF_FLOAT) * 4)
+
+#define GLTF_COMP_SIZE(comp) (((comp) == GLTF_SCALAR) \
+                            + ((comp) == GLTF_VEC2) * 2 \
+                            + ((comp) == GLTF_VEC3) * 3 \
+                            + ((comp) == GLTF_VEC4) * 4 \
+                            + ((comp) == GLTF_MAT2) * 4 \
+                            + ((comp) == GLTF_MAT3) * 9 \
+                            + ((comp) == GLTF_MAT4) * 16)
+
 struct GltfLight {
     enum GltfLightType {
         GLTF_POINT,         /* "point" */

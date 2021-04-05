@@ -99,6 +99,19 @@ int gltf_parse_buffer_views(struct GltfContext* context, json_t* jroot) {
     return 1;
 }
 
+static int check_mem_bounds(struct GltfContext* context, struct GltfAccessor* acc) {
+    struct GltfBufferView* v;
+    unsigned int stride;
+
+    v = context->bufferViews + acc->bufferView;
+    if (v->byteStride) {
+        stride = v->byteStride;
+    } else {
+        stride = GLTF_TYPE_SIZE(acc->componentType) * GLTF_COMP_SIZE(acc->type);
+    }
+    return acc->count * stride <= v->byteLength;
+}
+
 int gltf_parse_accessors(struct GltfContext* context, json_t* jroot) {
     unsigned int idx;
     json_t *curAccessor, *accessors;
@@ -153,6 +166,10 @@ int gltf_parse_accessors(struct GltfContext* context, json_t* jroot) {
                 && context->accessors[idx].componentType != GLTF_UNSIGNED_INT
                 && context->accessors[idx].componentType != GLTF_FLOAT) {
             fprintf(stderr, "Error: gltf: invalid componentType: %d\n", context->accessors[idx].componentType);
+            return 0;
+        }
+        if (!check_mem_bounds(context, &context->accessors[idx])) {
+            fprintf(stderr, "Error: gltf: accessor: invalid parameters (mem bounds)\n");
             return 0;
         }
     }
