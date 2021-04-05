@@ -98,6 +98,9 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, normals + i * normStride, sizeof(Vec3));
         }
         offset += 3;
+    } else if (MESH_HAS_NORMALS(mesh)) {
+        mesh_compute_normals(mesh);
+        offset += 3;
     }
     if (texCoords) {
         for (i = 0; i < numVertices; i++) {
@@ -125,7 +128,10 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
         }
         offset += 6;
     } else if (MESH_HAS_TANGENTS(mesh)) {
-        mesh_compute_tangents(mesh);
+        if (!mesh_compute_tangents(mesh)) {
+            fprintf(stderr, "Error: gltf: mesh: can't compute tangents, missing normals?\n");
+            return 0;
+        }
     }
     if (joints && weights) {
         for (i = 0; i < numVertices; i++) {
@@ -290,7 +296,10 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         if (!tgtStride) tgtStride = 16;
         if (!weightStride) weightStride = 16;
 
+        /* if normalMap, we need tangents so we set the flag, build_mesh will generate them if they were not found in the model */
         if (pbr->normalMap) mesh.flags |= MESH_TANGENTS;
+        /* we're using PBR so we need normals, build_mesh will generate them if they are not found in the model */
+        mesh.flags |= MESH_NORMALS;
 
         /* concatenate arrays and build up a Mesh structure */
         if (!build_mesh(context,    &mesh,
