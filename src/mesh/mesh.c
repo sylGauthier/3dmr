@@ -46,27 +46,13 @@ unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index) {
 int mesh_compute_tangents(struct Mesh* mesh) {
     Mat2 dTC;
     Vec3 d1, d2, T, B;
-    float oneOverDet, *tmp;
-    unsigned int i, j, ind[3], n, m, numVertices;
+    float oneOverDet;
+    unsigned int i, j, ind[3], n, numVertices;
 
-    if (MESH_HAS_TANGENTS(mesh)) {
-        return 1;
-    } else if (!MESH_HAS_NORMALS(mesh) || !MESH_HAS_TEXCOORDS(mesh)) {
+    if (!MESH_HAS_TANGENTS(mesh) || !MESH_HAS_NORMALS(mesh) || !MESH_HAS_TEXCOORDS(mesh)) {
         return 0;
     }
-    m = MESH_FLOATS_PER_VERTEX(mesh);
-    mesh->flags |= MESH_TANGENTS;
     n = MESH_FLOATS_PER_VERTEX(mesh);
-    if (!(tmp = malloc(n * mesh->numVertices * sizeof(float)))) {
-        mesh->flags &= ~MESH_TANGENTS;
-        return 0;
-    }
-    for (i = 0; i < mesh->numVertices; i++) {
-        memcpy(tmp + n * i, mesh->vertices + m * i, m * sizeof(float));
-    }
-    free(mesh->vertices);
-    mesh->vertices = tmp;
-
     if (mesh->numIndices) {
         numVertices = mesh->numIndices;
     } else {
@@ -105,6 +91,30 @@ int mesh_compute_tangents(struct Mesh* mesh) {
         }
     }
     return 1;
+}
+
+int mesh_add_tangents(struct Mesh* mesh) {
+    float *tmp;
+    unsigned int i, n, m;
+
+    if (MESH_HAS_TANGENTS(mesh)) {
+        return 1;
+    } else if (!MESH_HAS_NORMALS(mesh) || !MESH_HAS_TEXCOORDS(mesh)) {
+        return 0;
+    }
+    m = MESH_FLOATS_PER_VERTEX(mesh);
+    mesh->flags |= MESH_TANGENTS;
+    n = MESH_FLOATS_PER_VERTEX(mesh);
+    if (!(tmp = malloc(n * mesh->numVertices * sizeof(float)))) {
+        mesh->flags &= ~MESH_TANGENTS;
+        return 0;
+    }
+    for (i = 0; i < mesh->numVertices; i++) {
+        memcpy(tmp + n * i, mesh->vertices + m * i, m * sizeof(float));
+    }
+    free(mesh->vertices);
+    mesh->vertices = tmp;
+    return mesh_compute_tangents(mesh);
 }
 
 void mesh_free(struct Mesh* mesh) {

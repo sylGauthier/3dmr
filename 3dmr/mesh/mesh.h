@@ -32,7 +32,11 @@ struct Mesh {
 int mesh_unindex(struct Mesh* mesh);
 unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index);
 
+/* compute already existing tangents in-place */
 int mesh_compute_tangents(struct Mesh* mesh);
+
+/* copy/extend vertex array to add tangents then compute them */
+int mesh_add_tangents(struct Mesh* mesh);
 
 void mesh_free(struct Mesh*);
 
