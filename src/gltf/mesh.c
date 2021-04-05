@@ -110,7 +110,7 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
         Vec3 normal, tgt, bitgt;
         float sign;
 
-        if (!(mesh->flags & MESH_NORMALS)) {
+        if (!(MESH_HAS_NORMALS(mesh))) {
             fprintf(stderr, "Error: gltf: mesh: can't have tangents but no normals\n");
             return 0;
         }
@@ -124,6 +124,8 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset + 3, bitgt, sizeof(Vec3));
         }
         offset += 6;
+    } else if (MESH_HAS_TANGENTS(mesh)) {
+        mesh_compute_tangents(mesh);
     }
     if (joints && weights) {
         for (i = 0; i < numVertices; i++) {
@@ -287,6 +289,8 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         if (!texStride) texStride = 8;
         if (!tgtStride) tgtStride = 16;
         if (!weightStride) weightStride = 16;
+
+        if (pbr->normalMap) mesh.flags |= MESH_TANGENTS;
 
         /* concatenate arrays and build up a Mesh structure */
         if (!build_mesh(context,    &mesh,
