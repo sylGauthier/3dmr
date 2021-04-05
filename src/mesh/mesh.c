@@ -43,6 +43,57 @@ unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index) {
     return mesh->numVertices++;
 }
 
+int mesh_compute_normals(struct Mesh* mesh) {
+    Vec3 v1, v2, normal;
+    unsigned int i, j, nf, nv, ind[3];
+
+    nf = MESH_FLOATS_PER_VERTEX(mesh);
+    if (mesh->numIndices) {
+        nv = mesh->numIndices;
+    } else {
+        nv = mesh->numVertices;
+    }
+    for (i = 0; i < nv; i += 3) {
+        if (mesh->numIndices) {
+            memcpy(ind, mesh->indices + i, sizeof(ind));
+        } else {
+            ind[0] = i;
+            ind[1] = i + 1;
+            ind[2] = i + 2;
+        }
+        sub3v(v1, mesh->vertices + nf * ind[1], mesh->vertices + nf * ind[0]);
+        sub3v(v2, mesh->vertices + nf * ind[2], mesh->vertices + nf * ind[0]);
+        cross3(normal, v1, v2);
+        normalize3(normal);
+        for (j = 0; j < 3; j++) {
+            memcpy(mesh->vertices + nf * ind[j] + 3, normal, sizeof(Vec3));
+        }
+    }
+    return 1;
+}
+
+int mesh_add_normals(struct Mesh* mesh) {
+    float *tmp;
+    unsigned int i, n, m;
+
+    if (MESH_HAS_NORMALS(mesh)) {
+        return 1;
+    }
+    m = MESH_FLOATS_PER_VERTEX(mesh);
+    mesh->flags |= MESH_NORMALS;
+    n = MESH_FLOATS_PER_VERTEX(mesh);
+    if (!(tmp = malloc(n * mesh->numVertices * sizeof(float)))) {
+        mesh->flags &= ~MESH_NORMALS;
+        return 0;
+    }
+    for (i = 0; i < mesh->numVertices; i++) {
+        memcpy(tmp + n * i, mesh->vertices + m * i, m * sizeof(float));
+    }
+    free(mesh->vertices);
+    mesh->vertices = tmp;
+    return mesh_compute_normals(mesh);
+}
+
 int mesh_compute_tangents(struct Mesh* mesh) {
     Mat2 dTC;
     Vec3 d1, d2, T, B;

@@ -32,6 +32,12 @@ struct Mesh {
 int mesh_unindex(struct Mesh* mesh);
 unsigned int mesh_duplicate_index(struct Mesh* mesh, unsigned int index);
 
+/* compute already existing normals in-place */
+int mesh_compute_normals(struct Mesh* mesh);
+
+/* copy/extend vertex array to add normals then compute them */
+int mesh_add_normals(struct Mesh* mesh);
+
 /* compute already existing tangents in-place */
 int mesh_compute_tangents(struct Mesh* mesh);
 
