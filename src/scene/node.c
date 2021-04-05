@@ -70,7 +70,7 @@ void node_set_camera(struct Node* node, struct Camera* camera) {
 int node_set_name(struct Node* node, const char* name) {
     char* newname;
 
-    if ((newname = malloc(strlen(name)))) {
+    if ((newname = malloc(strlen(name) + 1))) {
         strcpy(newname, name);
         node->name = newname;
         return 1;
