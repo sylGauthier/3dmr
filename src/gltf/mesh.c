@@ -132,6 +132,7 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
             fprintf(stderr, "Error: gltf: mesh: can't compute tangents, missing normals?\n");
             return 0;
         }
+        offset += 6;
     }
     if (joints && weights) {
         for (i = 0; i < numVertices; i++) {
