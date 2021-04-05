@@ -70,8 +70,11 @@ void vertex_array_gen(const struct Mesh* mesh, struct VertexArray* va) {
     /* - Tangents and bitangents */
     if (MESH_HAS_TANGENTS(mesh)) {
         glEnableVertexAttribArray(LOCATION_TANGENT);
-        glVertexAttribPointer(LOCATION_TANGENT, 4, GL_FLOAT, GL_FALSE, stride, offset);
-        offset += 4;
+        glVertexAttribPointer(LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE, stride, offset);
+        offset += 3;
+        glEnableVertexAttribArray(LOCATION_BITANGENT);
+        glVertexAttribPointer(LOCATION_BITANGENT, 3, GL_FLOAT, GL_FALSE, stride, offset);
+        offset += 3;
     }
     if (MESH_HAS_SKIN(mesh)) {
         glEnableVertexAttribArray(LOCATION_BONE_IDX);

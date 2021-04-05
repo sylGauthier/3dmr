@@ -300,6 +300,7 @@ GLuint shader_link(const GLuint* shaders, size_t numShaders) {
     glBindAttribLocation(prog, LOCATION_NORMAL, "in_Normal");
     glBindAttribLocation(prog, LOCATION_TEXCOORD, "in_TexCoord");
     glBindAttribLocation(prog, LOCATION_TANGENT, "in_Tangent");
+    glBindAttribLocation(prog, LOCATION_BITANGENT, "in_Bitangent");
     glBindAttribLocation(prog, LOCATION_BONE_IDX, "in_Index");
     glBindAttribLocation(prog, LOCATION_BONE_WEIGHT, "in_Weight");
     glLinkProgram(prog);

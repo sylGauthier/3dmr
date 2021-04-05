@@ -24,7 +24,7 @@ struct Mesh {
 
 #define MESH_FLOATS_PER_VERTEX(mesh) (3 + 3 * !!MESH_HAS_NORMALS(mesh) \
                                         + 2 * !!MESH_HAS_TEXCOORDS(mesh) \
-                                        + 4 * !!MESH_HAS_TANGENTS(mesh) \
+                                        + 6 * !!MESH_HAS_TANGENTS(mesh) \
                                         + 4 * !!MESH_HAS_SKIN(mesh))
 #define MESH_SIZEOF_VERTEX(mesh) (MESH_FLOATS_PER_VERTEX(mesh) * sizeof(float))
 #define MESH_SIZEOF_VERTICES(mesh) (MESH_SIZEOF_VERTEX(mesh) * (mesh)->numVertices)

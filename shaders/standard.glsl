@@ -1,15 +1,19 @@
 #include "camera.glsl"
 
 in vec3 in_Vertex;
+
 #ifdef HAVE_NORMAL
 in vec3 in_Normal;
+#ifdef HAVE_TANGENT
+in vec3 in_Tangent;
+in vec3 in_Bitangent;
 #endif
+#endif
+
 #ifdef HAVE_TEXCOORD
 in vec2 in_TexCoord;
 #endif
-#if defined(HAVE_TANGENT) && defined(HAVE_NORMAL)
-in vec4 in_Tangent;
-#endif
+
 #ifdef HAVE_SKIN
 in vec2 in_Index;
 in vec2 in_Weight;
@@ -23,14 +27,17 @@ out mat3 tangentBasis;
 out vec3 surfelNormal;
 #endif
 #endif
+
 #ifdef HAVE_TEXCOORD
 out vec2 coordTexture;
 #endif
 
 uniform mat4 model;
+
 #ifdef HAVE_NORMAL
 uniform mat3 inverseNormal;
 #endif
+
 #ifdef HAVE_SKIN
 layout(std140) uniform Bones {
     mat4 bones[NB_BONES];

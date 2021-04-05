@@ -107,14 +107,23 @@ static int build_mesh(struct GltfContext* context, struct Mesh* mesh,
         offset += 2;
     }
     if (tangents) {
-        if (!normals) {
+        Vec3 normal, tgt, bitgt;
+        float sign;
+
+        if (!(mesh->flags & MESH_NORMALS)) {
             fprintf(stderr, "Error: gltf: mesh: can't have tangents but no normals\n");
             return 0;
         }
         for (i = 0; i < numVertices; i++) {
-            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, tangents + i * tgtStride, sizeof(Vec4));
+            memcpy(normal, mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 3, sizeof(Vec3));
+            memcpy(tgt, tangents + i * tgtStride, sizeof(Vec3));
+            sign = tangents[i * tgtStride + 3];
+            cross3(bitgt, normal, tgt);
+            scale3v(bitgt, sign);
+            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset, tgt, sizeof(Vec3));
+            memcpy(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + offset + 3, bitgt, sizeof(Vec3));
         }
-        offset += 4;
+        offset += 6;
     }
     if (joints && weights) {
         for (i = 0; i < numVertices; i++) {
