@@ -14,3 +14,5 @@ tux.jpeg: tux.png
 	convert $< $@
 grad.png:
 	convert -size 256x256 gradient:white-black $@
+occlusion.png:
+	curl "https://pedantic.software/syg/files/3dmr/occlusion.png" > $@
