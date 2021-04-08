@@ -11,6 +11,7 @@ struct PBRMaterialParams {
     struct MatParamFloat metalness;
     struct MatParamFloat roughness;
     GLuint normalMap;
+    GLuint occlusionMap;
     struct AlphaParams alpha;
     struct IBL* ibl;
 };

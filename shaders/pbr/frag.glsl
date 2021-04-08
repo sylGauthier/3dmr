@@ -2,7 +2,12 @@
 #include "../hdr.glsl"
 #include "pbr.glsl"
 
-#if defined(ALBEDO_TEXTURED) || defined(METALNESS_TEXTURED) || defined(ROUGHNESS_TEXTURED) || defined(NORMALMAP) || defined(ALPHA_TEXTURED)
+#if defined(ALBEDO_TEXTURED) || defined(METALNESS_TEXTURED) \
+                             || defined(ROUGHNESS_TEXTURED) \
+                             || defined(NORMALMAP) \
+                             || defined(OCCLUSIONMAP) \
+                             || defined(ALPHA_TEXTURED)
+
 #define HAVE_TEXCOORD
 #endif
 
@@ -35,6 +40,9 @@ uniform float roughness;
 #ifdef NORMALMAP
 uniform sampler2D normalMap;
 #endif
+#ifdef OCCLUSIONMAP
+uniform sampler2D occlusionMap;
+#endif
 
 #include "../alpha.glsl"
 
@@ -42,6 +50,12 @@ void pbr_frag_main() {
 #ifdef NORMALMAP
     vec3 surfelNormal = normalize(2.0 * texture(normalMap, coordTexture).xyz - 1.0);
     surfelNormal = tangentBasis * surfelNormal;
+#endif
+
+#ifdef OCCLUSIONMAP
+    float occlusion = texture(occlusionMap, coordTexture).r;
+#else
+    float occlusion = 1;
 #endif
 
 #ifdef ALBEDO_TEXTURED
@@ -60,7 +74,7 @@ void pbr_frag_main() {
     float r = roughness;
 #endif
 
-    vec3 color = pbr(a, m, r, normalize(surfelNormal), surfelPosition, cameraPosition);
+    vec3 color = pbr(a, m, r, occlusion, normalize(surfelNormal), surfelPosition, cameraPosition);
     color = reinhard_tonemapping(color, GAMMA, EXPOSURE, PURE_WHITE);
     out_Color = vec4(color, get_alpha());
 }

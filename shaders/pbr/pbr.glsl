@@ -58,7 +58,7 @@ vec3 pbr_ambient_lighting(vec3 Lr, float cosLo, vec3 N, vec3 albedo, float metal
     return diffuseIBL + specularIBL;
 }
 
-vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 surfelPosition, vec3 cameraPosition) {
+vec3 pbr(vec3 albedo, float metalness, float roughness, float occlusion, vec3 surfelNormal, vec3 surfelPosition, vec3 cameraPosition) {
     // Outgoing light
     vec3 Lo = normalize(cameraPosition - surfelPosition);
     float cosLo = max(0.0, dot(surfelNormal, Lo));
@@ -94,5 +94,5 @@ vec3 pbr(vec3 albedo, float metalness, float roughness, vec3 surfelNormal, vec3 
     // Ambient lighting
     vec3 ambientLighting = pbr_ambient_lighting(Lr, cosLo, surfelNormal, albedo, metalness, roughness, F0);
 
-    return ambientLighting + directLighting;
+    return occlusion * ambientLighting + directLighting;
 }

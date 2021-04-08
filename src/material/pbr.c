@@ -10,6 +10,7 @@ void pbr_material_params_init(struct PBRMaterialParams* p) {
     material_param_set_float_constant(&p->roughness, 0.5);
     alpha_params_init(&p->alpha);
     p->normalMap = 0;
+    p->occlusionMap = 0;
     p->ibl = NULL;
 }
 
@@ -30,6 +31,9 @@ void pbr_load(GLuint program, void* params) {
     if (p->normalMap) {
         material_param_send_texture(program, p->normalMap, "normalMap", &texSlot);
     }
+    if (p->occlusionMap) {
+        material_param_send_texture(program, p->occlusionMap, "occlusionMap", &texSlot);
+    }
     alpha_params_send(program, &p->alpha, &texSlot);
     light_load_ibl_uniforms(program, p->ibl, texSlot, texSlot + 1, texSlot + 2);
 }
@@ -40,6 +44,10 @@ GLuint pbr_shader_new(const struct PBRMaterialParams* params) {
 
     if (params->normalMap) {
         defines[2 * numDefines] = "NORMALMAP";
+        defines[2 * numDefines++ + 1] = NULL;
+    }
+    if (params->occlusionMap) {
+        defines[2 * numDefines] = "OCCLUSIONMAP";
         defines[2 * numDefines++ + 1] = NULL;
     }
     if (params->albedo.mode == MAT_PARAM_TEXTURED) {
