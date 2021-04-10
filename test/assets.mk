@@ -20,4 +20,4 @@ tux.jpeg: tux.png
 gray_%.jpeg: %.jpeg
 	convert $< -set colorspace Gray -separate -average $@
 cmyk_%.jpeg: %.jpeg
-	convert $< -profile "CMYK.icc" $@
+	convert $< -profile "CMYK.icc" $@ || convert $< -colorspace cmyk $@
