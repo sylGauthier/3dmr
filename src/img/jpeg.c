@@ -3,8 +3,6 @@
 #include <setjmp.h>
 #include <jpeglib.h>
 
-static jmp_buf env;
-
 static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
                          unsigned int     alignRows,
                          unsigned int*    width,
@@ -26,7 +24,7 @@ static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
                 break;
             case 2:
                 fprintf(stderr, "Error: jpeg: gray/alpha not supported (reqChannels == 2)\n");
-                longjmp(env, 1);
+                longjmp(cinfo->client_data, 1);
             case 3:
                 colorSpace = JCS_RGB;
                 break;
@@ -34,12 +32,12 @@ static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
                 colorSpace = JCS_EXT_RGBA;
                 break;
             default:
-                longjmp(env, 1);
+                longjmp(cinfo->client_data, 1);
         }
     } else {
         switch (cinfo->jpeg_color_space) {
             case JCS_UNKNOWN:
-                longjmp(env, 1);
+                longjmp(cinfo->client_data, 1);
             case JCS_GRAYSCALE:
                 colorSpace = JCS_GRAYSCALE;
                 break;
@@ -63,7 +61,7 @@ static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
                 colorSpace = JCS_EXT_RGBA;
                 break;
             default:
-                longjmp(env, 1);
+                longjmp(cinfo->client_data, 1);
 
         }
     }
@@ -82,7 +80,7 @@ static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
 
     if (!(*buffer = malloc(rowStride * *height))) {
         fprintf(stderr, "Error: jpeg: can't allocate buffer\n");
-        longjmp(env, 1);
+        longjmp(cinfo->client_data, 1);
     }
     if (vReverse) {
         unsigned int i;
@@ -108,7 +106,7 @@ static int _jpeg_do_read(struct jpeg_decompress_struct* cinfo,
 }
 
 static void _error_exit(j_common_ptr cinfo) {
-    longjmp(env, 1);
+    longjmp(cinfo->client_data, 1);
 }
 
 int jpeg_read_file(const char*      filename,
@@ -121,6 +119,7 @@ int jpeg_read_file(const char*      filename,
                    unsigned char**  buffer) {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
+    jmp_buf env;
     FILE* f = NULL;
     char ok = 0;
 
@@ -129,6 +128,7 @@ int jpeg_read_file(const char*      filename,
         return 0;
     }
     cinfo.err = jpeg_std_error(&jerr);
+    cinfo.client_data = env;
     jerr.error_exit = _error_exit;
 
     if (!setjmp(env)) {
@@ -154,9 +154,12 @@ int jpeg_read_buf(const void*       buf,
                   unsigned char**   buffer) {
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
+    jmp_buf env;
+
     char ok = 0;
 
     cinfo.err = jpeg_std_error(&jerr);
+    cinfo.client_data = env;
     jerr.error_exit = _error_exit;
 
     if (!setjmp(env)) {
