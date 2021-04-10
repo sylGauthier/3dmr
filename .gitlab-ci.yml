@@ -3,7 +3,7 @@ image: gcc
 coverage:
   stage: test
   before_script:
-    - apt update && apt -y install make libglfw3-dev libglew-dev libpng-dev libfreetype6-dev xvfb wget dc imagemagick libjson-perl libperlio-gzip-perl libgd-perl flex
+    - apt update && apt -y install make libglfw3-dev libglew-dev libpng-dev libjpeg-dev libfreetype6-dev xvfb wget dc imagemagick libjson-perl libperlio-gzip-perl libgd-perl flex
   variables:
     OPENGEX: 1
     CFLAGS: --coverage
