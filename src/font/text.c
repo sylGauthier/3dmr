@@ -38,6 +38,20 @@ static int cp_cmp(const void* a, const void* b) {
     return (cpa->x > cpb->x) - (cpa->x < cpb->x);
 }
 
+static int float_cmp(const void* a, const void* b) {
+    float fa = *(const float*)a;
+    float fb = *(const float*)b;
+    return (fa > fb) - (fa < fb);
+}
+
+static const Vec2* segment_start_point(const union OutlineSegment* seg) {
+    switch (seg->type) {
+        case OUTLINE_SEGMENT_LINEAR:    return &seg->linear.p0;
+        case OUTLINE_SEGMENT_QUADRATIC: return &seg->quadratic.p0;
+    }
+    return NULL;
+}
+
 GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
     float* sdm;
     float* mindist;
@@ -48,7 +62,6 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
         size_t xmin, xmax; /* in pixels */
     } *cl, *clcur[3];
     struct CP* cps = NULL;
-    const struct CP* cplast;
     const struct CP* cpcur;
     const struct CP* cpend;
     const struct Outline* outline;
@@ -110,6 +123,12 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
         for (i = 0; i < numChars; i++) {
             outline = &chars[i].outline;
             for (j = 0; j < outline->numContours; j++) {
+                const union OutlineSegment* hseg = NULL;
+                const union OutlineSegment* hsegnh = NULL;
+                struct CP* lastcp = NULL;
+                struct CP* nothandled = NULL;
+                size_t lastcpnum, nothandlednum;
+
                 for (k = 0; k < outline->contours[j].numSegments; k++) {
                     const union OutlineSegment *const seg = outline->contours[j].segments + k;
                     struct CP* cp;
@@ -117,13 +136,43 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
 
                     switch (seg->type) {
                         case OUTLINE_SEGMENT_LINEAR:
+                            if ((pt[1] > seg->linear.p0[1] && pt[1] > seg->linear.p1[1])
+                             || (pt[1] < seg->linear.p0[1] && pt[1] < seg->linear.p1[1])) {
+                                break;
+                            }
                             coefs[0] = seg->linear.p0[1] - pt[1];
                             coefs[1] = seg->linear.p1[1] - seg->linear.p0[1];
                             if ((numRoots = polynom_roots_1(roots, coefs)) > 0 && roots[0] >= 0.0f && roots[0] <= 1.0f) {
+                                if (lastcp) lastcpnum = lastcp - cps;
+                                if (nothandled) nothandlednum = nothandled - cps;
                                 if ((ok = (cp = cp_append(&cps, &ncp, &acp)) != NULL)) {
+                                    if (lastcp) lastcp = cps + lastcpnum;
+                                    if (nothandled) nothandled = cps + nothandlednum;
                                     cp->x = seg->linear.p0[0] + roots[0] * (seg->linear.p1[0] - seg->linear.p0[0]) + cl[i].xoffset;
                                     cp->d = 2 * (coefs[1] > 0.0f) - 1;
+                                    if (roots[0] == 0.0f) {
+                                        if (hseg) {
+                                            const Vec2* startpt;
+                                            if (lastcp && lastcp->d == cp->d && (startpt = segment_start_point(hseg)) && lastcp->x == ((*startpt)[0] + cl[i].xoffset)) {
+                                                cp->d = 0;
+                                            } else if (!lastcp && hseg == outline->contours[j].segments) {
+                                                nothandled = cp;
+                                                hsegnh = hseg;
+                                            }
+                                        } else if (lastcp) {
+                                            if (lastcp->d == cp->d && lastcp->x == cp->x) cp->d = 0;
+                                        } else if (seg == outline->contours[j].segments) {
+                                            nothandled = cp;
+                                            hsegnh = hseg;
+                                        }
+                                    }
+                                    if (cp->d) lastcp = cp;
                                 }
+                                hseg = NULL;
+                            } else if (numRoots < 0) {
+                                if (!hseg) hseg = seg;
+                            } else {
+                                hseg = NULL;
                             }
                             break;
                         case OUTLINE_SEGMENT_QUADRATIC:
@@ -138,16 +187,43 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
                                 coefs[1] = 2.0f * dy01;
                                 coefs[2] = dy12 - dy01;
                                 numRoots = polynom_roots_2(roots, coefs);
+                                if (numRoots > 0) qsort(roots, numRoots, sizeof(*roots), float_cmp);
                                 for (r = 0; ok && r < numRoots; r++) {
+                                    if (lastcp) lastcpnum = lastcp - cps;
+                                    if (nothandled) nothandlednum = nothandled - cps;
                                     if (roots[r] >= 0.0f && roots[r] <= 1.0f
                                      && ((d = ((1.0f - roots[r]) * coefs[1] + 2.0f * roots[r] * dy12)) || (d = (roots[r] == 1.0f) * dy01 + (roots[r] == 0.0f) * dy12))
                                      && (ok = (cp = cp_append(&cps, &ncp, &acp)) != NULL)) {
+                                        if (lastcp) lastcp = cps + lastcpnum;
+                                        if (nothandled) nothandled = cps + nothandlednum;
                                         cp->x = seg->quadratic.p0[0]
                                               + 2.0f * roots[r] * (seg->quadratic.p1[0] - seg->quadratic.p0[0])
                                               + roots[r] * roots[r] * (seg->quadratic.p0[0] - 2.0f * seg->quadratic.p1[0] + seg->quadratic.p2[0])
                                               + cl[i].xoffset;
                                         cp->d = 2 * (d > 0.0f) - 1;
+                                        if (roots[r] == 0.0f) {
+                                            if (hseg) {
+                                                const Vec2* startpt;
+                                                if (lastcp && lastcp->d == cp->d && (startpt = segment_start_point(hseg)) && lastcp->x == ((*startpt)[0] + cl[i].xoffset)) {
+                                                    cp->d = 0;
+                                                } else if (!lastcp && hseg == outline->contours[j].segments) {
+                                                    nothandled = cp;
+                                                    hsegnh = hseg;
+                                                }
+                                            } else if (lastcp) {
+                                                if (lastcp->d == cp->d && lastcp->x == cp->x) cp->d = 0;
+                                            } else if (seg == outline->contours[j].segments) {
+                                                nothandled = cp;
+                                                hsegnh = hseg;
+                                            }
+                                        }
+                                        if (cp->d) lastcp = cp;
                                     }
+                                }
+                                if (numRoots < 0) {
+                                    if (!hseg) hseg = seg;
+                                } else {
+                                    hseg = NULL;
                                 }
                             }
                             break;
@@ -159,26 +235,37 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
                         return 0;
                     }
                 }
+                if (nothandled && lastcp) {
+                    if (!hseg && hsegnh) {
+                        hseg = hsegnh;
+                    }
+                    if (hseg) {
+                        const Vec2* startpt;
+
+                        if (lastcp->d == nothandled->d && (startpt = segment_start_point(hseg)) && lastcp->x == ((*startpt)[0] + cl[i].xoffset)) {
+                            nothandled->d = 0;
+                        }
+                    } else if (lastcp->d == nothandled->d && lastcp->x == nothandled->x) {
+                        nothandled->d = 0;
+                    }
+                }
             }
         }
         qsort(cps, ncp, sizeof(*cps), cp_cmp);
-        cplast = NULL;
         cpcur = cps;
         cpend = cps + ncp;
         winding = 0;
         for (x = 0; x < w; x++, mindist++) {
             pt[0] = x * scaleinv;
             while (cpcur < cpend && pt[0] > cpcur->x) {
-                if (!cplast || cpcur->x - cplast->x > 1e-3 || cpcur->d != cplast->d) {
-                    winding += cpcur->d;
-                    if (winding == INT_MAX || winding == INT_MIN) {
-                        free(cl);
-                        free(cps);
-                        free(sdm);
-                        return 0;
-                    }
+                winding += cpcur->d;
+                if (winding == INT_MAX || winding == INT_MIN) {
+                    free(cl);
+                    free(cps);
+                    free(sdm);
+                    return 0;
                 }
-                cplast = cpcur++;
+                cpcur++;
             }
             if (clcur[1] && x > clcur[1]->xmax) {
                 clcur[0] = clcur[1];
