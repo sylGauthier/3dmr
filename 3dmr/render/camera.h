@@ -13,5 +13,6 @@ void camera_get_backward(const Mat4 view, Vec3 backward);
 void camera_set_ratio(float ratio, Mat4 projection);
 void camera_view(const Vec3 position, const Quaternion orientation, Mat4 view);
 void camera_projection(float ratio, float fov, float zNear, float zFar, Mat4 projection);
+void camera_ortho_projection(float width, float height, float zNear, float zFar, Mat4 projection);
 
 #endif
