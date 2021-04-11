@@ -168,6 +168,52 @@ int mesh_add_tangents(struct Mesh* mesh) {
     return mesh_compute_tangents(mesh);
 }
 
+void mesh_translate(struct Mesh* mesh, Vec3 t) {
+    unsigned int i;
+
+    for (i = 0; i < mesh->numVertices; i++) {
+        incr3v(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh), t);
+    }
+}
+
+void mesh_rotate(struct Mesh* mesh, Vec3 axis, float angle) {
+    unsigned int i;
+    Mat3 rot, invNormal;
+
+    load_rot3(rot, axis, angle);
+    if (MESH_HAS_NORMALS(mesh)) {
+        invert3m(invNormal, MAT_CONST_CAST(rot));
+        transpose3m(invNormal);
+    }
+
+    for (i = 0; i < mesh->numVertices; i++) {
+        Vec3 tmp;
+
+        memcpy(tmp, mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh), sizeof(Vec3));
+        mul3mv(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh), MAT_CONST_CAST(rot), tmp);
+        if (MESH_HAS_NORMALS(mesh)) {
+            memcpy(tmp, mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 3, sizeof(Vec3));
+            mul3mv(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 3, MAT_CONST_CAST(invNormal), tmp);
+        }
+        if (MESH_HAS_TANGENTS(mesh)) {
+            memcpy(tmp, mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 8, sizeof(Vec3));
+            mul3mv(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 8, MAT_CONST_CAST(invNormal), tmp);
+            memcpy(tmp, mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 11, sizeof(Vec3));
+            mul3mv(mesh->vertices + i * MESH_FLOATS_PER_VERTEX(mesh) + 11, MAT_CONST_CAST(invNormal), tmp);
+        }
+    }
+}
+
+void mesh_scale(struct Mesh* mesh, Vec3 s) {
+    unsigned int i, j;
+
+    for (i = 0; i < mesh->numVertices; i++) {
+        for (j = 0; j < 3; j++) {
+            mesh->vertices[i * MESH_FLOATS_PER_VERTEX(mesh) + j] *= s[j];
+        }
+    }
+}
+
 void mesh_free(struct Mesh* mesh) {
     free(mesh->vertices);
     free(mesh->indices);

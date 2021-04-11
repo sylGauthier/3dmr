@@ -44,6 +44,10 @@ int mesh_compute_tangents(struct Mesh* mesh);
 /* copy/extend vertex array to add tangents then compute them */
 int mesh_add_tangents(struct Mesh* mesh);
 
+void mesh_translate(struct Mesh* mesh, Vec3 t);
+void mesh_rotate(struct Mesh* mesh, Vec3 axis, float angle);
+void mesh_scale(struct Mesh* mesh, Vec3 scale);
+
 void mesh_free(struct Mesh*);
 
 #endif
