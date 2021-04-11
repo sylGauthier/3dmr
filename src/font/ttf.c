@@ -229,21 +229,36 @@ int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Charact
 }
 
 int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars) {
+    struct Character* dest;
+    struct Character* res;
     unsigned int l;
 
     l = strlen(str);
-    if (!(*c = malloc(l * sizeof(struct Character)))) {
+    if (!(dest = res = malloc(l * sizeof(struct Character)))) {
         fprintf(stderr, "Error: can't allocate memory for Characters\n");
     } else {
-        unsigned int i;
+        unsigned long cp;
+        unsigned int n;
+        unsigned char ch;
 
-        for (i = 0; i < l; i++) {
-            if (!ttf_load_char(ttf, str[i], *c + i)) {
-                free(*c);
+        while ((cp = (unsigned char)*str++)) {
+            for (n = 0; n < 4U && (cp & (0x80U >> n)); n++);
+            if (n >= 4U) {
+                while (dest > res) character_free(--dest);
+                free(res);
                 return 0;
             }
+            cp &= (0x3FU >> n) | (!n << 6U);
+            while (n-- > 1U && (ch = *str++)) cp = (cp << 6U) | (ch & 0x3FU);
+            if (!ttf_load_char(ttf, cp, dest)) {
+                while (dest > res) character_free(--dest);
+                free(res);
+                return 0;
+            }
+            dest++;
         }
-        *numChars = l;
+        *c = res;
+        *numChars = dest - res;
         return 1;
     }
     return 0;
