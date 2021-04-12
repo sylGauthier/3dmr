@@ -98,31 +98,72 @@ static void pt_to_vec2(const struct SFNT_GlyfPoint* pt, Vec2 vec2) {
     vec2[1] = pt->y;
 }
 
-static void pts_middle_to_vec2(const struct SFNT_GlyfPoint* pt1, const struct SFNT_GlyfPoint* pt2, Vec2 vec2) {
-    vec2[0] = (pt1->x + pt2->x) * 0.5f;
-    vec2[1] = (pt1->y + pt2->y) * 0.5f;
+struct GlyphFloat {
+    struct GlyphFloatPoint {
+        Vec2 coords;
+        unsigned int flags;
+    } *points;
+    unsigned int* endPoints;
+    size_t numContours;
+};
+
+static void free_glyph_float(struct GlyphFloat* g) {
+    free(g->points);
+    free(g->endPoints);
 }
 
-int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline) {
-    const struct SFNT_GlyfPoint* pts;
+static int simple_glyph_to_float(const struct SFNT_Glyf* src, struct GlyphFloat* dest) {
+    if (src->numContours < 0) {
+        return 0;
+    } else if (!src->numContours) {
+        dest->points = NULL;
+        dest->endPoints = NULL;
+        dest->numContours = 0;
+    } else {
+        unsigned int numContours = src->numContours;
+        unsigned int numPoints = src->data.simple.endPoints[numContours - 1] + 1U;
+        unsigned int i;
+
+        dest->points = NULL;
+        if (numPoints > ((size_t)-1) / sizeof(*dest->points)
+         || numContours > ((size_t)-1) / sizeof(*dest->endPoints)
+         || !(dest->points = malloc(numPoints * sizeof(*dest->points)))
+         || !(dest->endPoints = malloc(numContours * sizeof(*dest->endPoints)))) {
+            free(dest->points);
+            return 0;
+        }
+        for (i = 0; i < numPoints; i++) {
+            pt_to_vec2(src->data.simple.points + i, dest->points[i].coords);
+            dest->points[i].flags = src->data.simple.points[i].flags;
+        }
+        for (i = 0; i < numContours; i++) {
+            dest->endPoints[i] = src->data.simple.endPoints[i];
+        }
+        dest->numContours = numContours;
+    }
+    return 1;
+}
+
+static int glyph_outline(const struct GlyphFloat* glyph, struct Outline* outline) {
+    const struct GlyphFloatPoint* pts;
     union OutlineSegment* segment;
     uint32_t start, end, cur, last, last2;
     int16_t i;
     int ok = 1, laston, curon;
 
-    if (glyph->numContours < 0) return 0; /* composite glyph; not supported ATM */
+    if (glyph->numContours < 0) return 0; /* composite glyph; not handled here */
     if (glyph->numContours == 0) {
         outline->contours = NULL;
         outline->numContours = 0;
         return 1;
     }
-    if (((unsigned int)glyph->numContours) >= ((size_t)-1) / sizeof(*outline->contours) || !(outline->contours = malloc(((unsigned int)glyph->numContours) * sizeof(*outline->contours)))) {
+    if (glyph->numContours >= ((size_t)-1) / sizeof(*outline->contours) || !(outline->contours = malloc(((unsigned int)glyph->numContours) * sizeof(*outline->contours)))) {
         return 0;
     }
-    pts = glyph->data.simple.points;
+    pts = glyph->points;
     outline->numContours = glyph->numContours;
     for (i = 0, start = 0; ok && i < glyph->numContours; i++, start = end + 1U) {
-        end = glyph->data.simple.endPoints[i];
+        end = glyph->endPoints[i];
         outline->contours[i].segments = NULL;
         outline->contours[i].numSegments = 0;
         for (cur = start, laston = (pts[end].flags & SFNT_GLYF_ON_CURVE_POINT); ok && cur <= end; cur++, laston = curon) {
@@ -146,34 +187,37 @@ int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline) {
                 case 0: /* off-off: implicit on-pt in between, that closes current bezier segment */
                     segment->quadratic.type = OUTLINE_SEGMENT_QUADRATIC;
                     last = (cur > start) ? (cur - 1U) : end;
-                    pts_middle_to_vec2(pts + cur, pts + last, segment->quadratic.p2);
-                    pt_to_vec2(pts + last, segment->quadratic.p1);
+                    add2v(segment->quadratic.p2, pts[cur].coords, pts[last].coords);
+                    scale2v(segment->quadratic.p2, 0.5f);
+                    memcpy(segment->quadratic.p1, pts[last].coords, sizeof(Vec2));
                     last2 = (last > start) ? (last - 1U) : end;
                     if (pts[last2].flags & SFNT_GLYF_ON_CURVE_POINT) {
-                        pt_to_vec2(pts + last2, segment->quadratic.p0);
+                        memcpy(segment->quadratic.p0, pts[last2].coords, sizeof(Vec2));
                     } else {
-                        pts_middle_to_vec2(pts + last, pts + last2, segment->quadratic.p0);
+                        add2v(segment->quadratic.p0, pts[last].coords, pts[last2].coords);
+                        scale2v(segment->quadratic.p0, 0.5f);
                     }
                     segment++;
                     break;
                 case SFNT_GLYF_ON_CURVE_POINT: /* off-on: end of a bezier segment */
                     segment->quadratic.type = OUTLINE_SEGMENT_QUADRATIC;
                     last = (cur > start) ? (cur - 1U) : end;
-                    pt_to_vec2(pts + cur, segment->quadratic.p2);
-                    pt_to_vec2(pts + last, segment->quadratic.p1);
+                    memcpy(segment->quadratic.p2, pts[cur].coords, sizeof(Vec2));
+                    memcpy(segment->quadratic.p1, pts[last].coords, sizeof(Vec2));
                     last2 = (last > start) ? (last - 1U) : end;
                     if (pts[last2].flags & SFNT_GLYF_ON_CURVE_POINT) {
-                        pt_to_vec2(pts + last2, segment->quadratic.p0);
+                        memcpy(segment->quadratic.p0, pts[last2].coords, sizeof(Vec2));
                     } else {
-                        pts_middle_to_vec2(pts + last, pts + last2, segment->quadratic.p0);
+                        add2v(segment->quadratic.p0, pts[last].coords, pts[last2].coords);
+                        scale2v(segment->quadratic.p0, 0.5f);
                     }
                     segment++;
                     break;
                 case 2 * SFNT_GLYF_ON_CURVE_POINT + SFNT_GLYF_ON_CURVE_POINT: /* on-on: end of a linear segment */
                     segment->linear.type = OUTLINE_SEGMENT_LINEAR;
                     last = (cur > start) ? (cur - 1U) : end;
-                    pt_to_vec2(pts + cur, segment->linear.p1);
-                    pt_to_vec2(pts + last, segment->linear.p0);
+                    memcpy(segment->linear.p1, pts[cur].coords, sizeof(Vec2));
+                    memcpy(segment->linear.p0, pts[last].coords, sizeof(Vec2));
                     segment++;
                     break;
                 case 2 * SFNT_GLYF_ON_CURVE_POINT: /* on-off: start of a bezier segment */
@@ -189,6 +233,156 @@ int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline) {
     return 1;
 }
 
+int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline) {
+    struct GlyphFloat tmp;
+    int ret = 0;
+
+    if (simple_glyph_to_float(glyph, &tmp)) {
+        ret = glyph_outline(&tmp, outline);
+        free_glyph_float(&tmp);
+    }
+    return ret;
+}
+
+struct CompositeContext {
+    struct GlyphFloat glyf;
+    const struct SFNT_GlyfComponent* comps;
+    struct SFNT_GlyfComponent* mycomps;
+    size_t compNum, numComps;
+};
+
+static int push_composite_context(struct CompositeContext** stack, size_t* numStack, const struct SFNT_GlyfComponent* comps, struct SFNT_GlyfComponent* mycomps, size_t numComps) {
+    struct CompositeContext* ctx;
+    size_t n;
+
+    if ((n = *numStack) >= ((size_t)-1) || ++n > ((size_t)-1) / sizeof(**stack)
+     || !(ctx = realloc(*stack, n * sizeof(**stack)))) {
+        return 0;
+    }
+    *stack = ctx;
+    ctx += (*numStack)++;
+    ctx->glyf.numContours = 0;
+    ctx->glyf.endPoints = NULL;
+    ctx->glyf.points = NULL;
+    ctx->comps = comps;
+    ctx->mycomps = mycomps;
+    ctx->compNum = 0;
+    ctx->numComps = numComps;
+    return 1;
+}
+
+static int ttf_composite_outline(const struct TTF* ttf, const struct SFNT_Glyf* g, struct Character* c) {
+    struct CompositeContext* stack = NULL;
+    size_t numStack = 0;
+    int ok = 1;
+
+    if (!push_composite_context(&stack, &numStack, g->data.composite.components, NULL, g->data.composite.numComponents)) return 0;
+    while (ok && numStack) {
+        struct CompositeContext* ctx = stack + (numStack - 1U);
+
+        if (ctx->compNum >= ctx->numComps) {
+            if (--numStack) {
+                struct CompositeContext* base = stack + (numStack - 1U);
+                unsigned int* endPoints = NULL;
+                struct GlyphFloatPoint* points = NULL;
+                size_t i, basepts, newpts, totalpts, totalctrs;
+
+                if (base->glyf.numContours) {
+                    basepts = base->glyf.endPoints[base->glyf.numContours - 1U] + 1U;
+                } else {
+                    basepts = 0;
+                }
+                if (ctx->glyf.numContours) {
+                    newpts = ctx->glyf.endPoints[ctx->glyf.numContours - 1U] + 1U;
+                } else {
+                    newpts = 0;
+                }
+                ok = basepts <= ((size_t)-1) - newpts
+                    && (totalpts = basepts + newpts) <= ((size_t)-1) / sizeof(*base->glyf.points)
+                    && base->glyf.numContours <= ((size_t)-1) - ctx->glyf.numContours
+                    && (totalctrs = base->glyf.numContours + ctx->glyf.numContours) <= ((size_t)-1) / sizeof(*base->glyf.endPoints)
+                    && (endPoints = realloc(base->glyf.endPoints, totalctrs * sizeof(*base->glyf.endPoints)))
+                    && (points = realloc(base->glyf.points, totalpts * sizeof(*base->glyf.points)));
+                if (endPoints) base->glyf.endPoints = endPoints;
+                if (points) base->glyf.points = points;
+                if (ok) {
+                    Mat2 scale;
+                    Vec2 translation;
+                    const struct SFNT_GlyfComponent* comp = base->comps + base->compNum++;
+
+                    scale[0][0] = ((float)sfnt_f2d14_ipart(comp->transform[0][0])) + ((float)sfnt_f2d14_fpart(comp->transform[0][0])) / ((float)(0x4000U));
+                    scale[0][1] = ((float)sfnt_f2d14_ipart(comp->transform[0][1])) + ((float)sfnt_f2d14_fpart(comp->transform[0][1])) / ((float)(0x4000U));
+                    scale[1][0] = ((float)sfnt_f2d14_ipart(comp->transform[1][0])) + ((float)sfnt_f2d14_fpart(comp->transform[1][0])) / ((float)(0x4000U));
+                    scale[1][1] = ((float)sfnt_f2d14_ipart(comp->transform[1][1])) + ((float)sfnt_f2d14_fpart(comp->transform[1][1])) / ((float)(0x4000U));
+                    if (comp->flags & SFNT_GLYF_ARGS_ARE_XY_VALUES) {
+                        translation[0] = comp->args[0].offset;
+                        translation[1] = comp->args[1].offset;
+                    } else {
+                        Vec2 t;
+                        if (comp->args[0].ptNum >= basepts || comp->args[1].ptNum >= newpts) {
+                            ok = 0;
+                            break;
+                        }
+                        mul2mv(t, MAT_CONST_CAST(scale), base->glyf.points[basepts + comp->args[1].ptNum].coords);
+                        sub2v(translation, base->glyf.points[comp->args[0].ptNum].coords, t);
+                    }
+                    for (i = 0; i < newpts; i++) {
+                        mul2mv(points[basepts + i].coords, MAT_CONST_CAST(scale), ctx->glyf.points[i].coords);
+                        incr2v(points[basepts + i].coords, translation);
+                        points[basepts + i].flags = ctx->glyf.points[i].flags;
+                    }
+                    for (i = 0; i < ctx->glyf.numContours; i++) {
+                        endPoints[base->glyf.numContours + i] = ctx->glyf.endPoints[i] + basepts;
+                    }
+                    base->glyf.numContours += ctx->glyf.numContours;
+                }
+            } else {
+                ok = glyph_outline(&ctx->glyf, &c->outline);
+            }
+            free_glyph_float(&ctx->glyf);
+            free(ctx->mycomps);
+        } else {
+            struct SFNT_Glyf glyph;
+            const struct SFNT_GlyfComponent* comp = ctx->comps + ctx->compNum;
+            uint32_t offset = sfnt_loca_index(&ttf->loca, comp->glyphIndex);
+            uint32_t offsetEnd = sfnt_loca_index(&ttf->loca, comp->glyphIndex + 1U);
+            int hasglyph = 0;
+
+            if (offsetEnd <= offset) {
+                ctx->compNum++; /* no contours, skip */
+            } else if (!sfnt_seek(ttf->glyf, offset, ttf->file)) {
+                fputs("Error: failed to find glyph\n", stderr);
+                ok = 0;
+            } else if (!(hasglyph = sfnt_read_glyf(ttf->file, &glyph))) {
+                fputs("Error: failed to read glyph\n", stderr);
+                ok = 0;
+            } else if (glyph.numContours < 0) {
+                if (push_composite_context(&stack, &numStack, glyph.data.composite.components, glyph.data.composite.components, glyph.data.composite.numComponents)) {
+                    glyph.data.composite.components = NULL;
+                    glyph.data.composite.numComponents = 0;
+                } else {
+                    fputs("Error: failed to allocate memory\n", stderr);
+                    ok = 0;
+                }
+            } else {
+                if (push_composite_context(&stack, &numStack, NULL, NULL, 0)) {
+                    ok = simple_glyph_to_float(&glyph, &stack[numStack - 1U].glyf);
+                } else {
+                    fputs("Error: failed to allocate memory\n", stderr);
+                    ok = 0;
+                }
+            }
+            if (hasglyph) sfnt_free_glyf(&glyph);
+        }
+    }
+    while (numStack) {
+        free_glyph_float(&stack[--numStack].glyf);
+        free(&stack[numStack].mycomps);
+    }
+    free(stack);
+    return ok;
+}
+
 int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Character* c) {
     struct SFNT_Glyf glyph;
     struct SFNT_TableHmtxHMetric hmetric;
@@ -202,23 +396,22 @@ int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Charact
     } else if (offsetEnd <= offset) {
         c->outline.contours = NULL;
         c->outline.numContours = 0;
-        c->xMin = c->xMax = c->yMin = c->yMax = 0;
+        glyph.xMin = glyph.xMax = glyph.yMin = glyph.yMax = 0;
         hasoutline = 1;
     } else if (!sfnt_seek(ttf->glyf, offset, ttf->file)) {
         fputs("Error: failed to find glyph\n", stderr);
     } else if (!(hasglyph = sfnt_read_glyf(ttf->file, &glyph))) {
         fputs("Error: failed to read glyph\n", stderr);
     } else if (glyph.numContours < 0) {
-        fputs("Error: composite glyphs are not supported\n", stderr);
+        hasoutline = ttf_composite_outline(ttf, &glyph, c);
     } else if (!(hasoutline = ttf_glyph_outline(&glyph, &c->outline))) {
         fputs("Error: failed to compute outline\n", stderr);
-    } else {
+    }
+    if (hasoutline) {
         c->xMin = glyph.xMin;
         c->xMax = glyph.xMax;
         c->yMin = glyph.yMin;
         c->yMax = glyph.yMax;
-    }
-    if (hasoutline) {
         c->advance = hmetric.advanceWidth;
         c->lsb = hmetric.leftSideBearing;
         if (hasglyph) sfnt_free_glyf(&glyph);
