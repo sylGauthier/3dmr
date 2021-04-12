@@ -47,7 +47,7 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
         return 0;
     }
     json_array_foreach(materials, idx, curMat) {
-        json_t *pbr, *normal;
+        json_t *pbr, *normal, *occlusion;
         struct PBRMaterialParams* pbrMat;
         Vec3 albedo;
 
@@ -84,6 +84,11 @@ int gltf_parse_materials(struct GltfContext* context, json_t* jroot) {
         }
         if ((normal = json_object_get(curMat, "normalTexture"))) {
             if (!(pbrMat->normalMap = get_texture(context, normal))) {
+                return 0;
+            }
+        }
+        if ((occlusion = json_object_get(curMat, "occlusionTexture"))) {
+            if (!(pbrMat->occlusionMap = get_texture(context, occlusion))) {
                 return 0;
             }
         }
