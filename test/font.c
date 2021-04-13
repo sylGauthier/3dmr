@@ -62,13 +62,14 @@ int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct SolidMaterialParams matParams;
     struct TTF ttf;
-    struct Character text[4];
+    struct Character* text = NULL;
     size_t nchars = 0, mapWidth, mapHeight = 32;
     GLuint tex = 0;
-    int err = 1, hasttf = 0;
+    int err = 1, hasttf = 0, isTTC = (argc > 3);
 
-    if (argc != 2) {
-        fputs("Usage: test/font font.ttf\n", stderr);
+    if (argc != 3 && argc != 4) {
+        fputs("Usage: test/font font.ttf text\n", stderr);
+        fputs("       test/font font.ttc fnum text\n", stderr);
         return 1;
     }
     tdmrShaderRootPath = TDMR_SHADERS_PATH_SRC;
@@ -77,17 +78,11 @@ int main(int argc, char** argv) {
     app.va = NULL;
     app.mat = NULL;
     solid_material_params_init(&matParams);
-    if (!(hasttf = ttf_load(argv[1], &ttf))) {
+    if (!(hasttf = (isTTC ? ttc_load(argv[1], strtoul(argv[2], NULL, 10), &ttf) : ttf_load(argv[1], &ttf)))) {
         fputs("Error: failed to read font file\n", stderr);
-    } else if (!ttf_load_char(&ttf, 't', text)) {
-        fputs("Error: failed to load character t\n", stderr);
-    } else if (!ttf_load_char(&ttf, 'e', text + ++nchars)) {
-        fputs("Error: failed to load character e\n", stderr);
-    } else if (!ttf_load_char(&ttf, 's', text + ++nchars)) {
-        fputs("Error: failed to load character s\n", stderr);
-    } else if (!ttf_load_char(&ttf, 't', text + ++nchars)) {
-        fputs("Error: failed to load character t\n", stderr);
-    } else if (++nchars, !(viewer = viewer_new(640, 480, "test"))) {
+    } else if (!ttf_load_chars(&ttf, argv[2 + isTTC], &text, &nchars)) {
+        fputs("Error: failed to load characters\n", stderr);
+    } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(tex = text_to_sdm_texture(text, nchars, mapHeight, &mapWidth))) {
         fprintf(stderr, "Error: failed to create texture\n");
@@ -126,6 +121,7 @@ int main(int argc, char** argv) {
     }
     if (hasttf) ttf_free(&ttf);
     while (nchars > 0) character_free(text + --nchars);
+    free(text);
     if (tex) glDeleteTextures(1, &tex);
     free(app.mat);
     vertex_array_free(app.va);
