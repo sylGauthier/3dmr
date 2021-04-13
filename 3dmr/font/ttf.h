@@ -27,6 +27,7 @@ struct TTF {
 };
 
 int ttf_load(const char* ttfpath, struct TTF* ttf);
+int ttc_load(const char* ttcpath, unsigned long fnum, struct TTF* ttf);
 void ttf_free(struct TTF* ttf);
 
 int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline);

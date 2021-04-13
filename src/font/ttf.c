@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sfnt/character_map.h>
+#include <sfnt/font_collection.h>
 #include <sfnt/platform.h>
 #include <3dmr/font/ttf.h>
 #include <3dmr/math/linear_algebra.h>
@@ -51,11 +52,11 @@ const union SFNT_CmapEncodingTable* cmap_unicode_find_best_subtable(const struct
     return best;
 }
 
-int ttf_load(const char* ttfpath, struct TTF* ttf) {
+static int ttf_load_file(struct TTF* ttf) {
     int hasftdir = 0, hascmap = 0, hasloca = 0, hashmtx = 0;
 
-    if (!(ttf->file = fopen(ttfpath, "rb"))) {
-        perror("Error: failed to open font file");
+    if (!ttf->file) {
+        fputs("Error: failed to open font file\n", stderr);
     } else if (!(hasftdir = sfnt_read_font_directory(ttf->file, &ttf->fontdir))) {
         fputs("Error: failed to read font directory\n", stderr);
     } else if (!sfnt_read_head(&ttf->fontdir, ttf->file, &ttf->head)) {
@@ -83,6 +84,28 @@ int ttf_load(const char* ttfpath, struct TTF* ttf) {
     if (hashmtx) sfnt_free_hmtx(&ttf->hmtx);
     if (ttf->file) fclose(ttf->file);
     return 0;
+}
+
+int ttf_load(const char* ttfpath, struct TTF* ttf) {
+    ttf->file = fopen(ttfpath, "rb");
+    return ttf_load_file(ttf);
+}
+
+int ttc_load(const char* ttcpath, unsigned long fnum, struct TTF* ttf) {
+    if ((ttf->file = fopen(ttcpath, "rb"))) {
+        struct SFNT_TTC ttc;
+        int hasttc, ok;
+
+        ok = (hasttc = sfnt_read_ttc(ttf->file, &ttc)
+          && sfnt_seek_ttc(&ttc, fnum, ttf->file));
+        if (hasttc) sfnt_free_ttc(&ttc);
+        if (!ok) {
+            fputs("Error: failed to read TTC file\n", stderr);
+            fclose(ttf->file);
+            return 0;
+        }
+    }
+    return ttf_load_file(ttf);
 }
 
 void ttf_free(struct TTF* ttf) {
