@@ -68,3 +68,22 @@ void camera_projection(float ratio, float fov, float zNear, float zFar, Mat4 pro
     projection[3][2] = -(2.0 * zFar * zNear) / (zFar - zNear);
     projection[3][3] = 0;
 }
+
+void camera_ortho_projection(float width, float height, float zNear, float zFar, Mat4 projection) {
+    projection[0][0] = 2.0 / width;
+    projection[0][1] = 0;
+    projection[0][2] = 0;
+    projection[0][3] = 0;
+    projection[1][0] = 0;
+    projection[1][1] = 2.0 / height;
+    projection[1][2] = 0;
+    projection[1][3] = 0;
+    projection[2][0] = 0;
+    projection[2][1] = 0;
+    projection[2][2] = -2.0 / (zFar - zNear);
+    projection[2][3] = 0;
+    projection[3][0] = 0;
+    projection[3][1] = 0;
+    projection[3][2] = -(zFar + zNear) / (zFar - zNear);
+    projection[3][3] = 1.;
+}
