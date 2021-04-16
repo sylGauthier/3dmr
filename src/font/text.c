@@ -126,7 +126,7 @@ unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars
                 const union OutlineSegment* hsegnh = NULL;
                 struct CP* lastcp = NULL;
                 struct CP* nothandled = NULL;
-                size_t lastcpnum, nothandlednum;
+                size_t lastcpnum = 0, nothandlednum = 0;
 
                 for (k = 0; k < outline->contours[j].numSegments; k++) {
                     const union OutlineSegment *const seg = outline->contours[j].segments + k;
