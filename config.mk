@@ -7,6 +7,6 @@ INCLUDEDIR ?= include
 LIBDIR ?= lib
 DATADIR ?= share/$(NAME)-$(VERSION)
 
-# 3dmr features
-OPENGEX=1
+# 3dmr features (set to 1 to enable/empty to disable)
+OPENGEX ?=
 TTF ?=
