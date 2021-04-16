@@ -8,6 +8,7 @@
 #include <3dmr/material/solid.h>
 #include <3dmr/mesh/quad.h>
 #include <3dmr/shaders.h>
+#include <3dmr/font/cache.h>
 #include <3dmr/font/ttf.h>
 #include <3dmr/font/text.h>
 
@@ -62,6 +63,7 @@ int main(int argc, char** argv) {
     struct Viewer* viewer = NULL;
     struct SolidMaterialParams matParams;
     struct TTF ttf;
+    struct CharacterCache cache;
     struct Character* text = NULL;
     size_t nchars = 0, mapWidth, mapHeight = 32;
     GLuint tex = 0;
@@ -78,9 +80,10 @@ int main(int argc, char** argv) {
     app.va = NULL;
     app.mat = NULL;
     solid_material_params_init(&matParams);
+    character_cache_init(&cache);
     if (!(hasttf = (isTTC ? ttc_load(argv[1], strtoul(argv[2], NULL, 10), &ttf) : ttf_load(argv[1], &ttf)))) {
         fputs("Error: failed to read font file\n", stderr);
-    } else if (!ttf_load_chars(&ttf, argv[2 + isTTC], &text, &nchars, NULL)) {
+    } else if (!ttf_load_chars(&ttf, argv[2 + isTTC], &text, &nchars, &cache)) {
         fputs("Error: failed to load characters\n", stderr);
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
@@ -120,7 +123,7 @@ int main(int argc, char** argv) {
         }
     }
     if (hasttf) ttf_free(&ttf);
-    while (nchars > 0) character_free(text + --nchars);
+    character_cache_free(&cache);
     free(text);
     if (tex) glDeleteTextures(1, &tex);
     free(app.mat);
