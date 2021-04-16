@@ -9,3 +9,4 @@ DATADIR ?= share/$(NAME)-$(VERSION)
 
 # 3dmr features
 OPENGEX=1
+TTF ?=

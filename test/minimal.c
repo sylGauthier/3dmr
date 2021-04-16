@@ -8,6 +8,7 @@
 #include <3dmr/render/viewer.h>
 #include <3dmr/material/solid.h>
 #include <3dmr/mesh/box.h>
+#include <3dmr/shaders.h>
 
 struct CallbackParam {
     int running;
@@ -50,7 +51,9 @@ int main(int argc, char** argv) {
     struct Material* mat = NULL;
     struct UniformBuffer camera, lights;
     struct SolidMaterialParams matParams;
+    int hascam = 0, haslights = 0;
 
+    tdmrShaderRootPath = TDMR_SHADERS_PATH_SRC;
     load_id4(model);
     load_id3(inv);
     solid_material_params_init(&matParams);
@@ -59,7 +62,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Error: failed to create viewer\n");
     } else if (!(va = mkcube()) || !(mat = solid_material_new(0, &matParams))) {
         fprintf(stderr, "Error: failed to create cube\n");
-    } else if (!camera_buffer_object_gen(&camera) || !lights_buffer_object_gen(&lights)) {
+    } else if (!(hascam = camera_buffer_object_gen(&camera)) || !(haslights = lights_buffer_object_gen(&lights))) {
         fprintf(stderr, "Error: failed to create UBOs\n");
     } else {
         struct CallbackParam p;
@@ -82,8 +85,8 @@ int main(int argc, char** argv) {
             viewer_process_events(viewer);
         }
     }
-    uniform_buffer_del(&camera);
-    uniform_buffer_del(&lights);
+    if (hascam) uniform_buffer_del(&camera);
+    if (haslights) uniform_buffer_del(&lights);
     free(mat);
     vertex_array_free(va);
     viewer_free(viewer);
