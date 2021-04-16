@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     solid_material_params_init(&matParams);
     if (!(hasttf = (isTTC ? ttc_load(argv[1], strtoul(argv[2], NULL, 10), &ttf) : ttf_load(argv[1], &ttf)))) {
         fputs("Error: failed to read font file\n", stderr);
-    } else if (!ttf_load_chars(&ttf, argv[2 + isTTC], &text, &nchars)) {
+    } else if (!ttf_load_chars(&ttf, argv[2 + isTTC], &text, &nchars, NULL)) {
         fputs("Error: failed to load characters\n", stderr);
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");

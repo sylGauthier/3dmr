@@ -26,12 +26,14 @@ struct TTF {
     FILE* file;
 };
 
+struct CharacterCache;
+
 int ttf_load(const char* ttfpath, struct TTF* ttf);
 int ttc_load(const char* ttcpath, unsigned long fnum, struct TTF* ttf);
 void ttf_free(struct TTF* ttf);
 
 int ttf_glyph_outline(const struct SFNT_Glyf* glyph, struct Outline* outline);
 int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Character* c);
-int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars);
+int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars, struct CharacterCache* cache /* can be NULL */);
 
 #endif

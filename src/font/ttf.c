@@ -3,6 +3,7 @@
 #include <sfnt/character_map.h>
 #include <sfnt/font_collection.h>
 #include <sfnt/platform.h>
+#include <3dmr/font/cache.h>
 #include <3dmr/font/ttf.h>
 #include <3dmr/math/linear_algebra.h>
 
@@ -444,10 +445,11 @@ int ttf_load_char(const struct TTF* ttf, unsigned long codepoint, struct Charact
     return 0;
 }
 
-int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars) {
+int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c, size_t* numChars, struct CharacterCache* cache) {
     struct Character* dest;
     struct Character* res;
     unsigned int l;
+    int ok = 0;
 
     l = strlen(str);
     if (!(dest = res = malloc(l * sizeof(struct Character)))) {
@@ -457,25 +459,31 @@ int ttf_load_chars(const struct TTF* ttf, const char* str, struct Character** c,
         unsigned int n;
         unsigned char ch;
 
-        while ((cp = (unsigned char)*str++)) {
+        ok = 1;
+        while (ok && (cp = (unsigned char)*str++)) {
+            ok = 0;
             for (n = 0; n < 4U && (cp & (0x80U >> n)); n++);
-            if (n >= 4U) {
-                while (dest > res) character_free(--dest);
-                free(res);
-                return 0;
-            }
+            if (n >= 4U) break;
             cp &= (0x3FU >> n) | (!n << 6U);
             while (n-- > 1U && (ch = *str++)) cp = (cp << 6U) | (ch & 0x3FU);
-            if (!ttf_load_char(ttf, cp, dest)) {
-                while (dest > res) character_free(--dest);
-                free(res);
-                return 0;
+            if (cache && character_cache_get(cache, cp, dest)) {
+                ok = 1;
+            } else if (ttf_load_char(ttf, cp, dest)) {
+                if (!(ok = !cache || character_cache_insert(cache, cp, dest))) {
+                    character_free(dest);
+                }
+            } else {
+                break;
             }
             dest++;
         }
-        *c = res;
-        *numChars = dest - res;
-        return 1;
+        if (ok) {
+            *c = res;
+            *numChars = dest - res;
+        } else {
+            if (!cache) while (dest > res) character_free(--dest);
+            free(res);
+        }
     }
-    return 0;
+    return ok;
 }
