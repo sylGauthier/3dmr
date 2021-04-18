@@ -182,8 +182,8 @@ int node_update_matrices(struct Node* node) {
                     neg3v(node->data.camera->view[3]);
                 }
                 break;
-            case NODE_BONE:
-            case NODE_EMPTY:;
+            default:
+                break;
         }
         node->changedFlags = UPDATE_PARENT_BB;
         for (i = 0; i < node->nbChildren; i++) {

@@ -6,9 +6,6 @@
 void imported_node_free(struct Node* node) {
     if (node) {
         switch (node->type) {
-            case NODE_EMPTY:
-            case NODE_BONE:
-                break;
             case NODE_GEOMETRY:
                 if (node->data.geometry) {
                     free(node->data.geometry->material);
@@ -26,6 +23,8 @@ void imported_node_free(struct Node* node) {
                 break;
             case NODE_SLIGHT:
                 free(node->data.slight);
+                break;
+            default:
                 break;
         }
         free(node);

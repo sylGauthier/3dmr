@@ -48,7 +48,8 @@ struct Node {
         NODE_PLIGHT,
         NODE_SLIGHT,
         NODE_CAMERA,
-        NODE_BONE
+        NODE_BONE,
+        NODE_USER
     } type;
     union NodeData {
         struct Geometry* geometry;
@@ -56,6 +57,7 @@ struct Node {
         struct PointLight* plight;
         struct SpotLight* slight;
         struct Camera* camera;
+        void* userData;
     } data;
 
     char* name;
