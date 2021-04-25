@@ -104,6 +104,7 @@ int node_rm_child(struct Node* node, struct Node* child) {
     if (i >= node->nbChildren) return 0;
     node->children[i] = node->children[node->nbChildren - 1];
     node->nbChildren--;
+    child->father = NULL;
     return 1;
 }
 
