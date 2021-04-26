@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         fputs("Error: failed to load characters\n", stderr);
     } else if (!(viewer = viewer_new(640, 480, "test"))) {
         fprintf(stderr, "Error: failed to create viewer\n");
-    } else if (!(tex = text_to_sdm_texture(text, nchars, mapHeight, &mapWidth))) {
+    } else if (!(tex = text_to_sdm_texture(text, nchars, mapHeight, &mapWidth, 0, 0, 0))) {
         fprintf(stderr, "Error: failed to create texture\n");
     } else if (!(app.va = mkquad())
 #if 0

@@ -52,7 +52,7 @@ static const Vec2* segment_start_point(const union OutlineSegment* seg) {
     return NULL;
 }
 
-unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
+unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth, int yMinMaxProvided, int yMin_, int yMax_) {
     float* sdm;
     float* mindist;
     unsigned char* sdm8;
@@ -100,6 +100,10 @@ unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars
         if (pen + more > width) width = pen + more;
         cl[i].xoffset = pen + lsb - xMin;
         pen += a;
+    }
+    if (yMinMaxProvided) {
+        if ((float)yMin_ < yMin) yMin = yMin_;
+        if ((float)yMax_ > yMax) yMax = yMax_;
     }
     scale = ((float)mapHeight) / (yMax - yMin);
     scaleinv = 1.0f / scale;
@@ -311,12 +315,12 @@ unsigned char* text_to_sdm_buffer(const struct Character* chars, size_t numChars
     return sdm8;
 }
 
-GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth) {
+GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_t mapHeight, size_t* mapWidth, int yMinMaxProvided, int yMin, int yMax) {
     unsigned char* sdm8;
     GLuint tex = 0;
     size_t w;
 
-    if ((sdm8 = text_to_sdm_buffer(chars, numChars, mapHeight, &w))) {
+    if ((sdm8 = text_to_sdm_buffer(chars, numChars, mapHeight, &w, yMinMaxProvided, yMin, yMax))) {
         if ((tex = texture_load_from_uchar_buffer(sdm8, w, mapHeight, 1, 1))) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
