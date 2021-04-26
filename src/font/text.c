@@ -317,7 +317,10 @@ GLuint text_to_sdm_texture(const struct Character* chars, size_t numChars, size_
     size_t w;
 
     if ((sdm8 = text_to_sdm_buffer(chars, numChars, mapHeight, &w))) {
-        tex = texture_load_from_uchar_buffer(sdm8, w, mapHeight, 1, 1);
+        if ((tex = texture_load_from_uchar_buffer(sdm8, w, mapHeight, 1, 1))) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
         free(sdm8);
         if (mapWidth) *mapWidth = w;
     }
