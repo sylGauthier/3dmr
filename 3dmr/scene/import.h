@@ -31,10 +31,12 @@ struct ImportMetadata {
     struct Node** cameraNodes;
     struct Node** lightNodes;
     struct Clip** clips;
+    struct Mesh** meshes;
 
     unsigned int numCameraNodes;
     unsigned int numLightNodes;
     unsigned int numClips;
+    unsigned int numMeshes;
 };
 
 
@@ -44,10 +46,14 @@ void import_free_metadata(struct ImportMetadata* metadata);
 int import_add_metadata_camnode(struct ImportMetadata* metadata, struct Node* n);
 int import_add_metadata_lightnode(struct ImportMetadata* metadata, struct Node* n);
 int import_add_metadata_clip(struct ImportMetadata* metadata, struct Clip* c);
+int import_add_metadata_mesh(struct ImportMetadata* metadata, struct Mesh* m);
 
 struct ImportOptions {
     struct IBL* ibl;
-    char binary;
+    enum ImportFlags {
+        TDMR_IMPORT_BINARY = 1,
+        TDMR_IMPORT_MESHES = 1 << 2
+    } flags;
 };
 
 void import_init_options(struct ImportOptions* opts);

@@ -322,10 +322,24 @@ int gltf_parse_meshes(struct GltfContext* context, json_t* jroot) {
         } else if (!import_add_shared_geometry(context->shared, geom)) {
             fprintf(stderr, "Error: gltf: mesh: could not add shared geometry\n");
         } else {
-            ok = 1;
+            if (context->opts->flags & TDMR_IMPORT_MESHES) {
+                struct Mesh* m;
+                if ((m = malloc(sizeof(*m)))) {
+                    memcpy(m, &mesh, sizeof(*m));
+                    if (!import_add_metadata_mesh(context->metadata, m)) {
+                        fprintf(stderr, "Error: gltf: mesh: could not add mesh to metadata\n");
+                    } else {
+                        ok = 1;
+                    }
+                } else {
+                    fprintf(stderr, "Error: gltf: mesh: could not save mesh in metadata\n");
+                }
+            } else {
+                ok = 1;
+            }
         }
 
-        if (geom) mesh_free(&mesh);
+        if (!ok || !(context->opts->flags & TDMR_IMPORT_MESHES)) mesh_free(&mesh);
         free(joints);
         if (!ok) return 0;
     }

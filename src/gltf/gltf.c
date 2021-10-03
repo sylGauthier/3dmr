@@ -16,7 +16,7 @@ int gltf_load(struct Node* root, FILE* gltfFile, const char* path, struct Import
     context.path = path;
     context.file = gltfFile;
     context.opts = opts;
-    context.binary = opts && opts->binary;
+    context.binary = opts && (opts->flags & TDMR_IMPORT_BINARY);
     context.root = root;
     if (context.binary) {
         uint32_t header[5];

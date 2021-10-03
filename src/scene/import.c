@@ -87,10 +87,12 @@ void import_init_metadata(struct ImportMetadata* metadata) {
     metadata->cameraNodes = NULL;
     metadata->lightNodes = NULL;
     metadata->clips = NULL;
+    metadata->meshes = NULL;
 
     metadata->numCameraNodes = 0;
     metadata->numLightNodes = 0;
     metadata->numClips = 0;
+    metadata->numMeshes = 0;
 }
 
 int import_add_metadata_camnode(struct ImportMetadata* metadata, struct Node* n)
@@ -102,6 +104,9 @@ IMPORT_ADD_ITEM(struct Node, metadata->lightNodes, metadata->numLightNodes, n)
 int import_add_metadata_clip(struct ImportMetadata* metadata, struct Clip* c)
 IMPORT_ADD_ITEM(struct Clip, metadata->clips, metadata->numClips, c)
 
+int import_add_metadata_mesh(struct ImportMetadata* metadata, struct Mesh* m)
+IMPORT_ADD_ITEM(struct Mesh, metadata->meshes, metadata->numMeshes, m)
+
 void import_free_metadata(struct ImportMetadata* metadata) {
     unsigned int i;
 
@@ -112,9 +117,13 @@ void import_free_metadata(struct ImportMetadata* metadata) {
         free(metadata->clips[i]);
     }
     free(metadata->clips);
+    for (i = 0; i < metadata->numMeshes; i++) {
+        mesh_free(metadata->meshes[i]);
+        free(metadata->meshes[i]);
+    }
 }
 
 void import_init_options(struct ImportOptions* opts) {
     opts->ibl = NULL;
-    opts->binary = 0;
+    opts->flags = 0;
 }

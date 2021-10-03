@@ -202,7 +202,7 @@ static int load_scenes(struct Prog* prog, struct ImportSharedData* shared, int a
 #ifdef TDMR_GLTF
             struct ImportOptions opts = {0};
             if (prog->ibl.enabled) opts.ibl = &prog->ibl;
-            opts.binary = !strcmp(extension, ".glb");
+            opts.flags = strcmp(extension, ".glb") ? 0 : TDMR_IMPORT_BINARY;
             if (!gltf_load(&prog->scene.root, file, dirname(argv[i]), shared, &prog->metadata, &opts)) {
                 fprintf(stderr, "Error: failed to load gltf file\n");
                 ok = 0;
