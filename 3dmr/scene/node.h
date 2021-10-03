@@ -75,6 +75,7 @@ int node_set_name(struct Node* node, const char* name);
 int node_add_child(struct Node* node, struct Node* child);
 int node_rm_child(struct Node* node, struct Node* child);
 void nodes_free(struct Node* root, void (*free_node)(struct Node*));
+struct Node* node_dup(struct Node* node);
 
 int node_update_matrices(struct Node* node);
 void node_update_father_bounding_box(struct Node* node);

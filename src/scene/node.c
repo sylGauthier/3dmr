@@ -126,6 +126,48 @@ void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
     }
 }
 
+static void dup_node_free(struct Node* node) {
+    free(node);
+}
+
+struct Node* node_dup(struct Node* node) {
+    struct Node* new = NULL;
+
+    if (!(new = malloc(sizeof(*new)))) {
+        fprintf(stderr, "Error: node_dup: malloc failed\n");
+    } else {
+        memcpy(new, node, sizeof(*new));
+        new->children = NULL;
+        new->nbChildren = 0;
+        new->name = NULL;
+        new->father = NULL;
+        if (node->name && !(new->name = malloc(strlen(node->name) + 1))) {
+            fprintf(stderr, "Error: node_dup: malloc failed\n");
+        } else {
+            unsigned int i;
+            if (node->name) {
+                strcpy(new->name, node->name);
+            }
+            for (i = 0; i < node->nbChildren; i++) {
+                struct Node* n = NULL;
+                if (!(n = node_dup(node->children[i]))) {
+                    fprintf(stderr, "Error: node_dup: failed to dup child\n");
+                    break;
+                } else if (!node_add_child(new, n)) {
+                    fprintf(stderr, "Error: node_dup: failed to add child dupped node\n");
+                    nodes_free(n, dup_node_free);
+                    break;
+                }
+            }
+            if (i == node->nbChildren) return new;
+        }
+    }
+    if (new) {
+        nodes_free(new, dup_node_free);
+    }
+    return NULL;
+}
+
 int node_update_matrices(struct Node* node) {
     unsigned int i;
     int changed;
