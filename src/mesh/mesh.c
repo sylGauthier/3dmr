@@ -19,6 +19,7 @@ int mesh_unindex(struct Mesh* mesh) {
     for (i = 0; i < mesh->numIndices; i++) {
         index = mesh->indices[i];
         memcpy(cur, mesh->vertices + n * index, n * sizeof(float));
+        cur += n;
     }
 
     free(mesh->vertices);
