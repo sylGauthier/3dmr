@@ -129,4 +129,9 @@ void load_rot3(RESTRICT_MAT3(dest), const RESTRICT_VEC3(axis), float angle);
 void load_rot4(RESTRICT_MAT4(dest), const RESTRICT_VEC3(axis), float angle);
 void compute_rotation(const RESTRICT_VEC3(u), const RESTRICT_VEC3(v), RESTRICT_VEC3(axis), float* angle);
 
+/* Setters */
+#define set2v(v, x, y)          (v)[0] = (x); (v)[1] = (y);
+#define set3v(v, x, y, z)       (v)[0] = (x); (v)[1] = (y); (v)[2] = (z);
+#define set4v(v, x, y, z, t)    (v)[0] = (x); (v)[1] = (y); (v)[2] = (z); (v)[3] = (t);
+
 #endif
