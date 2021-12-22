@@ -74,6 +74,7 @@ int node_set_name(struct Node* node, const char* name);
 
 int node_add_child(struct Node* node, struct Node* child);
 int node_rm_child(struct Node* node, struct Node* child);
+void node_free(struct Node* n);
 void nodes_free(struct Node* root, void (*free_node)(struct Node*));
 struct Node* node_dup(struct Node* node);
 

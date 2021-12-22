@@ -108,6 +108,11 @@ int node_rm_child(struct Node* node, struct Node* child) {
     return 1;
 }
 
+void node_free(struct Node* node) {
+    free(node->children);
+    free(node->name);
+}
+
 void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
     struct Node *cur, *next;
 
@@ -116,8 +121,7 @@ void nodes_free(struct Node* root, void (*free_node)(struct Node*)) {
             next = cur->children[0];
         } else {
             next = (cur == root) ? NULL : cur->father;
-            free(cur->children);
-            free(cur->name);
+            node_free(cur);
             if (free_node) free_node(cur);
             if (next) {
                 next->children[0] = next->children[--(next->nbChildren)];
