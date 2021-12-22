@@ -121,6 +121,7 @@ void import_free_metadata(struct ImportMetadata* metadata) {
         mesh_free(metadata->meshes[i]);
         free(metadata->meshes[i]);
     }
+    free(metadata->meshes);
 }
 
 void import_init_options(struct ImportOptions* opts) {
