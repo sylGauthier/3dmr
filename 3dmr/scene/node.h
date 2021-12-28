@@ -81,6 +81,7 @@ struct Node* node_dup(struct Node* node);
 int node_update_matrices(struct Node* node);
 void node_update_father_bounding_box(struct Node* node);
 int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection);
+void node_render(struct Node* node);
 
 void node_set_scale(struct Node* node, const Vec3 scale);
 void node_set_pos(struct Node* node, const Vec3 pos);

@@ -312,6 +312,13 @@ int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection
     return !(up >= 8 || down >= 8 || left >= 8 || right >= 8 || back >= 8);
 }
 
+void node_render(struct Node* n) {
+    if (n->type != NODE_GEOMETRY) return;
+    material_use(n->data.geometry->material);
+    material_set_matrices(n->data.geometry->material, n->model, n->inverseNormal);
+    vertex_array_render(n->data.geometry->vertexArray);
+}
+
 void node_translate(struct Node* node, const Vec3 t) {
     incr3v(node->position, t);
     node->changedFlags |= POSITION_CHANGED;
