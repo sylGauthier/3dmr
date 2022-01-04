@@ -154,22 +154,24 @@ int compute_ibl_32(GLuint envmap, unsigned int irrSize, unsigned int spSize, uns
     return compute_ibl_(envmap, irrSize, spSize, spMips, spBrdfSize, GL_RGB32F, dest);
 }
 
-void light_load_ibl_uniforms(GLuint shader, const struct IBL* ibl, unsigned int tex1, unsigned int tex2, unsigned int tex3) {
+void light_load_ibl_uniforms(GLuint shader, const struct IBL* ibl) {
     struct IBL empty = {0};
 
     if (!ibl || !ibl->enabled) {
         ibl = &empty; /* It is necessary to bind textures regardless of whether IBL is enabled, otherwise there is a bug with intel cards */
     }
+
+    glUniform1i(glGetUniformLocation(shader, "irradianceMap"), TEX_SLOT_IBL_IRRADIANCE);
+    glUniform1i(glGetUniformLocation(shader, "specularMap"), TEX_SLOT_IBL_SPECULAR);
+    glUniform1i(glGetUniformLocation(shader, "specularBrdf"), TEX_SLOT_IBL_SPECBRDF);
+
     glUniform1i(glGetUniformLocation(shader, "hasIBL"), !!ibl->enabled);
-    glActiveTexture(GL_TEXTURE0 + tex1);
+    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_IBL_IRRADIANCE);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->irradianceMap);
-    glUniform1i(glGetUniformLocation(shader, "irradianceMap"), tex1);
-    glActiveTexture(GL_TEXTURE0 + tex2);
+    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_IBL_SPECULAR);
     glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->specularMap);
-    glUniform1i(glGetUniformLocation(shader, "specularMap"), tex2);
-    glActiveTexture(GL_TEXTURE0 + tex3);
+    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_IBL_SPECBRDF);
     glBindTexture(GL_TEXTURE_2D, ibl->specularBrdf);
-    glUniform1i(glGetUniformLocation(shader, "specularBrdf"), tex3);
 
     glUniform1i(glGetUniformLocation(shader, "specularMapNumMipmaps"), ibl->specularMapNumMips);
 }

@@ -16,6 +16,27 @@
 #define LIGHTS_UBO_BINDING 1
 #define BONES_UBO_BINDING 2
 
+#define TEX_SLOT_COLOR_SOLID    0
+
+#define TEX_SLOT_COLOR_DIFFUSE  0
+#define TEX_SLOT_COLOR_AMBIENT  1
+#define TEX_SLOT_COLOR_SPECULAR 2
+#define TEX_SLOT_SHININESS      3
+
+#define TEX_SLOT_COLOR_ALBEDO   0
+#define TEX_SLOT_ROUGHNESS      1
+#define TEX_SLOT_METALNESS      2
+#define TEX_SLOT_MRMIXED        1
+
+#define TEX_SLOT_IBL_IRRADIANCE 3
+#define TEX_SLOT_IBL_SPECULAR   4
+#define TEX_SLOT_IBL_SPECBRDF   5
+
+#define TEX_SLOT_COLOR_ALPHA    6
+#define TEX_SLOT_NORMALMAP      7
+#define TEX_SLOT_OCCLUSIONMAP   8
+#define TEX_SLOT_DIR_SHADOWMAP  9
+
 GLuint shader_find_compile(const char* filename, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);
 GLuint shader_compile(const char* path, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);
 GLuint shader_compile_fd(FILE* fd, const char* pathInfo, GLenum type, const char** includePaths, size_t numIncludePaths, const char** defines, size_t numDefines);

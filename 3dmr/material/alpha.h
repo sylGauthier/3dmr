@@ -11,7 +11,7 @@ struct AlphaParams {
 };
 
 void alpha_params_init(struct AlphaParams* params);
-void alpha_params_send(GLuint prog, const struct AlphaParams* params, unsigned int* texSlot);
+void alpha_params_send(GLuint prog, const struct AlphaParams* params);
 void alpha_set_defines(const struct AlphaParams* params, const char** defines, unsigned int* numDefines);
 
 #endif

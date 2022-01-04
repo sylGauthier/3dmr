@@ -24,24 +24,23 @@ struct PBRMaterialParams* pbr_material_params_new(void) {
 
 void pbr_load(GLuint program, void* params) {
     const struct PBRMaterialParams* p = params;
-    unsigned int texSlot = 0;
-    material_param_send_vec3(program,  &p->albedo, "albedo", &texSlot);
+    material_param_send_vec3(program,  &p->albedo, "albedo", TEX_SLOT_COLOR_ALBEDO);
     if (       p->metalness.mode == MAT_PARAM_TEXTURED
             && p->roughness.mode == MAT_PARAM_TEXTURED
             && p->metalness.value.texture == p->roughness.value.texture) {
-        material_param_send_float(program, &p->metalness, "mrmixed", &texSlot);
+        material_param_send_float(program, &p->metalness, "mrmixed", TEX_SLOT_MRMIXED);
     } else {
-        material_param_send_float(program, &p->metalness, "metalness", &texSlot);
-        material_param_send_float(program, &p->roughness, "roughness", &texSlot);
+        material_param_send_float(program, &p->metalness, "metalness", TEX_SLOT_METALNESS);
+        material_param_send_float(program, &p->roughness, "roughness", TEX_SLOT_ROUGHNESS);
     }
     if (p->normalMap) {
-        material_param_send_texture(program, p->normalMap, "normalMap", &texSlot);
+        material_param_send_texture(program, p->normalMap, "normalMap", TEX_SLOT_NORMALMAP);
     }
     if (p->occlusionMap) {
-        material_param_send_texture(program, p->occlusionMap, "occlusionMap", &texSlot);
+        material_param_send_texture(program, p->occlusionMap, "occlusionMap", TEX_SLOT_OCCLUSIONMAP);
     }
-    alpha_params_send(program, &p->alpha, &texSlot);
-    light_load_ibl_uniforms(program, p->ibl, texSlot, texSlot + 1, texSlot + 2);
+    alpha_params_send(program, &p->alpha);
+    light_load_ibl_uniforms(program, p->ibl);
 }
 
 GLuint pbr_shader_new(const struct PBRMaterialParams* params) {

@@ -2,13 +2,12 @@
 #include <string.h>
 #include <3dmr/material/param.h>
 
-void material_param_send_texture(GLuint shader, GLuint tex, const char* name, unsigned int* texSlot) {
+void material_param_send_texture(GLuint shader, GLuint tex, const char* name, unsigned int texSlot) {
     GLint uniform = glGetUniformLocation(shader, name);
-    GLint texId = GL_TEXTURE0 + *texSlot;
+    GLint texId = GL_TEXTURE0 + texSlot;
     glActiveTexture(texId);
     glBindTexture(GL_TEXTURE_2D, tex);
-    glUniform1i(uniform, *texSlot);
-    (*texSlot)++;
+    glUniform1i(uniform, texSlot);
 }
 
 void material_param_set_float_constant(struct MatParamFloat* p, float v) {
@@ -26,7 +25,7 @@ void material_param_set_float_texture(struct MatParamFloat* p, GLuint v) {
     p->value.texture = v;
 }
 
-void material_param_send_float(GLuint shader, const struct MatParamFloat* param, const char* name, unsigned int* texSlot) {
+void material_param_send_float(GLuint shader, const struct MatParamFloat* param, const char* name, unsigned int texSlot) {
     GLint uniform = glGetUniformLocation(shader, name);
     switch (param->mode) {
         case MAT_PARAM_CONSTANT:
@@ -37,11 +36,10 @@ void material_param_send_float(GLuint shader, const struct MatParamFloat* param,
             break;
         case MAT_PARAM_TEXTURED:
             {
-                GLint texId = GL_TEXTURE0 + *texSlot;
+                GLint texId = GL_TEXTURE0 + texSlot;
                 glActiveTexture(texId);
                 glBindTexture(GL_TEXTURE_2D, param->value.texture);
-                glUniform1i(uniform, *texSlot);
-                (*texSlot)++;
+                glUniform1i(uniform, texSlot);
             }
             break;
     }
@@ -69,7 +67,7 @@ void material_param_set_vec3_texture(struct MatParamVec3* p, GLuint v) {
     p->value.texture = v;
 }
 
-void material_param_send_vec3(GLuint shader, const struct MatParamVec3* param, const char* name, unsigned int* texSlot) {
+void material_param_send_vec3(GLuint shader, const struct MatParamVec3* param, const char* name, unsigned int texSlot) {
     GLint uniform = glGetUniformLocation(shader, name);
     switch (param->mode) {
         case MAT_PARAM_CONSTANT:
@@ -80,11 +78,10 @@ void material_param_send_vec3(GLuint shader, const struct MatParamVec3* param, c
             break;
         case MAT_PARAM_TEXTURED:
             {
-                GLint texId = GL_TEXTURE0 + *texSlot;
+                GLint texId = GL_TEXTURE0 + texSlot;
                 glActiveTexture(texId);
                 glBindTexture(GL_TEXTURE_2D, param->value.texture);
-                glUniform1i(uniform, *texSlot);
-                (*texSlot)++;
+                glUniform1i(uniform, texSlot);
             }
             break;
     }

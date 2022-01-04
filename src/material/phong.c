@@ -23,15 +23,14 @@ struct PhongMaterialParams* phong_material_params_new(void) {
 
 void phong_load(GLuint program, void* params) {
     const struct PhongMaterialParams* p = params;
-    unsigned int texSlot = 0;
-    material_param_send_vec3(program, &p->ambient, "ambient", &texSlot);
-    material_param_send_vec3(program, &p->diffuse, "diffuse", &texSlot);
-    material_param_send_vec3(program, &p->specular, "specular", &texSlot);
-    material_param_send_float(program, &p->shininess, "shininess", &texSlot);
+    material_param_send_vec3(program, &p->ambient, "ambient", TEX_SLOT_COLOR_AMBIENT);
+    material_param_send_vec3(program, &p->diffuse, "diffuse", TEX_SLOT_COLOR_DIFFUSE);
+    material_param_send_vec3(program, &p->specular, "specular", TEX_SLOT_COLOR_SPECULAR);
+    material_param_send_float(program, &p->shininess, "shininess", TEX_SLOT_SHININESS);
     if (p->normalMap) {
-        material_param_send_texture(program, p->normalMap, "normalMap", &texSlot);
+        material_param_send_texture(program, p->normalMap, "normalMap", TEX_SLOT_NORMALMAP);
     }
-    alpha_params_send(program, &p->alpha, &texSlot);
+    alpha_params_send(program, &p->alpha);
 }
 
 GLuint phong_shader_new(const struct PhongMaterialParams* params) {

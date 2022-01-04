@@ -19,9 +19,8 @@ struct SolidMaterialParams* solid_material_params_new(void) {
 
 void solid_load(GLuint program, void* params) {
     const struct SolidMaterialParams* p = params;
-    unsigned int texSlot = 0;
-    material_param_send_vec3(program, &p->color, "solidColor", &texSlot);
-    alpha_params_send(program, &p->alpha, &texSlot);
+    material_param_send_vec3(program, &p->color, "solidColor", TEX_SLOT_COLOR_SOLID);
+    alpha_params_send(program, &p->alpha);
 }
 
 GLuint solid_shader_new(const struct SolidMaterialParams* params) {
