@@ -44,6 +44,24 @@ void camera_view(const Vec3 position, const Quaternion orientation, Mat4 view) {
     neg3v(view[3]);
 }
 
+void camera_look_at(const Vec3 camPos, const Vec3 lookAt, const Vec3 camUp, Mat4 view) {
+    Mat3 rot;
+
+    sub3v(rot[2], camPos, lookAt);
+    normalize3(rot[2]);
+
+    cross3(rot[0], camUp, rot[2]);
+    normalize3(rot[0]);
+
+    cross3(rot[1], rot[2], rot[0]);
+    normalize3(rot[1]);
+
+    transpose3m(rot);
+    mat3to4(view, MAT_CONST_CAST(rot));
+    mul3mv(view[3], MAT_CONST_CAST(rot), camPos);
+    neg3v(view[3]);
+}
+
 void camera_set_ratio(float ratio, Mat4 projection) {
     projection[0][0] = projection[1][1] / ratio;
 }
