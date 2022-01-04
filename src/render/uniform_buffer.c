@@ -64,3 +64,7 @@ void uniform_buffer_send(struct UniformBuffer* u) {
     u->dStart = u->size;
     u->dEnd = 0;
 }
+
+void uniform_buffer_bind(struct UniformBuffer* u, GLuint slot) {
+    glBindBufferRange(GL_UNIFORM_BUFFER, slot, u->ubo, 0, u->size);
+}

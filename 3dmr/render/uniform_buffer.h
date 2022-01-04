@@ -18,5 +18,6 @@ void uniform_buffer_free(struct UniformBuffer* u);
 void uniform_buffer_invalidate(struct UniformBuffer* u, unsigned int offset, unsigned int size);
 void uniform_buffer_update(struct UniformBuffer* u, unsigned int offset, unsigned int size, const void* data);
 void uniform_buffer_send(struct UniformBuffer* u);
+void uniform_buffer_bind(struct UniformBuffer* u, GLuint slot);
 
 #endif

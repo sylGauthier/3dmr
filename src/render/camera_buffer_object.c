@@ -13,7 +13,6 @@
 
 int camera_buffer_object_gen(struct UniformBuffer* dest) {
     if (!uniform_buffer_gen(SIZEOF_CAMERA_UBO, dest)) return 0;
-    glBindBufferRange(GL_UNIFORM_BUFFER, CAMERA_UBO_BINDING, dest->ubo, 0, SIZEOF_CAMERA_UBO);
     return 1;
 }
 

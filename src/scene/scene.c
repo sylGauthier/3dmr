@@ -2,6 +2,7 @@
 #include <3dmr/render/camera_buffer_object.h>
 #include <3dmr/render/lights_buffer_object.h>
 #include <3dmr/scene/scene.h>
+#include <3dmr/render/shader.h>
 
 int scene_init(struct Scene* scene, struct Camera* camera) {
     node_init(&scene->root);
@@ -113,6 +114,8 @@ int scene_update_render_queue(struct Scene* scene, const Mat4 cameraView, const 
 
 void scene_render(struct Scene* scene) {
     unsigned int i;
+    uniform_buffer_bind(&scene->camera, CAMERA_UBO_BINDING);
+    uniform_buffer_bind(&scene->lights, LIGHTS_UBO_BINDING);
     for (i = 0; i < scene->nRender; i++) {
         struct Node* n = scene->renderQueue[i];
         material_use(n->data.geometry->material);

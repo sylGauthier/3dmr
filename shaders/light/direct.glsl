@@ -5,6 +5,8 @@
 #include "point_light.h"
 #include "spot_light.h"
 
+uniform sampler2D directionalLightDepthMap[MAX_DIRECTIONAL_LIGHTS];
+
 layout(std140) uniform Lights {
     AmbientLight ambientLight;
     DirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
