@@ -31,7 +31,7 @@ $(LIB): $(LIB_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -f $(wildcard $(LIB) $(NAME).pc src/*.o src/*/*.o test/*.o test/*/*.o $(TEST_EXECS) tags test/out/* test/scenes.h test/ubo.h)
+	rm -f $(wildcard $(LIB) $(NAME).pc src/*.o src/*/*.o test/*.o test/*/*.o $(TEST_EXECS) test/out/* test/scenes.h test/ubo.h)
 
 tags: $(wildcard src/*.c src/*/*.c)
 	ctags $^
