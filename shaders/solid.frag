@@ -20,7 +20,11 @@ uniform vec3 solidColor;
 
 void main() {
 #ifdef SOLID_TEXTURED
+#ifdef FLOAT_TEXTURE
+    vec3 color = vec3(texture(solidColor, coordTexture).r);
+#else
     vec3 color = texture(solidColor, coordTexture).rgb;
+#endif
 #else
     vec3 color = solidColor;
 #endif

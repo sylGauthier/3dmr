@@ -31,6 +31,10 @@ GLuint solid_shader_new(const struct SolidMaterialParams* params) {
     if (params->color.mode == MAT_PARAM_TEXTURED) {
         defines[2 * numDefines] = "SOLID_TEXTURED";
         defines[2 * numDefines++ + 1] = NULL;
+        if (params->floatTexture) {
+            defines[2 * numDefines] = "FLOAT_TEXTURE";
+            defines[2 * numDefines++ + 1] = NULL;
+        }
     }
     alpha_set_defines(&params->alpha, defines, &numDefines);
     return shader_find_compile("solid.frag", GL_FRAGMENT_SHADER, &tdmrShaderRootPath, 1, defines, numDefines);

@@ -9,6 +9,7 @@
 struct SolidMaterialParams {
     struct MatParamVec3 color;
     struct AlphaParams alpha;
+    int floatTexture;
 };
 
 void solid_load(GLuint program, void* params);
