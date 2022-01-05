@@ -15,11 +15,13 @@
 #include <3dmr/render/lights_buffer_object.h>
 #include <3dmr/render/camera_buffer_object.h>
 
+#include <3dmr/material/pbr.h>
 #include <3dmr/material/phong.h>
 #include <3dmr/material/solid.h>
 
 #define TDMR_SHADERS_PATH TDMR_SHADERS_PATH_SRC
 
+struct PBRMaterialParams pbrp;
 struct PhongMaterialParams phongp, phongp2;
 struct SolidMaterialParams solidp, depthmapp;
 
@@ -78,7 +80,7 @@ int setup_cubes(struct Node cubes[4], struct Geometry* g) {
 
 int setup_plane(struct Node* plane, struct Geometry* g) {
     struct Mesh planem;
-    Vec3 scale = {10, 10, 10};
+    Vec3 scale = {5, 10, 10}, pos = {-2.5, 0, 0};
 
     make_quad(&planem, 1, 1);
 
@@ -95,6 +97,30 @@ int setup_plane(struct Node* plane, struct Geometry* g) {
     node_init(plane);
     node_set_geometry(plane, g);
     node_set_scale(plane, scale);
+    node_set_pos(plane, pos);
+
+    return 1;
+}
+
+int setup_pbr_plane(struct Node* plane, struct Geometry* g) {
+    struct Mesh planem;
+    Vec3 scale = {5, 10, 10}, pos = {2.5, 0, 0};
+
+    make_quad(&planem, 1, 1);
+
+    pbr_material_params_init(&pbrp);
+    material_param_set_vec3_elems(&pbrp.albedo, 0.9, 0.3, 0.3);
+    material_param_set_float_constant(&pbrp.metalness, 0);
+    material_param_set_float_constant(&pbrp.roughness, 0.5);
+    pbrp.alpha.mode = ALPHA_DISABLED;
+
+    g->vertexArray = vertex_array_new(&planem);
+    g->material = pbr_material_new(planem.flags, &pbrp);
+
+    node_init(plane);
+    node_set_geometry(plane, g);
+    node_set_scale(plane, scale);
+    node_set_pos(plane, pos);
 
     return 1;
 }
@@ -145,10 +171,10 @@ int main() {
     struct Scene scene;
     struct Viewer* viewer = NULL;
     struct Node cubes[4];
-    struct Node* shadowQueue[5];
-    struct Node plane, overlay;
+    struct Node* shadowQueue[6];
+    struct Node plane, pbrPlane, overlay;
     struct Camera cam;
-    struct Geometry geom, planeGeom, dispGeom;
+    struct Geometry geom, planeGeom, dispGeom, pbrPlaneGeom;
     struct Lights lights;
 
 #ifdef TDMR_SHADERS_PATH
@@ -166,6 +192,7 @@ int main() {
             || !scene_init(&scene, &cam)
             || !setup_cubes(cubes, &geom)
             || !setup_plane(&plane, &planeGeom)
+            || !setup_pbr_plane(&pbrPlane, &pbrPlaneGeom)
             || !setup_lights(&lights, &scene)
             || !setup_depthmap_display(&overlay, &dispGeom)) {
         fprintf(stderr, "Error: setup failed\n");
@@ -177,9 +204,12 @@ int main() {
             shadowQueue[i] = &cubes[i];
         }
         node_add_child(&scene.root, &plane);
+        node_add_child(&scene.root, &pbrPlane);
         shadowQueue[4] = &plane;
+        shadowQueue[5] = &pbrPlane;
 
         depthmapp.color.value.texture = lights.directionalLightDepthMap[0].tex;
+        /* uncomment to display light's depthmap */
         /* node_add_child(&scene.root, &overlay); */
 
         scene_update_nodes(&scene, NULL, NULL);
@@ -203,3 +233,4 @@ int main() {
     if (viewer) viewer_free(viewer);
     return 0;
 }
+
