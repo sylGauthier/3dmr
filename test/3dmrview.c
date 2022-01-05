@@ -394,7 +394,7 @@ int main(int argc, char** argv) {
             uniform_buffer_send(&prog.scene.camera);
             camera = prog.activeCam->data.camera;
             scene_update_render_queue(&prog.scene, MAT_CONST_CAST(camera->view), MAT_CONST_CAST(camera->projection));
-            scene_render(&prog.scene);
+            scene_render(&prog.scene, NULL);
         }
     }
 

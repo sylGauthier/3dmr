@@ -43,7 +43,8 @@ vec3 phong(vec3 ambient, vec3 diffuse, vec3 specular, float shininess, vec3 came
     uint i;
 
     for (i = 0U; i < numDirectionalLights; i++) {
-        lightFactor += phong_compute_directional_light(diffuse, specular, shininess, directionalLights[i], surfelToCamera, surfelNormal);
+        lightFactor += phong_compute_directional_light(diffuse, specular, shininess, directionalLights[i], surfelToCamera, surfelNormal)
+                     * (1 - compute_shadow(surfelPosition, surfelNormal, i));
     }
 
     for (i = 0U; i < numPointLights; i++) {

@@ -54,7 +54,6 @@ int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
 
     if (dl->shadow) return 1; /* already enabled */
 
-    dl->depthMapID = id;
     glGenFramebuffers(1, &fbtex->fbo);
     glGenTextures(1, &fbtex->tex);
     if (!fbtex->fbo || !fbtex->tex) {
@@ -62,6 +61,8 @@ int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
         return 0;
     }
     /* setup texture parameters */
+    /* bind shadowmap to its global slot, same for all programs */
+    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + id);
     glBindTexture(GL_TEXTURE_2D, fbtex->tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_W, SHADOW_MAP_H, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -99,6 +100,7 @@ void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Nod
     uniform_buffer_send(&lightCamUBO);
 
     glUseProgram(depthMapProgram);
+    glCullFace(GL_FRONT);
 
     for (i = 0; i < numNodes; i++) {
         struct Node* cur = queue[i];
@@ -108,6 +110,7 @@ void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Nod
             vertex_array_render(cur->data.geometry->vertexArray);
         }
     }
+    glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }

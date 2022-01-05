@@ -74,7 +74,8 @@ vec3 pbr(vec3 albedo, float metalness, float roughness, float occlusion, vec3 su
     for (uint i = 0U; i < numDirectionalLights; i++) {
         vec3 Li = -directionalLights[i].direction;
         vec3 Lradiance = directionalLights[i].color;
-        directLighting += pbr_direct_lighting(Li, Lo, cosLo, surfelNormal, albedo, metalness, roughness, F0, Lradiance);
+        directLighting += pbr_direct_lighting(Li, Lo, cosLo, surfelNormal, albedo, metalness, roughness, F0, Lradiance)
+                        * (1. - compute_shadow(surfelPosition, surfelNormal, i));
     }
     for (uint i = 0U; i < numPointLights; i++) {
         vec3 Li = pointLights[i].position - surfelPosition;

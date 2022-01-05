@@ -7,8 +7,7 @@ struct DirectionalLight {
     vec3 direction;
     vec3 color;
 
-    bool shadow;
-    int depthMapID;
+    int shadow;
     mat4 projection;
     mat4 view;
 };

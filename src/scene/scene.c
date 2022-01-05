@@ -112,7 +112,7 @@ int scene_update_render_queue(struct Scene* scene, const Mat4 cameraView, const 
     return 1;
 }
 
-void scene_render(struct Scene* scene) {
+void scene_render(struct Scene* scene, struct Lights* lights) {
     unsigned int i;
     uniform_buffer_bind(&scene->camera, CAMERA_UBO_BINDING);
     uniform_buffer_bind(&scene->lights, LIGHTS_UBO_BINDING);
@@ -120,6 +120,7 @@ void scene_render(struct Scene* scene) {
         struct Node* n = scene->renderQueue[i];
         material_use(n->data.geometry->material);
         material_set_matrices(n->data.geometry->material, n->model, n->inverseNormal);
+        if (lights) material_bind_shadowmaps(n->data.geometry->material, lights);
         vertex_array_render(n->data.geometry->vertexArray);
     }
 }

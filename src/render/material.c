@@ -31,3 +31,19 @@ void material_set_matrices(const struct Material* material, Mat4 model, Mat3 inv
     glUniformMatrix4fv(glGetUniformLocation(material->program, "model"), 1, GL_FALSE, &model[0][0]);
     glUniformMatrix3fv(glGetUniformLocation(material->program, "inverseNormal"), 1, GL_FALSE, &inverseNormal[0][0]);
 }
+
+void material_bind_shadowmaps(const struct Material* material, struct Lights* lights) {
+    unsigned int i;
+    GLint loc;
+
+    if ((loc = glGetUniformLocation(material->program, "directionalLightDepthMap")) < 0) {
+        return;
+    }
+    for (i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
+        struct DirectionalLight* dl = &lights->directional[i];
+
+        if (dl->shadow) {
+            glUniform1i(loc + i, TEX_SLOT_DIR_SHADOWMAP + i);
+        }
+    }
+}

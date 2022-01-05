@@ -17,6 +17,7 @@ uniform vec3 solidColor;
 #endif
 
 #include "alpha.glsl"
+#include "light/direct.glsl"
 
 void main() {
 #ifdef SOLID_TEXTURED

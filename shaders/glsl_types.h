@@ -12,6 +12,4 @@ typedef Mat2 mat2;
 typedef Mat3 mat3;
 typedef Mat4 mat4;
 
-typedef uint32_t bool;
-
 #endif

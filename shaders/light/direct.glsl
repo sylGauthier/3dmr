@@ -5,7 +5,7 @@
 #include "point_light.h"
 #include "spot_light.h"
 
-uniform sampler2D DirectionalLightDepthMap[MAX_DIRECTIONAL_LIGHTS];
+uniform sampler2D directionalLightDepthMap[MAX_DIRECTIONAL_LIGHTS];
 
 layout(std140) uniform Lights {
     AmbientLight ambientLight;
@@ -16,3 +16,16 @@ layout(std140) uniform Lights {
     uint numPointLights;
     uint numSpotLights;
 };
+
+float compute_shadow(vec3 fragPos, vec3 fragNormal, uint lightID) {
+    vec4 lightSpacePos;
+    vec3 projCoords;
+    float bias = max(0.005 * (1 - dot(fragNormal, directionalLights[lightID].direction)), 0.005);
+
+    if (directionalLights[lightID].shadow == 0) return 0;
+    lightSpacePos = directionalLights[lightID].projection * directionalLights[lightID].view * vec4(fragPos, 1);
+    lightSpacePos /= lightSpacePos.w;
+    lightSpacePos = lightSpacePos * 0.5 + 0.5;
+
+    return texture(directionalLightDepthMap[lightID], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+}

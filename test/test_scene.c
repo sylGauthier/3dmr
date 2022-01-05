@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
             if (scene_update_nodes(&scene, NULL, NULL)) {
                 scene_update_render_queue(&scene, MAT_CONST_CAST(camera.view), MAT_CONST_CAST(camera.projection));
             }
-            scene_render(&scene);
+            scene_render(&scene, NULL);
             viewer_process_events(viewer);
         }
         if (argc == 3) {

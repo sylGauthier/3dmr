@@ -1,4 +1,5 @@
 #include "camera.glsl"
+#include "light/direct.glsl"
 
 in vec3 in_Vertex;
 
