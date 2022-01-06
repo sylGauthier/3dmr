@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <3dmr/light/light.h>
 #include <3dmr/render/vertex_shader.h>
 #include <3dmr/shaders.h>
@@ -25,14 +27,7 @@ static int load_depth_map_shaders() {
 }
 
 int light_init(struct Lights* lights) {
-    lights->numDirectionalLights = 0;
-    lights->numPointLights = 0;
-    lights->numSpotLights = 0;
-    lights->ambientLight.color[0] = 0;
-    lights->ambientLight.color[1] = 0;
-    lights->ambientLight.color[2] = 0;
-
-    lights->numDLDepthMaps = 0;
+    memset(lights, 0, sizeof(*lights));
 
     if (!lightGlobalInit) {
         if (!camera_buffer_object_gen(&lightCamUBO)) {
@@ -48,9 +43,25 @@ int light_init(struct Lights* lights) {
     return 1;
 }
 
+void light_bind_shadowmaps(struct Lights* lights) {
+    unsigned int i;
+
+    for (i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
+        struct DirectionalLight* dl = &lights->directional[i];
+
+        if (dl->shadow) {
+            struct FBTexture* fbtex = &lights->directionalLightDepthMap[i];
+
+            glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + i);
+            glBindTexture(GL_TEXTURE_2D, fbtex->tex);
+        }
+    }
+}
+
 int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
     struct DirectionalLight* dl = &lights->directional[id];
     struct FBTexture* fbtex = &lights->directionalLightDepthMap[id];
+    float borderColor[] = {1., 1., 1., 1.};
 
     if (dl->shadow) return 1; /* already enabled */
 
@@ -67,8 +78,9 @@ int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_W, SHADOW_MAP_H, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     /* bind texture to frame buffer object */
     glBindFramebuffer(GL_FRAMEBUFFER, fbtex->fbo);
@@ -79,6 +91,18 @@ int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
 
     dl->shadow = 1;
     return 1;
+}
+
+static void do_render(struct Node* node) {
+    unsigned int i;
+
+    if (node->type == NODE_GEOMETRY) {
+        glUniformMatrix4fv(glGetUniformLocation(depthMapProgram, "model"), 1, GL_FALSE, &node->model[0][0]);
+        vertex_array_render(node->data.geometry->vertexArray);
+    }
+    for (i = 0; i < node->nbChildren; i++) {
+        do_render(node->children[i]);
+    }
 }
 
 void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Node** queue, unsigned int numNodes) {
@@ -105,10 +129,7 @@ void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Nod
     for (i = 0; i < numNodes; i++) {
         struct Node* cur = queue[i];
 
-        if (cur->type == NODE_GEOMETRY) {
-            glUniformMatrix4fv(glGetUniformLocation(depthMapProgram, "model"), 1, GL_FALSE, &cur->model[0][0]);
-            vertex_array_render(cur->data.geometry->vertexArray);
-        }
+        do_render(cur);
     }
     glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

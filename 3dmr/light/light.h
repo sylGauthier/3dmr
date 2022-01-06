@@ -23,13 +23,13 @@ struct Lights {
     unsigned int numDirectionalLights, numPointLights, numSpotLights;
 
     struct FBTexture directionalLightDepthMap[MAX_DIRECTIONAL_LIGHTS];
-    unsigned int numDLDepthMaps;
 };
 
 struct Node;
 
 int light_init(struct Lights* lights);
 
+void light_bind_shadowmaps(struct Lights* lights);
 int dirlight_enable_shadow(struct Lights* lights, unsigned int id);
 void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Node** queue, unsigned int numNodes);
 

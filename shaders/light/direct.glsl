@@ -27,5 +27,6 @@ float compute_shadow(vec3 fragPos, vec3 fragNormal, uint lightID) {
     lightSpacePos /= lightSpacePos.w;
     lightSpacePos = lightSpacePos * 0.5 + 0.5;
 
+    if (lightSpacePos.z >= 1) return 0;
     return texture(directionalLightDepthMap[lightID], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
 }
