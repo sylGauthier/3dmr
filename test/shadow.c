@@ -127,6 +127,7 @@ int setup_pbr_plane(struct Node* plane, struct Geometry* g) {
 
 int setup_lights(struct Lights* lights, struct Scene* scene) {
     struct DirectionalLight* dl;
+    struct ShadowMap* map;
     Vec3 pos = {2.5, 5, 7.5}, dir = {-0.5, -1, -1.5}, lookAt = {0, 0, 0}, up = {0, 0, 1};
 
     if (!light_init(lights)) return 0;
@@ -136,11 +137,11 @@ int setup_lights(struct Lights* lights, struct Scene* scene) {
     dl = &lights->directional[0];
     memcpy(dl->direction, dir, sizeof(Vec3));
     set3v(dl->color, 0.3, 0.3, 0.3);
-    dl->shadow = 0;
 
-    dirlight_enable_shadow(lights, 0);
-    camera_ortho_projection(10, 10, 1, 15, dl->projection);
-    camera_look_at(pos, lookAt, up, dl->view);
+    if ((dl->shadow = light_shadowmap_new(lights)) < 0) return 0;
+    map = &lights->shadowMaps[dl->shadow];
+    camera_ortho_projection(10, 10, 1, 15, map->projection);
+    camera_look_at(pos, lookAt, up, map->view);
 
     lights_buffer_object_update(&scene->lights, lights);
 
@@ -208,7 +209,7 @@ int main() {
         shadowQueue[4] = &plane;
         shadowQueue[5] = &pbrPlane;
 
-        depthmapp.color.value.texture = lights.directionalLightDepthMap[0].tex;
+        depthmapp.color.value.texture = lights.shadowMaps[0].tex;
         /* uncomment to display light's depthmap */
         /* node_add_child(&scene.root, &overlay); */
 
@@ -225,7 +226,7 @@ int main() {
 
             cube_update(cubes, dt);
             scene_update_nodes(&scene, NULL, NULL);
-            dirlight_render_depthmap(&lights, 0, shadowQueue, 5);
+            light_shadowmap_render(&lights, 0, shadowQueue, 5);
             scene_render(&scene, &lights);
         }
     }

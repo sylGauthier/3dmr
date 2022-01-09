@@ -8,8 +8,6 @@ struct DirectionalLight {
     vec3 color;
 
     int shadow;
-    mat4 projection;
-    mat4 view;
 };
 
 #endif

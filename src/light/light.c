@@ -27,7 +27,12 @@ static int load_depth_map_shaders() {
 }
 
 int light_init(struct Lights* lights) {
+    unsigned int i;
+
     memset(lights, 0, sizeof(*lights));
+    for (i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
+        lights->directional[i].shadow = -1;
+    }
 
     if (!lightGlobalInit) {
         if (!camera_buffer_object_gen(&lightCamUBO)) {
@@ -43,38 +48,27 @@ int light_init(struct Lights* lights) {
     return 1;
 }
 
-void light_bind_shadowmaps(struct Lights* lights) {
-    unsigned int i;
-
-    for (i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
-        struct DirectionalLight* dl = &lights->directional[i];
-
-        if (dl->shadow) {
-            struct FBTexture* fbtex = &lights->directionalLightDepthMap[i];
-
-            glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + i);
-            glBindTexture(GL_TEXTURE_2D, fbtex->tex);
-        }
-    }
-}
-
-int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
-    struct DirectionalLight* dl = &lights->directional[id];
-    struct FBTexture* fbtex = &lights->directionalLightDepthMap[id];
+int light_shadowmap_new(struct Lights* lights) {
+    int res = 0;
+    struct ShadowMap* map;
     float borderColor[] = {1., 1., 1., 1.};
 
-    if (dl->shadow) return 1; /* already enabled */
+    for (res = 0; res < MAX_SHADOWMAPS && lights->shadowMaps[res].fbo != 0; res++);
+    if (res >= MAX_SHADOWMAPS) return -1;
+    map = &lights->shadowMaps[res];
 
-    glGenFramebuffers(1, &fbtex->fbo);
-    glGenTextures(1, &fbtex->tex);
-    if (!fbtex->fbo || !fbtex->tex) {
+    glGenFramebuffers(1, &map->fbo);
+    glGenTextures(1, &map->tex);
+    if (!map->fbo || !map->tex) {
+        map->fbo = 0;
+        map->tex = 0;
         fprintf(stderr, "Error: dirlight_enable_shadow: genBuffers or genTextures failed\n");
-        return 0;
+        return -1;
     }
     /* setup texture parameters */
     /* bind shadowmap to its global slot, same for all programs */
-    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + id);
-    glBindTexture(GL_TEXTURE_2D, fbtex->tex);
+    glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + res);
+    glBindTexture(GL_TEXTURE_2D, map->tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_W, SHADOW_MAP_H, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -83,14 +77,26 @@ int dirlight_enable_shadow(struct Lights* lights, unsigned int id) {
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     /* bind texture to frame buffer object */
-    glBindFramebuffer(GL_FRAMEBUFFER, fbtex->fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbtex->tex, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, map->fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, map->tex, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    dl->shadow = 1;
-    return 1;
+    return res;
+}
+
+void light_shadowmap_bind(struct Lights* lights) {
+    unsigned int i;
+
+    for (i = 0; i < MAX_SHADOWMAPS; i++) {
+        struct ShadowMap* map = &lights->shadowMaps[i];
+
+        if (map->fbo && map->tex) {
+            glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + i);
+            glBindTexture(GL_TEXTURE_2D, map->tex);
+        }
+    }
 }
 
 static void do_render(struct Node* node) {
@@ -105,22 +111,22 @@ static void do_render(struct Node* node) {
     }
 }
 
-void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Node** queue, unsigned int numNodes) {
+void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, unsigned int numNodes) {
     unsigned int i;
-    struct DirectionalLight* dl = &lights->directional[id];
     GLint viewport[4];
+    struct ShadowMap* map = &lights->shadowMaps[id];
 
-    if (!dl->shadow) return;
+    if (!map->fbo || !map->tex) return;
 
     glGetIntegerv(GL_VIEWPORT, viewport);
     glViewport(0, 0, SHADOW_MAP_W, SHADOW_MAP_H);
-    glBindFramebuffer(GL_FRAMEBUFFER, lights->directionalLightDepthMap[id].fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, map->fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     /* bind light camera to "global" camera uniform buffer object */
     uniform_buffer_bind(&lightCamUBO, CAMERA_UBO_BINDING);
-    camera_buffer_object_update_view_and_position(&lightCamUBO, MAT_CONST_CAST(dl->view));
-    camera_buffer_object_update_projection(&lightCamUBO, MAT_CONST_CAST(dl->projection));
+    camera_buffer_object_update_view_and_position(&lightCamUBO, MAT_CONST_CAST(map->view));
+    camera_buffer_object_update_projection(&lightCamUBO, MAT_CONST_CAST(map->projection));
     uniform_buffer_send(&lightCamUBO);
 
     glUseProgram(depthMapProgram);

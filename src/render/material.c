@@ -34,16 +34,20 @@ void material_set_matrices(const struct Material* material, Mat4 model, Mat3 inv
 
 void material_bind_shadowmaps(const struct Material* material, struct Lights* lights) {
     unsigned int i;
-    GLint loc;
+    GLint smLoc, svLoc;
 
-    if ((loc = glGetUniformLocation(material->program, "directionalLightDepthMap")) < 0) {
+    if ((smLoc = glGetUniformLocation(material->program, "shadowMaps")) < 0 || (svLoc = glGetUniformLocation(material->program, "shadowViews")) < 0) {
         return;
     }
-    for (i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
-        struct DirectionalLight* dl = &lights->directional[i];
+    for (i = 0; i < MAX_SHADOWMAPS; i++) {
+        struct ShadowMap* map = &lights->shadowMaps[i];
 
-        if (dl->shadow) {
-            glUniform1i(loc + i, TEX_SLOT_DIR_SHADOWMAP + i);
+        if (map->fbo && map->tex) {
+            Mat4 lightTransform;
+
+            mul4mm(lightTransform, MAT_CONST_CAST(map->projection), MAT_CONST_CAST(map->view));
+            glUniform1i(smLoc + i, TEX_SLOT_DIR_SHADOWMAP + i);
+            glUniformMatrix4fv(svLoc + i, 1, GL_FALSE, &lightTransform[0][0]);
         }
     }
 }

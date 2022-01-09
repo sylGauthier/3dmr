@@ -8,14 +8,12 @@
 #define SIZEOF_AMBIENT sizeof(Vec4)
 
 #define OFFSET_DLIGHTS (OFFSET_AMBIENT + SIZEOF_AMBIENT)
-#define SIZEOF_DLIGHT (2 * sizeof(Vec4) + 2 * sizeof(Mat4))
+#define SIZEOF_DLIGHT (2 * sizeof(Vec4))
 #define SIZEOF_DLIGHTS (MAX_DIRECTIONAL_LIGHTS * SIZEOF_DLIGHT)
 #define OFFSET_DLIGHT(i) (OFFSET_DLIGHTS + (i) * SIZEOF_DLIGHT)
 #define OFFSET_DLIGHT_DIRECTION(i) OFFSET_DLIGHT(i)
 #define OFFSET_DLIGHT_COLOR(i) (OFFSET_DLIGHT_DIRECTION(i) + sizeof(Vec4))
 #define OFFSET_DLIGHT_SHADOW(i) (OFFSET_DLIGHT_COLOR(i) + sizeof(Vec3))
-#define OFFSET_DLIGHT_SHADOW_PROJ(i) (OFFSET_DLIGHT_COLOR(i) + sizeof(Vec4))
-#define OFFSET_DLIGHT_SHADOW_VIEW(i) (OFFSET_DLIGHT_SHADOW_PROJ(i) + sizeof(Mat4))
 
 #define OFFSET_PLIGHTS (OFFSET_DLIGHTS + SIZEOF_DLIGHTS)
 #define SIZEOF_PLIGHT (2 * sizeof(Vec4))
@@ -72,10 +70,7 @@ void lights_buffer_object_update_ambient(struct UniformBuffer* u, const struct A
 void lights_buffer_object_update_dlight(struct UniformBuffer* u, const struct DirectionalLight* l, unsigned int i) {
     uniform_buffer_update(u, OFFSET_DLIGHT_DIRECTION(i), sizeof(Vec3), l->direction);
     uniform_buffer_update(u, OFFSET_DLIGHT_COLOR(i), sizeof(Vec3), l->color);
-
     uniform_buffer_update(u, OFFSET_DLIGHT_SHADOW(i), sizeof(int), &l->shadow);
-    uniform_buffer_update(u, OFFSET_DLIGHT_SHADOW_PROJ(i), sizeof(Mat4), l->projection);
-    uniform_buffer_update(u, OFFSET_DLIGHT_SHADOW_VIEW(i), sizeof(Mat4), l->view);
 }
 
 void lights_buffer_object_update_ndlight(struct UniformBuffer* u, unsigned int n) {

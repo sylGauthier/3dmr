@@ -6,13 +6,15 @@
 #include <3dmr/light/point_light.h>
 #include <3dmr/light/spot_light.h>
 #include <3dmr/light/ibl.h>
+#include <shaders/light/shadowmap.h>
 
 #ifndef TDMR_LIGHT_H
 #define TDMR_LIGHT_H
 
-struct FBTexture {
+struct ShadowMap {
     GLuint fbo;
     GLuint tex;
+    Mat4 view, projection;
 };
 
 struct Lights {
@@ -22,15 +24,15 @@ struct Lights {
     struct AmbientLight ambientLight;
     unsigned int numDirectionalLights, numPointLights, numSpotLights;
 
-    struct FBTexture directionalLightDepthMap[MAX_DIRECTIONAL_LIGHTS];
+    struct ShadowMap shadowMaps[MAX_SHADOWMAPS];
 };
 
 struct Node;
 
 int light_init(struct Lights* lights);
 
-void light_bind_shadowmaps(struct Lights* lights);
-int dirlight_enable_shadow(struct Lights* lights, unsigned int id);
-void dirlight_render_depthmap(struct Lights* lights, unsigned int id, struct Node** queue, unsigned int numNodes);
+int light_shadowmap_new(struct Lights* lights);
+void light_shadowmap_bind(struct Lights* lights);
+void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, unsigned int numNodes);
 
 #endif
