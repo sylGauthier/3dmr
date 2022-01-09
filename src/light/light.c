@@ -5,9 +5,6 @@
 #include <3dmr/shaders.h>
 #include <3dmr/scene/node.h>
 
-#define SHADOW_MAP_W    1024
-#define SHADOW_MAP_H    1024
-
 static char lightGlobalInit;
 static GLuint depthMapShaders[2];
 static GLuint depthMapProgram;

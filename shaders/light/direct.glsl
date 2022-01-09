@@ -19,6 +19,21 @@ layout(std140) uniform Lights {
     uint numSpotLights;
 };
 
+float pcf_shadow(sampler2D map, vec2 pos, float depth, float bias) {
+    float shadow = 0;
+    float texelSize = 1. / SHADOW_MAP_W;
+    int x, y;
+
+    for (x = -1; x <= 1; x++) {
+        for (y = -1; y <= 1; y++) {
+            float pcfDepth = texture(map, pos + vec2(x, y) * texelSize).r;
+
+            shadow += depth - bias > pcfDepth ? 1. : 0.;
+        }
+    }
+    return shadow / 9.;
+}
+
 float compute_shadow(vec3 fragPos, vec3 fragNormal, uint lightID) {
     vec4 lightSpacePos;
     vec3 projCoords;
@@ -37,15 +52,15 @@ float compute_shadow(vec3 fragPos, vec3 fragNormal, uint lightID) {
      */
     switch (smID) {
         case 0:
-            return texture(shadowMaps[0], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+            return pcf_shadow(shadowMaps[0], lightSpacePos.xy, lightSpacePos.z, bias);
         case 1:
-            return texture(shadowMaps[1], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+            return pcf_shadow(shadowMaps[1], lightSpacePos.xy, lightSpacePos.z, bias);
         case 2:
-            return texture(shadowMaps[2], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+            return pcf_shadow(shadowMaps[2], lightSpacePos.xy, lightSpacePos.z, bias);
         case 3:
-            return texture(shadowMaps[3], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+            return pcf_shadow(shadowMaps[3], lightSpacePos.xy, lightSpacePos.z, bias);
         case 4:
-            return texture(shadowMaps[4], lightSpacePos.xy).r < lightSpacePos.z - bias ? 1. : 0.;
+            return pcf_shadow(shadowMaps[4], lightSpacePos.xy, lightSpacePos.z, bias);
         default:
             return 0.;
     }
