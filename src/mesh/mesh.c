@@ -24,6 +24,7 @@ int mesh_unindex(struct Mesh* mesh) {
 
     free(mesh->vertices);
     mesh->vertices = vertices;
+    free(mesh->indices);
     mesh->indices = NULL;
     mesh->numVertices = mesh->numIndices;
     mesh->numIndices = 0;
