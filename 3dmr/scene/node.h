@@ -62,6 +62,7 @@ struct Node {
 
     char* name;
     int alwaysDraw;
+    int hasShadow;
 };
 
 void node_init(struct Node* node);

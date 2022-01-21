@@ -22,6 +22,7 @@ void node_init(struct Node* node) {
     node->type = NODE_EMPTY;
     node->name = NULL;
     node->alwaysDraw = 0;
+    node->hasShadow = 1;
 }
 
 static void node_reset_bounding_box(struct Node* node, Vec3 bb[2]) {

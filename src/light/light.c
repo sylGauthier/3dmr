@@ -99,7 +99,7 @@ void light_shadowmap_bind(struct Lights* lights) {
 static void do_render(struct Node* node) {
     unsigned int i;
 
-    if (node->type == NODE_GEOMETRY) {
+    if (node->type == NODE_GEOMETRY && node->hasShadow) {
         glUniformMatrix4fv(glGetUniformLocation(depthMapProgram, "model"), 1, GL_FALSE, &node->model[0][0]);
         vertex_array_render(node->data.geometry->vertexArray);
     }
