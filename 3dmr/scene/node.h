@@ -78,6 +78,7 @@ void node_free(struct Node* n);
 void nodes_free(struct Node* root, void (*free_node)(struct Node*));
 struct Node* node_dup(struct Node* node);
 
+void node_get_transform(struct Node* node, Mat4 dest);
 int node_update_matrices(struct Node* node);
 void node_update_father_bounding_box(struct Node* node);
 int node_visible(const struct Node* node, const Mat4 view, const Mat4 projection);

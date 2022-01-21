@@ -172,6 +172,14 @@ struct Node* node_dup(struct Node* node) {
     return NULL;
 }
 
+void node_get_transform(struct Node* node, Mat4 dest) {
+    quaternion_to_mat4(dest, node->orientation);
+    scale3v(dest[0], node->scale[0]);
+    scale3v(dest[1], node->scale[1]);
+    scale3v(dest[2], node->scale[2]);
+    memcpy(dest[3], node->position, sizeof(Vec3));
+}
+
 int node_update_matrices(struct Node* node) {
     unsigned int i;
     int changed;
