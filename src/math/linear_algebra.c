@@ -153,6 +153,12 @@ void cross3(RESTRICT_VEC3(dest), const RESTRICT_VEC3(u), const RESTRICT_VEC3(v))
     dest[2] = u[0] * v[1] - u[1] * v[0];
 }
 
+void outer3(RESTRICT_MAT3(dest), const RESTRICT_VEC3(u), const RESTRICT_VEC3(v)) {
+    dest[0][0] = u[0] * v[0]; dest[0][1] = u[1] * v[0]; dest[0][2] = u[2] * v[0];
+    dest[1][0] = u[0] * v[1]; dest[1][1] = u[1] * v[1]; dest[1][2] = u[2] * v[1];
+    dest[2][0] = u[0] * v[2]; dest[2][1] = u[1] * v[2]; dest[2][2] = u[2] * v[2];
+}
+
 /* Vec4 */
 void zero4v(Vec4 v) {
     v[0] = 0;
@@ -350,6 +356,18 @@ void mul3mm(RESTRICT_MAT3(dest), const RESTRICT_MAT3(a), const RESTRICT_MAT3(b))
     dest[2][0] = a[0][0] * b[2][0] + a[1][0] * b[2][1] + a[2][0] * b[2][2];
     dest[2][1] = a[0][1] * b[2][0] + a[1][1] * b[2][1] + a[2][1] * b[2][2];
     dest[2][2] = a[0][2] * b[2][0] + a[1][2] * b[2][1] + a[2][2] * b[2][2];
+}
+
+void add3mm(RESTRICT_MAT3(dest), const RESTRICT_MAT3(a), const RESTRICT_MAT3(b)) {
+    dest[0][0] = a[0][0] + b[0][0];
+    dest[0][1] = a[0][1] + b[0][1];
+    dest[0][2] = a[0][2] + b[0][2];
+    dest[1][0] = a[1][0] + b[1][0];
+    dest[1][1] = a[1][1] + b[1][1];
+    dest[1][2] = a[1][2] + b[1][2];
+    dest[2][0] = a[2][0] + b[2][0];
+    dest[2][1] = a[2][1] + b[2][1];
+    dest[2][2] = a[2][2] + b[2][2];
 }
 
 void neg3m(Mat3 m) {

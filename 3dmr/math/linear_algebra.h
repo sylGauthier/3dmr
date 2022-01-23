@@ -65,6 +65,7 @@ float norm3(const Vec3 v);
 void normalize3(Vec3 v);
 float dot3(const RESTRICT_VEC3(u), const RESTRICT_VEC3(v));
 void cross3(RESTRICT_VEC3(dest), const RESTRICT_VEC3(u), const RESTRICT_VEC3(v));
+void outer3(RESTRICT_MAT3(dest), const RESTRICT_VEC3(u), const RESTRICT_VEC3(v));
 
 /* Vec4 */
 void zero4v(Vec4 v);
@@ -98,6 +99,7 @@ void print3m(const Mat3 m);
 void mul3sm(RESTRICT_MAT3(dest), float s, const RESTRICT_MAT3(m));
 void mul3mv(RESTRICT_VEC3(dest), const RESTRICT_MAT3(m), const RESTRICT_VEC3(v));
 void mul3mm(RESTRICT_MAT3(dest), const RESTRICT_MAT3(a), const RESTRICT_MAT3(b));
+void add3mm(RESTRICT_MAT3(dest), const RESTRICT_MAT3(a), const RESTRICT_MAT3(b));
 void neg3m(Mat3 m);
 void transpose3m(Mat3 m);
 float det3(const Mat3 m);
