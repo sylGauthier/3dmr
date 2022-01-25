@@ -8,7 +8,7 @@ uniform float alpha;
 
 float get_alpha() {
 #ifdef ALPHA_TEXTURED
-    float a = texture(alpha, coordTexture).r;
+    float a = texture(alpha, coordTexture).a;
 #else
     float a = alpha;
 #endif
