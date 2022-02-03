@@ -19,6 +19,11 @@ struct Viewer {
     void (*resize_callback)(struct Viewer*, void*);
     void (*close_callback)(struct Viewer*, void*);
     void* callbackData;
+
+    double cursorPos[2];
+    char buttonPressed[3];
+    unsigned int textCodepoint;
+    char hasText;
 };
 
 struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* title);

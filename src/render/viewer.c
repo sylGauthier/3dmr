@@ -34,6 +34,8 @@ static void mouse_callback(GLFWwindow* window, int button, int action, int mods)
     if (viewer->user.mouse_callback) {
         viewer->user.mouse_callback(&viewer->user, button, action, mods, viewer->user.callbackData);
     }
+
+    viewer->user.buttonPressed[button - GLFW_MOUSE_BUTTON_LEFT] = (action == GLFW_PRESS);
 }
 
 static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -47,6 +49,9 @@ static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
     viewer->lastX = xpos;
     viewer->lastY = ypos;
     viewer->hasLast = 1;
+
+    viewer->user.cursorPos[0] = xpos;
+    viewer->user.cursorPos[1] = ypos;
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -61,6 +66,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (viewer->user.key_callback) {
         viewer->user.key_callback(&viewer->user, key, scancode, action, mods, viewer->user.callbackData);
     }
+}
+
+static void text_callback(GLFWwindow* window, unsigned int codepoint) {
+    struct ViewerImpl* viewer = glfwGetWindowUserPointer(window);
+
+    viewer->user.textCodepoint = codepoint;
+    viewer->user.hasText = 1;
 }
 
 static void window_size_callback(GLFWwindow* window, int width, int height) {
@@ -102,7 +114,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
             glfwSetScrollCallback(viewer->window, scroll_callback);
             glfwSetWindowSizeCallback(viewer->window, window_size_callback);
             glfwSetWindowCloseCallback(viewer->window, window_close_callback);
-            /*glfwSetInputMode(viewer->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);*/
+            glfwSetCharCallback(viewer->window, text_callback);
             glewExperimental = 1;
             if ((error = glGetError()) != GL_NO_ERROR) {
                 fprintf(stderr, "Error: GL context setup failed\n");
@@ -187,6 +199,7 @@ struct Viewer* viewer_get_current(void) {
 }
 
 void viewer_process_events(struct Viewer* viewer) {
+    viewer->hasText = 0;
     glfwPollEvents();
 }
 
