@@ -95,7 +95,7 @@ struct Viewer* viewer_new(unsigned int width, unsigned int height, const char* t
     struct ViewerImpl* viewer;
     GLenum error;
 
-    if (!(viewer = malloc(sizeof(struct ViewerImpl)))) {
+    if (!(viewer = calloc(1, sizeof(struct ViewerImpl)))) {
         fprintf(stderr, "Error: memory allocation failed\n");
     } else if (!init_glfw()) {
         fprintf(stderr, "Error: GLFW3 initialization failed\n");
