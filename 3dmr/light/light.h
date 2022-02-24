@@ -15,6 +15,7 @@ struct ShadowMap {
     GLuint fbo;
     GLuint tex;
     Mat4 view, projection;
+    unsigned int width, height;
 };
 
 struct Lights {
@@ -31,8 +32,11 @@ struct Node;
 
 int light_init(struct Lights* lights);
 
-int light_shadowmap_new(struct Lights* lights);
+int light_shadowmap_new(struct Lights* lights, unsigned int w, unsigned int h);
 void light_shadowmap_bind(struct Lights* lights);
+void light_shadowmap_render_start(struct Lights* lights, int id, GLint viewport[4]);
+void light_shadowmap_render_end(struct Lights* lights, GLint viewport[4]);
+void light_shadowmap_render_node(struct Node* node);
 void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, unsigned int numNodes);
 
 #endif

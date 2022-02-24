@@ -138,7 +138,7 @@ int setup_lights(struct Lights* lights, struct Scene* scene) {
     memcpy(dl->direction, dir, sizeof(Vec3));
     set3v(dl->color, 0.3, 0.3, 0.3);
 
-    if ((dl->shadow = light_shadowmap_new(lights)) < 0) return 0;
+    if ((dl->shadow = light_shadowmap_new(lights, 1024, 1024)) < 0) return 0;
     map = &lights->shadowMaps[dl->shadow];
     camera_ortho_projection(10, 10, 1, 15, map->projection);
     camera_look_at(pos, lookAt, up, map->view);

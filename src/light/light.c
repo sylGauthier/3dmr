@@ -45,7 +45,7 @@ int light_init(struct Lights* lights) {
     return 1;
 }
 
-int light_shadowmap_new(struct Lights* lights) {
+int light_shadowmap_new(struct Lights* lights, unsigned int w, unsigned int h) {
     int res = 0;
     struct ShadowMap* map;
     float borderColor[] = {1., 1., 1., 1.};
@@ -54,6 +54,8 @@ int light_shadowmap_new(struct Lights* lights) {
     if (res >= MAX_SHADOWMAPS) return -1;
     map = &lights->shadowMaps[res];
 
+    map->width = w;
+    map->height = h;
     glGenFramebuffers(1, &map->fbo);
     glGenTextures(1, &map->tex);
     if (!map->fbo || !map->tex) {
@@ -66,7 +68,7 @@ int light_shadowmap_new(struct Lights* lights) {
     /* bind shadowmap to its global slot, same for all programs */
     glActiveTexture(GL_TEXTURE0 + TEX_SLOT_DIR_SHADOWMAP + res);
     glBindTexture(GL_TEXTURE_2D, map->tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_W, SHADOW_MAP_H, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -96,27 +98,29 @@ void light_shadowmap_bind(struct Lights* lights) {
     }
 }
 
-static void do_render(struct Node* node) {
-    unsigned int i;
-
+void light_shadowmap_render_node(struct Node* node) {
     if (node->type == NODE_GEOMETRY && node->hasShadow) {
         glUniformMatrix4fv(glGetUniformLocation(depthMapProgram, "model"), 1, GL_FALSE, &node->model[0][0]);
         vertex_array_render(node->data.geometry->vertexArray);
     }
+}
+
+static void do_render(struct Node* node) {
+    unsigned int i;
+
+    light_shadowmap_render_node(node);
     for (i = 0; i < node->nbChildren; i++) {
         do_render(node->children[i]);
     }
 }
 
-void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, unsigned int numNodes) {
-    unsigned int i;
-    GLint viewport[4];
+void light_shadowmap_render_start(struct Lights* lights, int id, GLint viewport[4]) {
     struct ShadowMap* map = &lights->shadowMaps[id];
 
     if (!map->fbo || !map->tex) return;
 
     glGetIntegerv(GL_VIEWPORT, viewport);
-    glViewport(0, 0, SHADOW_MAP_W, SHADOW_MAP_H);
+    glViewport(0, 0, map->width, map->height);
     glBindFramebuffer(GL_FRAMEBUFFER, map->fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -128,13 +132,23 @@ void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, 
 
     glUseProgram(depthMapProgram);
     glCullFace(GL_FRONT);
+}
 
+void light_shadowmap_render_end(struct Lights* lights, GLint viewport[4]) {
+    glCullFace(GL_BACK);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+void light_shadowmap_render(struct Lights* lights, int id, struct Node** queue, unsigned int numNodes) {
+    unsigned int i;
+    GLint viewport[4];
+
+    light_shadowmap_render_start(lights, id, viewport);
     for (i = 0; i < numNodes; i++) {
         struct Node* cur = queue[i];
 
         do_render(cur);
     }
-    glCullFace(GL_BACK);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    light_shadowmap_render_end(lights, viewport);
 }

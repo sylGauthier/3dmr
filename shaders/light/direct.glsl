@@ -21,7 +21,7 @@ layout(std140) uniform Lights {
 
 float pcf_shadow(sampler2D map, vec2 pos, float depth, float bias) {
     float shadow = 0;
-    float texelSize = 1. / SHADOW_MAP_W;
+    float texelSize = 1. / 1024;
     int x, y;
 
     for (x = -1; x <= 1; x++) {
@@ -37,7 +37,7 @@ float pcf_shadow(sampler2D map, vec2 pos, float depth, float bias) {
 float compute_shadow(vec3 fragPos, vec3 fragNormal, uint lightID) {
     vec4 lightSpacePos;
     vec3 projCoords;
-    float bias = max(0.005 * (1 - dot(fragNormal, directionalLights[lightID].direction)), 0.005);
+    float bias = max(0.0005 * (1 - dot(fragNormal, directionalLights[lightID].direction)), 0.0005);
     int smID = directionalLights[lightID].shadow;
 
     if (smID < 0) return 0.;
