@@ -7,6 +7,7 @@
 void solid_material_params_init(struct SolidMaterialParams* p) {
     material_param_set_vec3_elems(&p->color, 1, 1, 1);
     alpha_params_init(&p->alpha);
+    p->floatTexture = 0;
 }
 
 struct SolidMaterialParams* solid_material_params_new(void) {
